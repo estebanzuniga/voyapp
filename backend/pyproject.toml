@@ -6,6 +6,10 @@ dependencies = [
     "fastapi",
     "strawberry-graphql[fastapi]",
     "uvicorn[standard]",
+    "sqlalchemy[asyncio]",
+    "asyncpg",
+    "alembic",
+    "pydantic-settings",
 ]
 
 [build-system]
