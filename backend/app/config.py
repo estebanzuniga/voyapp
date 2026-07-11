@@ -6,5 +6,9 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+asyncpg://localhost/voyapp"
 
+    jwt_secret_key: str = "dev-secret-change-me"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 60 * 24 * 7
+
 
 settings = Settings()

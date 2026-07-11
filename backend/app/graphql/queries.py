@@ -13,6 +13,12 @@ class Query:
 
     @strawberry.field
     async def my_trips(self, info: strawberry.Info) -> list[Trip]:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
         session = info.context.session
-        result = await session.execute(select(TripModel))
+        result = await session.execute(
+            select(TripModel).where(TripModel.user_id == user.id)
+        )
         return [Trip.from_model(trip) for trip in result.scalars().all()]
