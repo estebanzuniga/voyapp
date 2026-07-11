@@ -1,11 +1,6 @@
 import strawberry
 
+from app.graphql.mutations import Mutation
+from app.graphql.queries import Query
 
-@strawberry.type
-class Query:
-    @strawberry.field
-    def hello(self) -> str:
-        return "Hello, Voyapp!"
-
-
-schema = strawberry.Schema(query=Query)
+schema = strawberry.Schema(query=Query, mutation=Mutation)
