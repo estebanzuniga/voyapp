@@ -14,6 +14,7 @@ This is a learning project: the goal is to get hands-on with **FastAPI**, **Stra
 - Alembic (migrations)
 - asyncpg (Postgres driver)
 - PyJWT + bcrypt (auth)
+- pytest + pytest-asyncio (testing)
 
 **Frontend** *(not started yet)*
 - React + Vite
@@ -53,4 +54,19 @@ Run migrations and start the server:
 ```bash
 alembic upgrade head
 uvicorn app.main:app --reload
+```
+
+### Running tests
+
+Tests run against a real Postgres database, not mocks. Create a `voyapp_test` database once:
+
+```bash
+createdb voyapp_test
+```
+
+Then install the dev dependencies and run the suite:
+
+```bash
+pip install -e ".[dev]"
+pytest
 ```
