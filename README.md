@@ -22,6 +22,7 @@ This is a learning project: the goal is to get hands-on with **FastAPI**, **Stra
 - @dnd-kit/core (drag-and-drop)
 - React Router
 - Tailwind CSS
+- vite-plugin-pwa (installable PWA: manifest + service worker)
 
 **Database**
 - PostgreSQL
