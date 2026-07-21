@@ -16,7 +16,7 @@ This is a learning project: the goal is to get hands-on with **FastAPI**, **Stra
 - PyJWT + bcrypt (auth)
 - pytest + pytest-asyncio (testing)
 
-**Frontend** *(not started yet)*
+**Frontend**
 - React + Vite
 - Apollo Client
 - @dnd-kit/core (drag-and-drop)
@@ -70,3 +70,13 @@ Then install the dev dependencies and run the suite:
 pip install -e ".[dev]"
 pytest
 ```
+
+### Frontend setup
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The dev server runs at `http://localhost:5173` and expects the backend GraphQL API at `http://localhost:8000/graphql` (see `src/apollo/client.js`).
