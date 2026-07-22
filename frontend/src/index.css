@@ -1,1 +1,22 @@
 @import "tailwindcss";
+
+@theme {
+  --font-display: Charter, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+
+  --color-bg: #fbf2e9;
+  --color-surface: #ffffff;
+  --color-surface-2: #fbf3ea;
+  --color-ink: #2b1b12;
+  --color-muted: #8c6f5c;
+  --color-border: #e4d3c4;
+  --color-accent: #e0602f;
+  --color-accent-ink: #fff8f2;
+  --color-accent-2: #1f6f6b;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
