@@ -163,6 +163,58 @@ class Mutation:
         return [Stop.from_model(stops_by_id[int(stop_id)]) for stop_id in stop_ids]
 
     @strawberry.mutation
+    async def move_stop(
+        self,
+        info: strawberry.Info,
+        stop_id: strawberry.ID,
+        to_day_id: strawberry.ID,
+        to_index: int,
+    ) -> Stop:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        session = info.context.session
+        stop = await session.get(StopModel, int(stop_id))
+        if stop is None:
+            raise Exception("Stop not found")
+
+        source_day = await session.get(DayModel, stop.day_id)
+        source_trip = await session.get(TripModel, source_day.trip_id) if source_day else None
+        if source_trip is None or source_trip.user_id != user.id:
+            raise Exception("Stop not found")
+
+        target_day = await session.get(DayModel, int(to_day_id))
+        target_trip = await session.get(TripModel, target_day.trip_id) if target_day else None
+        if target_trip is None or target_trip.user_id != user.id:
+            raise Exception("Day not found")
+
+        if target_day.id != source_day.id:
+            remaining_result = await session.execute(
+                select(StopModel)
+                .where(StopModel.day_id == source_day.id, StopModel.id != stop.id)
+                .order_by(StopModel.order_index)
+            )
+            for index, remaining_stop in enumerate(remaining_result.scalars().all()):
+                remaining_stop.order_index = index
+
+        target_stops_result = await session.execute(
+            select(StopModel)
+            .where(StopModel.day_id == target_day.id, StopModel.id != stop.id)
+            .order_by(StopModel.order_index)
+        )
+        target_stops = list(target_stops_result.scalars().all())
+        to_index = max(0, min(to_index, len(target_stops)))
+        target_stops.insert(to_index, stop)
+
+        stop.day_id = target_day.id
+        for index, target_stop in enumerate(target_stops):
+            target_stop.order_index = index
+
+        await session.commit()
+        return Stop.from_model(stop)
+
+    @strawberry.mutation
     async def delete_stop(self, info: strawberry.Info, id: strawberry.ID) -> bool:
         user = info.context.current_user
         if user is None:

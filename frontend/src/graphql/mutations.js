@@ -67,7 +67,14 @@ export const REORDER_STOPS_MUTATION = gql`
   mutation ReorderStops($dayId: ID!, $stopIds: [ID!]!) {
     reorderStops(dayId: $dayId, stopIds: $stopIds) {
       id
-      orderIndex
+    }
+  }
+`
+
+export const MOVE_STOP_MUTATION = gql`
+  mutation MoveStop($stopId: ID!, $toDayId: ID!, $toIndex: Int!) {
+    moveStop(stopId: $stopId, toDayId: $toDayId, toIndex: $toIndex) {
+      id
     }
   }
 `
