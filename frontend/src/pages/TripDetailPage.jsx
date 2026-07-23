@@ -1,42 +1,32 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { useQuery } from '@apollo/client/react'
+import { useMutation, useQuery } from '@apollo/client/react'
 import { TRIP_QUERY } from '../graphql/queries'
-import { formatDateRange, formatFullDate } from '../lib/dates'
-
-function StopRow({ stop }) {
-  return (
-    <li className="flex flex-col gap-0.5 rounded-lg border border-border bg-surface-2 px-4 py-3">
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-semibold text-ink">{stop.name}</span>
-        {stop.startTime ? <span className="text-sm text-muted">{stop.startTime}</span> : null}
-      </div>
-      {stop.notes ? <p className="text-sm text-muted">{stop.notes}</p> : null}
-    </li>
-  )
-}
-
-function DayCard({ day }) {
-  return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-5 shadow-sm">
-      <h3 className="font-display text-lg text-ink">{formatFullDate(day.date)}</h3>
-      {day.stops.length === 0 ? (
-        <p className="text-sm text-muted">No stops yet for this day.</p>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {day.stops.map((stop) => (
-            <StopRow key={stop.id} stop={stop} />
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
+import { ADD_DAY_MUTATION } from '../graphql/mutations'
+import { formatDate, formatDateRange, enumerateDates } from '../lib/dates'
+import { DayCard } from '../components/DayCard'
 
 export function TripDetailPage() {
   const { id } = useParams()
   const { data, loading, error } = useQuery(TRIP_QUERY, { variables: { id } })
+  const [addingDate, setAddingDate] = useState(null)
+  const [runAddDay] = useMutation(ADD_DAY_MUTATION, {
+    refetchQueries: [{ query: TRIP_QUERY, variables: { id } }],
+    awaitRefetchQueries: true,
+  })
 
   const trip = data?.trip
+
+  async function handleAddDay(date) {
+    setAddingDate(date)
+    await runAddDay({ variables: { tripId: id, date } })
+    setAddingDate(null)
+  }
+
+  const existingDates = new Set(trip?.days.map((day) => day.date) ?? [])
+  const missingDates = trip
+    ? enumerateDates(trip.startDate, trip.endDate).filter((date) => !existingDates.has(date))
+    : []
 
   return (
     <div className="min-h-dvh bg-bg px-4 py-8 sm:px-8 lg:px-12">
@@ -60,9 +50,28 @@ export function TripDetailPage() {
               {trip.days.length === 0 ? (
                 <p className="text-muted">No days added yet.</p>
               ) : (
-                trip.days.map((day) => <DayCard key={day.id} day={day} />)
+                trip.days.map((day) => <DayCard key={day.id} day={day} tripId={id} />)
               )}
             </div>
+
+            {missingDates.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                <h2 className="text-sm font-semibold text-muted">Start a day</h2>
+                <div className="flex flex-wrap gap-2">
+                  {missingDates.map((date) => (
+                    <button
+                      key={date}
+                      type="button"
+                      disabled={addingDate === date}
+                      onClick={() => handleAddDay(date)}
+                      className="cursor-pointer rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-ink hover:border-accent disabled:opacity-60"
+                    >
+                      {addingDate === date ? 'Adding…' : formatDate(date)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </>
         ) : null}
       </div>

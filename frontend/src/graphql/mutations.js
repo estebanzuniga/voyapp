@@ -34,3 +34,31 @@ export const CREATE_TRIP_MUTATION = gql`
     }
   }
 `
+
+export const ADD_DAY_MUTATION = gql`
+  mutation AddDay($tripId: ID!, $date: Date!) {
+    addDay(tripId: $tripId, date: $date) {
+      id
+    }
+  }
+`
+
+export const DELETE_DAY_MUTATION = gql`
+  mutation DeleteDay($id: ID!) {
+    deleteDay(id: $id)
+  }
+`
+
+export const ADD_STOP_MUTATION = gql`
+  mutation AddStop($dayId: ID!, $name: String!, $location: LocationInput!) {
+    addStop(dayId: $dayId, name: $name, location: $location) {
+      id
+    }
+  }
+`
+
+export const DELETE_STOP_MUTATION = gql`
+  mutation DeleteStop($id: ID!) {
+    deleteStop(id: $id)
+  }
+`
