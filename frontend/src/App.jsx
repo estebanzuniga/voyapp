@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthPage } from './pages/AuthPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { TripDetailPage } from './pages/TripDetailPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 
 function App() {
@@ -13,6 +14,14 @@ function App() {
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/trips/:id"
+        element={
+          <ProtectedRoute>
+            <TripDetailPage />
           </ProtectedRoute>
         }
       />
