@@ -23,3 +23,14 @@ export const LOGIN_MUTATION = gql`
     }
   }
 `
+
+export const CREATE_TRIP_MUTATION = gql`
+  mutation CreateTrip($title: String!, $startDate: Date!, $endDate: Date!) {
+    createTrip(title: $title, startDate: $startDate, endDate: $endDate) {
+      id
+      title
+      startDate
+      endDate
+    }
+  }
+`
