@@ -62,3 +62,12 @@ export const DELETE_STOP_MUTATION = gql`
     deleteStop(id: $id)
   }
 `
+
+export const REORDER_STOPS_MUTATION = gql`
+  mutation ReorderStops($dayId: ID!, $stopIds: [ID!]!) {
+    reorderStops(dayId: $dayId, stopIds: $stopIds) {
+      id
+      orderIndex
+    }
+  }
+`
