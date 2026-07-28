@@ -7,15 +7,22 @@ import { DELETE_DAY_MUTATION, DELETE_STOP_MUTATION } from '../graphql/mutations'
 import { TRIP_QUERY } from '../graphql/queries'
 import { formatFullDate } from '../lib/dates'
 import { AddStopForm } from './AddStopForm'
+import { ConfirmDialog } from './ConfirmDialog'
 
 function SortableStopRow({ stop, tripId }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: stop.id,
   })
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
   const [runDeleteStop, { loading }] = useMutation(DELETE_STOP_MUTATION, {
     refetchQueries: [{ query: TRIP_QUERY, variables: { id: tripId } }],
     awaitRefetchQueries: true,
   })
+
+  async function handleConfirmDelete() {
+    await runDeleteStop({ variables: { id: stop.id } })
+    setIsConfirmingDelete(false)
+  }
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -46,8 +53,9 @@ function SortableStopRow({ stop, tripId }) {
             <button
               type="button"
               disabled={loading}
-              onClick={() => runDeleteStop({ variables: { id: stop.id } })}
-              className="cursor-pointer text-sm font-semibold text-muted hover:text-red-600 disabled:opacity-60"
+              onClick={() => setIsConfirmingDelete(true)}
+              aria-label={`Remove ${stop.name}`}
+              className="cursor-pointer text-muted hover:text-red-600 disabled:opacity-60"
             >
               Remove
             </button>
@@ -55,6 +63,16 @@ function SortableStopRow({ stop, tripId }) {
         </div>
         {stop.notes ? <p className="text-sm text-muted">{stop.notes}</p> : null}
       </div>
+
+      {isConfirmingDelete ? (
+        <ConfirmDialog
+          title="Remove stop"
+          message={`Are you sure you want to remove "${stop.name}"? This can't be undone.`}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setIsConfirmingDelete(false)}
+          loading={loading}
+        />
+      ) : null}
     </li>
   )
 }
@@ -73,11 +91,17 @@ export function StopDragPreview({ stop }) {
 
 export function DayCard({ day, stops, tripId }) {
   const [isAddingStop, setIsAddingStop] = useState(false)
+  const [isConfirmingDeleteDay, setIsConfirmingDeleteDay] = useState(false)
   const [runDeleteDay, { loading: deletingDay }] = useMutation(DELETE_DAY_MUTATION, {
     refetchQueries: [{ query: TRIP_QUERY, variables: { id: tripId } }],
     awaitRefetchQueries: true,
   })
   const { setNodeRef } = useDroppable({ id: `day:${day.id}` })
+
+  async function handleConfirmDeleteDay() {
+    await runDeleteDay({ variables: { id: day.id } })
+    setIsConfirmingDeleteDay(false)
+  }
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-5 shadow-sm">
@@ -86,12 +110,22 @@ export function DayCard({ day, stops, tripId }) {
         <button
           type="button"
           disabled={deletingDay}
-          onClick={() => runDeleteDay({ variables: { id: day.id } })}
-          className="cursor-pointer text-sm font-semibold text-muted hover:text-red-600 disabled:opacity-60"
+          onClick={() => setIsConfirmingDeleteDay(true)}
+          className="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted hover:text-red-600 disabled:opacity-60"
         >
           Delete day
         </button>
       </div>
+
+      {isConfirmingDeleteDay ? (
+        <ConfirmDialog
+          title="Delete day"
+          message={`Are you sure you want to delete ${formatFullDate(day.date)}? All of its stops will be removed too. This can't be undone.`}
+          onConfirm={handleConfirmDeleteDay}
+          onCancel={() => setIsConfirmingDeleteDay(false)}
+          loading={deletingDay}
+        />
+      ) : null}
 
       <SortableContext items={stops.map((stop) => stop.id)} strategy={verticalListSortingStrategy}>
         <ul ref={setNodeRef} className="flex min-h-14 flex-col gap-2">
