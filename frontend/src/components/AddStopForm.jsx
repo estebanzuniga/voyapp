@@ -3,6 +3,7 @@ import { useMutation } from '@apollo/client/react'
 import { ADD_STOP_MUTATION } from '../graphql/mutations'
 import { TRIP_QUERY } from '../graphql/queries'
 import { MapPicker } from './MapPicker'
+import { PlusIcon, XIcon } from './Icons'
 
 export function AddStopForm({ dayId, tripId, onDone }) {
   const [name, setName] = useState('')
@@ -45,15 +46,17 @@ export function AddStopForm({ dayId, tripId, onDone }) {
         <button
           type="submit"
           disabled={loading || lat == null || lng == null}
-          className="cursor-pointer rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-accent-ink disabled:opacity-60"
+          className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-accent-ink disabled:opacity-60"
         >
+          <PlusIcon size={16} />
           {loading ? 'Adding…' : 'Add stop'}
         </button>
         <button
           type="button"
           onClick={onDone}
-          className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-muted hover:text-ink"
+          className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-muted hover:text-ink"
         >
+          <XIcon size={16} />
           Cancel
         </button>
       </div>

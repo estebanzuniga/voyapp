@@ -8,6 +8,7 @@ import { TRIP_QUERY } from '../graphql/queries'
 import { formatFullDate } from '../lib/dates'
 import { AddStopForm } from './AddStopForm'
 import { ConfirmDialog } from './ConfirmDialog'
+import { ClockIcon, GripVerticalIcon, PlusIcon, TrashIcon } from './Icons'
 
 function SortableStopRow({ stop, tripId }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -43,13 +44,18 @@ function SortableStopRow({ stop, tripId }) {
         {...attributes}
         {...listeners}
       >
-        ⠿
+        <GripVerticalIcon size={18} />
       </button>
       <div className="flex flex-1 flex-col gap-0.5">
         <div className="flex items-center justify-between gap-2">
           <span className="font-semibold text-ink">{stop.name}</span>
           <div className="flex items-center gap-3">
-            {stop.startTime ? <span className="text-sm text-muted">{stop.startTime}</span> : null}
+            {stop.startTime ? (
+              <span className="flex items-center gap-1 text-sm text-muted">
+                <ClockIcon size={14} />
+                {stop.startTime}
+              </span>
+            ) : null}
             <button
               type="button"
               disabled={loading}
@@ -57,7 +63,7 @@ function SortableStopRow({ stop, tripId }) {
               aria-label={`Remove ${stop.name}`}
               className="cursor-pointer text-muted hover:text-red-600 disabled:opacity-60"
             >
-              Remove
+              <TrashIcon size={16} />
             </button>
           </div>
         </div>
@@ -113,6 +119,7 @@ export function DayCard({ day, stops, tripId }) {
           onClick={() => setIsConfirmingDeleteDay(true)}
           className="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted hover:text-red-600 disabled:opacity-60"
         >
+          <TrashIcon size={16} />
           Delete day
         </button>
       </div>
@@ -145,9 +152,10 @@ export function DayCard({ day, stops, tripId }) {
         <button
           type="button"
           onClick={() => setIsAddingStop(true)}
-          className="cursor-pointer self-start text-sm font-semibold text-accent hover:underline"
+          className="flex cursor-pointer items-center gap-1.5 self-start text-sm font-semibold text-accent hover:underline"
         >
-          + Add stop
+          <PlusIcon size={16} />
+          Add stop
         </button>
       )}
     </div>

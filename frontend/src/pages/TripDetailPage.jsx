@@ -14,6 +14,7 @@ import { TRIP_QUERY } from '../graphql/queries'
 import { ADD_DAY_MUTATION, MOVE_STOP_MUTATION, REORDER_STOPS_MUTATION } from '../graphql/mutations'
 import { formatDate, formatDateRange, enumerateDates } from '../lib/dates'
 import { DayCard, StopDragPreview } from '../components/DayCard'
+import { ArrowLeftIcon, PlusIcon } from '../components/Icons'
 
 function findContainerId(stopsByDay, stopId) {
   return Object.keys(stopsByDay).find((dayId) =>
@@ -138,8 +139,9 @@ export function TripDetailPage() {
   return (
     <div className="min-h-dvh bg-bg px-4 py-8 sm:px-8 lg:px-12">
       <div className="mx-auto flex max-w-4xl flex-col gap-8">
-        <Link to="/trips" className="text-sm font-semibold text-muted hover:text-ink">
-          ← Back to trips
+        <Link to="/trips" className="flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink">
+          <ArrowLeftIcon size={16} />
+          Back to trips
         </Link>
 
         {loading ? <p className="text-muted">Loading trip…</p> : null}
@@ -188,8 +190,9 @@ export function TripDetailPage() {
                       type="button"
                       disabled={addingDate === date}
                       onClick={() => handleAddDay(date)}
-                      className="cursor-pointer rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-ink hover:border-accent disabled:opacity-60"
+                      className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-ink hover:border-accent disabled:opacity-60"
                     >
+                      <PlusIcon size={14} />
                       {addingDate === date ? 'Adding…' : formatDate(date)}
                     </button>
                   ))}

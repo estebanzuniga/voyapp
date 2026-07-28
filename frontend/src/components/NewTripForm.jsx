@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation } from '@apollo/client/react'
 import { CREATE_TRIP_MUTATION } from '../graphql/mutations'
 import { MY_TRIPS_QUERY } from '../graphql/queries'
+import { PlusIcon, XIcon } from './Icons'
 
 export function NewTripForm({ onCreated, onCancel }) {
   const [title, setTitle] = useState('')
@@ -77,15 +78,17 @@ export function NewTripForm({ onCreated, onCancel }) {
         <button
           type="submit"
           disabled={loading}
-          className="rounded-lg bg-accent px-4 py-2.5 font-semibold text-accent-ink disabled:opacity-60 cursor-pointer"
+          className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent px-4 py-2.5 font-semibold text-accent-ink disabled:opacity-60"
         >
+          <PlusIcon size={18} />
           {loading ? 'Creating…' : 'Create trip'}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg px-4 py-2.5 font-semibold text-muted hover:text-ink cursor-pointer"
+          className="flex cursor-pointer items-center gap-1.5 rounded-lg px-4 py-2.5 font-semibold text-muted hover:text-ink"
         >
+          <XIcon size={18} />
           Cancel
         </button>
       </div>

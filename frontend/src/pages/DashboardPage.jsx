@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { MY_TRIPS_QUERY } from '../graphql/queries'
 import { TripCard } from '../components/TripCard'
 import { NewTripForm } from '../components/NewTripForm'
+import { LogOutIcon, PlusIcon } from '../components/Icons'
 
 export function DashboardPage() {
   const { user, logout } = useAuth()
@@ -23,8 +24,9 @@ export function DashboardPage() {
           <button
             type="button"
             onClick={logout}
-            className="rounded-lg px-3 py-2 text-sm font-semibold text-muted hover:text-ink cursor-pointer"
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-muted hover:text-ink"
           >
+            <LogOutIcon size={16} />
             Log out
           </button>
         </header>
@@ -36,8 +38,9 @@ export function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setIsCreating(true)}
-                className="rounded-lg bg-accent px-4 py-2 font-semibold text-accent-ink cursor-pointer"
+                className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent px-4 py-2 font-semibold text-accent-ink"
               >
+                <PlusIcon size={18} />
                 New trip
               </button>
             )}
