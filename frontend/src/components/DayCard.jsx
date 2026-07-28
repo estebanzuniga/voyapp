@@ -8,7 +8,8 @@ import { TRIP_QUERY } from '../graphql/queries'
 import { formatFullDate } from '../lib/dates'
 import { AddStopForm } from './AddStopForm'
 import { ConfirmDialog } from './ConfirmDialog'
-import { ClockIcon, GripVerticalIcon, PlusIcon, TrashIcon } from './Icons'
+import { DayMapModal } from './DayMapModal'
+import { ClockIcon, GripVerticalIcon, MapPinIcon, PlusIcon, TrashIcon } from './Icons'
 
 function SortableStopRow({ stop, tripId }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -98,6 +99,7 @@ export function StopDragPreview({ stop }) {
 export function DayCard({ day, stops, tripId }) {
   const [isAddingStop, setIsAddingStop] = useState(false)
   const [isConfirmingDeleteDay, setIsConfirmingDeleteDay] = useState(false)
+  const [isMapOpen, setIsMapOpen] = useState(false)
   const [runDeleteDay, { loading: deletingDay }] = useMutation(DELETE_DAY_MUTATION, {
     refetchQueries: [{ query: TRIP_QUERY, variables: { id: tripId } }],
     awaitRefetchQueries: true,
@@ -111,17 +113,29 @@ export function DayCard({ day, stops, tripId }) {
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-5 shadow-sm">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-display text-lg text-ink">{formatFullDate(day.date)}</h3>
-        <button
-          type="button"
-          disabled={deletingDay}
-          onClick={() => setIsConfirmingDeleteDay(true)}
-          className="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted hover:text-red-600 disabled:opacity-60"
-        >
-          <TrashIcon size={16} />
-          Delete day
-        </button>
+        <div className="flex items-center gap-4">
+          {stops.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setIsMapOpen(true)}
+              className="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
+            >
+              <MapPinIcon size={16} />
+              View day map
+            </button>
+          ) : null}
+          <button
+            type="button"
+            disabled={deletingDay}
+            onClick={() => setIsConfirmingDeleteDay(true)}
+            className="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted hover:text-red-600 disabled:opacity-60"
+          >
+            <TrashIcon size={16} />
+            Delete day
+          </button>
+        </div>
       </div>
 
       {isConfirmingDeleteDay ? (
@@ -132,6 +146,10 @@ export function DayCard({ day, stops, tripId }) {
           onCancel={() => setIsConfirmingDeleteDay(false)}
           loading={deletingDay}
         />
+      ) : null}
+
+      {isMapOpen ? (
+        <DayMapModal dayLabel={formatFullDate(day.date)} stops={stops} onClose={() => setIsMapOpen(false)} />
       ) : null}
 
       <SortableContext items={stops.map((stop) => stop.id)} strategy={verticalListSortingStrategy}>

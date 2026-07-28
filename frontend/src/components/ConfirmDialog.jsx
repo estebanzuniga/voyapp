@@ -1,46 +1,25 @@
-import { useEffect } from 'react'
-import { createPortal } from 'react-dom'
+import { Modal } from './Modal'
 import { AlertTriangleIcon, XIcon } from './Icons'
 
 export function ConfirmDialog({ title, message, confirmLabel = 'Delete', onConfirm, onCancel, loading }) {
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === 'Escape') onCancel()
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onCancel])
-
-  return createPortal(
-    <div
-      role="presentation"
-      onClick={onCancel}
-      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 p-4"
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="confirm-dialog-title"
-        onClick={(event) => event.stopPropagation()}
-        className="relative flex w-full max-w-sm flex-col gap-4 rounded-xl bg-surface p-5 shadow-lg"
+  return (
+    <Modal onClose={onCancel} className="max-w-sm">
+      <button
+        type="button"
+        onClick={onCancel}
+        aria-label="Close"
+        className="absolute right-3 top-3 cursor-pointer text-muted hover:text-ink"
       >
-        <button
-          type="button"
-          onClick={onCancel}
-          aria-label="Close"
-          className="absolute right-3 top-3 cursor-pointer text-muted hover:text-ink"
-        >
-          <XIcon size={18} />
-        </button>
+        <XIcon size={18} />
+      </button>
 
+      <div className="flex flex-col gap-4">
         <div className="flex items-start gap-3 pr-6">
           <span className="mt-0.5 shrink-0 text-red-600">
             <AlertTriangleIcon size={22} />
           </span>
           <div className="flex flex-col gap-1">
-            <h2 id="confirm-dialog-title" className="font-display text-lg text-ink">
-              {title}
-            </h2>
+            <h2 className="font-display text-lg text-ink">{title}</h2>
             <p className="text-sm text-muted">{message}</p>
           </div>
         </div>
@@ -63,7 +42,6 @@ export function ConfirmDialog({ title, message, confirmLabel = 'Delete', onConfi
           </button>
         </div>
       </div>
-    </div>,
-    document.body,
+    </Modal>
   )
 }
