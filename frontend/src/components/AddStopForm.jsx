@@ -30,7 +30,6 @@ export function AddStopForm({ dayId, tripId, onDone }) {
           required
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder="Shibuya Crossing"
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
         />
       </div>

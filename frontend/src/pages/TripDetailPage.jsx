@@ -14,6 +14,7 @@ import { TRIP_QUERY } from '../graphql/queries'
 import { ADD_DAY_MUTATION, MOVE_STOP_MUTATION, REORDER_STOPS_MUTATION } from '../graphql/mutations'
 import { formatDate, formatDateRange, enumerateDates } from '../lib/dates'
 import { DayCard, StopDragPreview } from '../components/DayCard'
+import { Skeleton } from '../components/Skeleton'
 import { ArrowLeftIcon, PlusIcon } from '../components/Icons'
 
 function findContainerId(stopsByDay, stopId) {
@@ -29,6 +30,7 @@ export function TripDetailPage() {
 
   const [stopsByDay, setStopsByDay] = useState({})
   const [addingDate, setAddingDate] = useState(null)
+  const [addDayError, setAddDayError] = useState(null)
   const [dragError, setDragError] = useState(null)
   const [activeStop, setActiveStop] = useState(null)
 
@@ -54,8 +56,14 @@ export function TripDetailPage() {
 
   async function handleAddDay(date) {
     setAddingDate(date)
-    await runAddDay({ variables: { tripId: id, date } })
-    setAddingDate(null)
+    setAddDayError(null)
+    try {
+      await runAddDay({ variables: { tripId: id, date } })
+    } catch (err) {
+      setAddDayError(err.message)
+    } finally {
+      setAddingDate(null)
+    }
   }
 
   function handleDragStart(event) {
@@ -144,7 +152,26 @@ export function TripDetailPage() {
           Back to trips
         </Link>
 
-        {loading ? <p className="text-muted">Loading trip…</p> : null}
+        {loading ? (
+          <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-7 w-2/3" />
+              <Skeleton className="h-4 w-1/3" />
+            </div>
+            <div className="flex flex-col gap-4">
+              {Array.from({ length: 2 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-5 shadow-sm"
+                >
+                  <Skeleton className="h-5 w-1/3" />
+                  <Skeleton className="h-14 w-full" />
+                  <Skeleton className="h-14 w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
         {error ? <p className="text-sm text-red-600">{error.message}</p> : null}
         {!loading && !error && !trip ? <p className="text-muted">Trip not found.</p> : null}
 
@@ -183,6 +210,7 @@ export function TripDetailPage() {
             {missingDates.length > 0 ? (
               <div className="flex flex-col gap-3">
                 <h2 className="text-sm font-semibold text-muted">Start a day</h2>
+                {addDayError ? <p className="text-sm text-red-600">{addDayError}</p> : null}
                 <div className="flex flex-wrap gap-2">
                   {missingDates.map((date) => (
                     <button

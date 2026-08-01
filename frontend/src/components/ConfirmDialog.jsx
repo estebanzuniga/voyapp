@@ -1,7 +1,7 @@
 import { Modal } from './Modal'
 import { AlertTriangleIcon, XIcon } from './Icons'
 
-export function ConfirmDialog({ title, message, confirmLabel = 'Delete', onConfirm, onCancel, loading }) {
+export function ConfirmDialog({ title, message, confirmLabel = 'Delete', onConfirm, onCancel, loading, error }) {
   return (
     <Modal onClose={onCancel} className="max-w-sm">
       <button
@@ -23,6 +23,8 @@ export function ConfirmDialog({ title, message, confirmLabel = 'Delete', onConfi
             <p className="text-sm text-muted">{message}</p>
           </div>
         </div>
+
+        {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
         <div className="flex justify-end gap-3">
           <button

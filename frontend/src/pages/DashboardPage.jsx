@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { MY_TRIPS_QUERY } from '../graphql/queries'
 import { TripCard } from '../components/TripCard'
 import { NewTripForm } from '../components/NewTripForm'
+import { Skeleton } from '../components/Skeleton'
 import { LogOutIcon, PlusIcon } from '../components/Icons'
 
 export function DashboardPage() {
@@ -50,7 +51,19 @@ export function DashboardPage() {
             <NewTripForm onCreated={() => setIsCreating(false)} onCancel={() => setIsCreating(false)} />
           ) : null}
 
-          {loading ? <p className="text-muted">Loading your trips…</p> : null}
+          {loading ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-5 shadow-sm"
+                >
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              ))}
+            </div>
+          ) : null}
           {error ? <p className="text-sm text-red-600">{error.message}</p> : null}
 
           {!loading && !error && trips.length === 0 ? (

@@ -16,14 +16,20 @@ function SortableStopRow({ stop, tripId }) {
     id: stop.id,
   })
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
+  const [deleteError, setDeleteError] = useState(null)
   const [runDeleteStop, { loading }] = useMutation(DELETE_STOP_MUTATION, {
     refetchQueries: [{ query: TRIP_QUERY, variables: { id: tripId } }],
     awaitRefetchQueries: true,
   })
 
   async function handleConfirmDelete() {
-    await runDeleteStop({ variables: { id: stop.id } })
-    setIsConfirmingDelete(false)
+    setDeleteError(null)
+    try {
+      await runDeleteStop({ variables: { id: stop.id } })
+      setIsConfirmingDelete(false)
+    } catch (err) {
+      setDeleteError(err.message)
+    }
   }
 
   const style = {
@@ -60,7 +66,10 @@ function SortableStopRow({ stop, tripId }) {
             <button
               type="button"
               disabled={loading}
-              onClick={() => setIsConfirmingDelete(true)}
+              onClick={() => {
+                setDeleteError(null)
+                setIsConfirmingDelete(true)
+              }}
               aria-label={`Remove ${stop.name}`}
               className="cursor-pointer text-muted hover:text-red-600 disabled:opacity-60"
             >
@@ -78,6 +87,7 @@ function SortableStopRow({ stop, tripId }) {
           onConfirm={handleConfirmDelete}
           onCancel={() => setIsConfirmingDelete(false)}
           loading={loading}
+          error={deleteError}
         />
       ) : null}
     </li>
@@ -99,6 +109,7 @@ export function StopDragPreview({ stop }) {
 export function DayCard({ day, stops, tripId }) {
   const [isAddingStop, setIsAddingStop] = useState(false)
   const [isConfirmingDeleteDay, setIsConfirmingDeleteDay] = useState(false)
+  const [deleteDayError, setDeleteDayError] = useState(null)
   const [isMapOpen, setIsMapOpen] = useState(false)
   const [runDeleteDay, { loading: deletingDay }] = useMutation(DELETE_DAY_MUTATION, {
     refetchQueries: [{ query: TRIP_QUERY, variables: { id: tripId } }],
@@ -107,8 +118,13 @@ export function DayCard({ day, stops, tripId }) {
   const { setNodeRef } = useDroppable({ id: `day:${day.id}` })
 
   async function handleConfirmDeleteDay() {
-    await runDeleteDay({ variables: { id: day.id } })
-    setIsConfirmingDeleteDay(false)
+    setDeleteDayError(null)
+    try {
+      await runDeleteDay({ variables: { id: day.id } })
+      setIsConfirmingDeleteDay(false)
+    } catch (err) {
+      setDeleteDayError(err.message)
+    }
   }
 
   return (
@@ -129,7 +145,10 @@ export function DayCard({ day, stops, tripId }) {
           <button
             type="button"
             disabled={deletingDay}
-            onClick={() => setIsConfirmingDeleteDay(true)}
+            onClick={() => {
+              setDeleteDayError(null)
+              setIsConfirmingDeleteDay(true)
+            }}
             className="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted hover:text-red-600 disabled:opacity-60"
           >
             <TrashIcon size={16} />
@@ -145,6 +164,7 @@ export function DayCard({ day, stops, tripId }) {
           onConfirm={handleConfirmDeleteDay}
           onCancel={() => setIsConfirmingDeleteDay(false)}
           loading={deletingDay}
+          error={deleteDayError}
         />
       ) : null}
 
