@@ -98,7 +98,7 @@ export function MapPicker({ lat, lng, onSelect }) {
                 <button
                   type="button"
                   onClick={() => handleResultClick(result)}
-                  className="w-full cursor-pointer px-3 py-2 text-left text-sm text-ink hover:bg-surface-2"
+                  className="w-full cursor-pointer px-3 py-2 text-left text-sm text-ink hover:bg-surface-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
                 >
                   {result.display_name}
                 </button>

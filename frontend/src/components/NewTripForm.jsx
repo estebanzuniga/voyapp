@@ -78,7 +78,7 @@ export function NewTripForm({ onCreated, onCancel }) {
         <button
           type="submit"
           disabled={loading}
-          className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent px-4 py-2.5 font-semibold text-accent-ink disabled:opacity-60"
+          className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent px-4 py-2.5 font-semibold text-accent-ink disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           <PlusIcon size={18} />
           {loading ? 'Creating…' : 'Create trip'}
@@ -86,7 +86,7 @@ export function NewTripForm({ onCreated, onCancel }) {
         <button
           type="button"
           onClick={onCancel}
-          className="flex cursor-pointer items-center gap-1.5 rounded-lg px-4 py-2.5 font-semibold text-muted hover:text-ink"
+          className="flex cursor-pointer items-center gap-1.5 rounded-lg px-4 py-2.5 font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
         >
           <XIcon size={18} />
           Cancel

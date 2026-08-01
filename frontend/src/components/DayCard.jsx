@@ -47,7 +47,7 @@ function SortableStopRow({ stop, tripId }) {
       <button
         type="button"
         aria-label="Reorder stop"
-        className="cursor-grab touch-none px-1 text-muted active:cursor-grabbing"
+        className="cursor-grab touch-none rounded-lg p-2 text-muted hover:bg-surface active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-accent"
         {...attributes}
         {...listeners}
       >
@@ -71,7 +71,7 @@ function SortableStopRow({ stop, tripId }) {
                 setIsConfirmingDelete(true)
               }}
               aria-label={`Remove ${stop.name}`}
-              className="cursor-pointer text-muted hover:text-red-600 disabled:opacity-60"
+              className="cursor-pointer rounded-lg p-2 text-muted hover:bg-red-50 hover:text-red-600 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
             >
               <TrashIcon size={16} />
             </button>
@@ -136,7 +136,7 @@ export function DayCard({ day, stops, tripId }) {
             <button
               type="button"
               onClick={() => setIsMapOpen(true)}
-              className="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg text-sm font-semibold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
             >
               <MapPinIcon size={16} />
               View day map
@@ -149,7 +149,7 @@ export function DayCard({ day, stops, tripId }) {
               setDeleteDayError(null)
               setIsConfirmingDeleteDay(true)
             }}
-            className="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted hover:text-red-600 disabled:opacity-60"
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg text-sm font-semibold text-muted hover:text-red-600 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
           >
             <TrashIcon size={16} />
             Delete day
@@ -190,7 +190,7 @@ export function DayCard({ day, stops, tripId }) {
         <button
           type="button"
           onClick={() => setIsAddingStop(true)}
-          className="flex cursor-pointer items-center gap-1.5 self-start text-sm font-semibold text-accent hover:underline"
+          className="flex cursor-pointer items-center gap-1.5 self-start rounded-lg text-sm font-semibold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
         >
           <PlusIcon size={16} />
           Add stop

@@ -25,7 +25,7 @@ export function DashboardPage() {
           <button
             type="button"
             onClick={logout}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-muted hover:text-ink"
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
           >
             <LogOutIcon size={16} />
             Log out
@@ -39,7 +39,7 @@ export function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setIsCreating(true)}
-                className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent px-4 py-2 font-semibold text-accent-ink"
+                className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent px-4 py-2 font-semibold text-accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
                 <PlusIcon size={18} />
                 New trip

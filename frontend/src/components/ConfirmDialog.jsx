@@ -8,7 +8,7 @@ export function ConfirmDialog({ title, message, confirmLabel = 'Delete', onConfi
         type="button"
         onClick={onCancel}
         aria-label="Close"
-        className="absolute right-3 top-3 cursor-pointer text-muted hover:text-ink"
+        className="absolute right-2 top-2 cursor-pointer rounded-full p-2 text-muted hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
       >
         <XIcon size={18} />
       </button>
@@ -30,7 +30,7 @@ export function ConfirmDialog({ title, message, confirmLabel = 'Delete', onConfi
           <button
             type="button"
             onClick={onCancel}
-            className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-muted hover:text-ink"
+            className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
           >
             Cancel
           </button>
@@ -38,7 +38,7 @@ export function ConfirmDialog({ title, message, confirmLabel = 'Delete', onConfi
             type="button"
             disabled={loading}
             onClick={onConfirm}
-            className="cursor-pointer rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+            className="cursor-pointer rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
           >
             {loading ? 'Deleting…' : confirmLabel}
           </button>

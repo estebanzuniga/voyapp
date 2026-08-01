@@ -28,6 +28,17 @@ function FitToStops({ positions }) {
   return null
 }
 
+function InvalidateSizeOnResize() {
+  const map = useMap()
+  useEffect(() => {
+    const container = map.getContainer()
+    const observer = new ResizeObserver(() => map.invalidateSize())
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [map])
+  return null
+}
+
 export function DayMap({ stops }) {
   const positions = useMemo(() => stops.map((stop) => [stop.location.lat, stop.location.lng]), [stops])
 
@@ -40,6 +51,7 @@ export function DayMap({ stops }) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <FitToStops positions={positions} />
+      <InvalidateSizeOnResize />
 
       {positions.length > 1 ? (
         <Polyline positions={positions} pathOptions={{ color: ROUTE_COLOR, weight: 3, dashArray: '6 8' }} />

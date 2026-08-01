@@ -147,7 +147,10 @@ export function TripDetailPage() {
   return (
     <div className="min-h-dvh bg-bg px-4 py-8 sm:px-8 lg:px-12">
       <div className="mx-auto flex max-w-4xl flex-col gap-8">
-        <Link to="/trips" className="flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink">
+        <Link
+          to="/trips"
+          className="flex items-center gap-1.5 rounded-lg text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+        >
           <ArrowLeftIcon size={16} />
           Back to trips
         </Link>
@@ -218,7 +221,7 @@ export function TripDetailPage() {
                       type="button"
                       disabled={addingDate === date}
                       onClick={() => handleAddDay(date)}
-                      className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-ink hover:border-accent disabled:opacity-60"
+                      className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-ink hover:border-accent disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
                     >
                       <PlusIcon size={14} />
                       {addingDate === date ? 'Adding…' : formatDate(date)}
