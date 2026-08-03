@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { Suspense, lazy, useState } from 'react'
 import { useMutation } from '@apollo/client/react'
 import { ADD_STOP_MUTATION } from '../graphql/mutations'
 import { TRIP_QUERY } from '../graphql/queries'
-import { MapPicker } from './MapPicker'
 import { PlusIcon, XIcon } from './Icons'
+
+const MapPicker = lazy(() => import('./MapPicker').then((module) => ({ default: module.MapPicker })))
 
 export function AddStopForm({ dayId, tripId, onDone }) {
   const [name, setName] = useState('')
@@ -36,7 +37,9 @@ export function AddStopForm({ dayId, tripId, onDone }) {
 
       <div className="flex flex-col gap-1">
         <label className="text-xs font-semibold text-ink">Location</label>
-        <MapPicker lat={lat} lng={lng} onSelect={(newLat, newLng) => { setLat(newLat); setLng(newLng) }} />
+        <Suspense fallback={<div className="flex h-40 items-center justify-center text-sm text-muted">Loading map…</div>}>
+          <MapPicker lat={lat} lng={lng} onSelect={(newLat, newLng) => { setLat(newLat); setLng(newLng) }} />
+        </Suspense>
       </div>
 
       {error ? <p className="text-sm text-red-600">{error.message}</p> : null}
