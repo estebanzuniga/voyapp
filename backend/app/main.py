@@ -19,5 +19,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-graphql_app = GraphQLRouter(schema, context_getter=get_context)
+graphql_app = GraphQLRouter(
+    schema,
+    context_getter=get_context,
+    graphql_ide=None if settings.environment == "production" else "graphiql",
+)
 app.include_router(graphql_app, prefix="/graphql")
