@@ -2,7 +2,9 @@ import { ApolloClient, ApolloLink, InMemoryCache } from '@apollo/client'
 import { HttpLink } from '@apollo/client/link/http'
 import { setContext } from '@apollo/client/link/context'
 
-const httpLink = new HttpLink({ uri: 'http://localhost:8000/graphql' })
+const uri = import.meta.env.VITE_API_URL || 'http://localhost:8000/graphql'
+
+const httpLink = new HttpLink({ uri })
 
 const authLink = setContext((_, { headers }) => {
   const token = localStorage.getItem('voyapp_token')
