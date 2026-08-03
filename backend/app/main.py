@@ -6,6 +6,9 @@ from app.config import settings
 from app.graphql.context import get_context
 from app.schema import schema
 
+if settings.environment == "production" and settings.jwt_secret_key == "dev-secret-change-me":
+    raise RuntimeError("Please change the JWT secret key in production!")
+
 app = FastAPI()
 
 app.add_middleware(
