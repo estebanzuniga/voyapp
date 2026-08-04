@@ -9,6 +9,8 @@ from app.schema import schema
 if settings.environment == "production" and settings.jwt_secret_key == "dev-secret-change-me":
     raise RuntimeError("Please change the JWT secret key in production!")
 
+print(f"[startup] environment={settings.environment!r} cors_origins={settings.cors_origins!r}")
+
 app = FastAPI()
 
 app.add_middleware(
