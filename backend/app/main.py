@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from strawberry.fastapi import GraphQLRouter
 
 from app.config import settings
+from app.database import engine
 from app.graphql.context import get_context
 from app.schema import schema
 
@@ -27,3 +29,10 @@ graphql_app = GraphQLRouter(
     graphql_ide=None if settings.environment == "production" else "graphiql",
 )
 app.include_router(graphql_app, prefix="/graphql")
+
+
+@app.get("/health")
+async def health():
+    async with engine.connect() as conn:
+        await conn.execute(text("SELECT 1"))
+    return {"status": "ok"}
