@@ -31,7 +31,7 @@ graphql_app = GraphQLRouter(
 app.include_router(graphql_app, prefix="/graphql")
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     async with engine.connect() as conn:
         await conn.execute(text("SELECT 1"))
