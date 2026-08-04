@@ -9,7 +9,9 @@ export function DayMapModal({ dayLabel, stops, onClose }) {
 
   return (
     <Modal onClose={onClose} className={isFullscreen ? '' : 'max-w-2xl'} fullBleed={isFullscreen}>
-      <div className="absolute right-1 top-1 flex items-center gap-1">
+      <div
+        className={`absolute right-1 flex items-center gap-1 ${isFullscreen ? 'top-[max(0.25rem,env(safe-area-inset-top))]' : 'top-1'}`}
+      >
         <button
           type="button"
           onClick={() => setIsFullscreen((prev) => !prev)}
