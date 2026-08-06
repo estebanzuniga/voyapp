@@ -5,6 +5,7 @@ import { InviteAcceptPage } from './pages/InviteAcceptPage'
 import { TripDetailPage } from './pages/TripDetailPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { PullToRefresh } from './components/PullToRefresh'
+import { InstallPwaBanner } from './components/InstallPwaBanner'
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
         />
         <Route path="*" element={<Navigate to="/trips" replace />} />
       </Routes>
+      <InstallPwaBanner />
     </PullToRefresh>
   )
 }
