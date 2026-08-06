@@ -17,6 +17,5 @@
 body {
   background: var(--color-bg);
   color: var(--color-ink);
-  padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
 }
