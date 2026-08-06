@@ -12,14 +12,12 @@ from app.models.stop import Stop as StopModel
 class Day:
     id: strawberry.ID
     date: date
-    order_index: int
 
     @classmethod
     def from_model(cls, day: DayModel) -> "Day":
         return cls(
             id=strawberry.ID(str(day.id)),
             date=day.date,
-            order_index=day.order_index,
         )
 
     @strawberry.field

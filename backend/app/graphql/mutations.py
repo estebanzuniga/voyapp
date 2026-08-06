@@ -80,12 +80,13 @@ class Mutation:
         session = info.context.session
         trip = await require_trip_access(session, int(trip_id), user, editor=True)
 
-        next_index = await session.scalar(
-            select(func.coalesce(func.max(DayModel.order_index), -1)).where(
-                DayModel.trip_id == trip.id
-            )
+        existing = await session.scalar(
+            select(DayModel).where(DayModel.trip_id == trip.id, DayModel.date == date)
         )
-        day = DayModel(trip_id=trip.id, date=date, order_index=next_index + 1)
+        if existing is not None:
+            raise Exception("This trip already has a day for that date")
+
+        day = DayModel(trip_id=trip.id, date=date)
         session.add(day)
         await session.commit()
         return Day.from_model(day)

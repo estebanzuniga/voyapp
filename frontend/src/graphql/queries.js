@@ -25,7 +25,6 @@ export const TRIP_QUERY = gql`
       days {
         id
         date
-        orderIndex
         stops {
           id
           name

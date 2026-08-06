@@ -41,7 +41,12 @@ class Trip:
         result = await session.execute(
             select(DayModel)
             .where(DayModel.trip_id == int(self.id))
-            .order_by(DayModel.order_index)
+            # Sorted by the day's actual calendar date. A day's "position" in
+            # the list is always its date - there's no drag-to-reorder UI for
+            # days the way there is for stops, and there's no sensible reason
+            # a day would need a position independent of its date - so
+            # there's no separate `order_index` column to maintain here.
+            .order_by(DayModel.date)
         )
         return [Day.from_model(day) for day in result.scalars().all()]
 

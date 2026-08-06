@@ -25,6 +25,6 @@ class Trip(Base):
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     user: Mapped["User"] = relationship(back_populates="trips")
-    days: Mapped[list["Day"]] = relationship(back_populates="trip", order_by="Day.order_index")
+    days: Mapped[list["Day"]] = relationship(back_populates="trip", order_by="Day.date")
     share_links: Mapped[list["TripShareLink"]] = relationship(back_populates="trip")
     collaborators: Mapped[list["TripCollaborator"]] = relationship(back_populates="trip")
