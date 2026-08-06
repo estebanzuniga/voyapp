@@ -216,22 +216,3 @@ export function EyeIcon(props) {
   )
 }
 
-export function DownloadIcon(props) {
-  return (
-    <Icon {...props}>
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="7 10 12 15 17 10" />
-      <line x1="12" y1="15" x2="12" y2="3" />
-    </Icon>
-  )
-}
-
-export function ShareIosIcon(props) {
-  return (
-    <Icon {...props}>
-      <path d="M12 2v13" />
-      <path d="M8 6l4-4 4 4" />
-      <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
-    </Icon>
-  )
-}

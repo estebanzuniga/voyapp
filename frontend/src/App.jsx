@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthPage } from './pages/AuthPage'
 import { DashboardPage } from './pages/DashboardPage'
@@ -5,7 +6,10 @@ import { InviteAcceptPage } from './pages/InviteAcceptPage'
 import { TripDetailPage } from './pages/TripDetailPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { PullToRefresh } from './components/PullToRefresh'
-import { InstallPwaBanner } from './components/InstallPwaBanner'
+
+const PwaInstallPrompt = lazy(() =>
+  import('./components/PwaInstallPrompt').then((module) => ({ default: module.PwaInstallPrompt })),
+)
 
 function App() {
   return (
@@ -32,7 +36,9 @@ function App() {
         />
         <Route path="*" element={<Navigate to="/trips" replace />} />
       </Routes>
-      <InstallPwaBanner />
+      <Suspense fallback={null}>
+        <PwaInstallPrompt />
+      </Suspense>
     </PullToRefresh>
   )
 }
