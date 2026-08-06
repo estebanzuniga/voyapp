@@ -145,7 +145,7 @@ export function TripDetailPage() {
     : []
 
   return (
-    <div className="min-h-dvh bg-bg px-4 py-8 sm:px-8 lg:px-12">
+    <div className="min-h-dvh bg-bg px-4 pb-8 pt-4 sm:px-8 sm:pt-6 lg:px-12">
       <div className="mx-auto flex max-w-4xl flex-col gap-8">
         <Link
           to="/trips"
