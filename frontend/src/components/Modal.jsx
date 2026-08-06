@@ -20,7 +20,7 @@ export function Modal({ onClose, className = 'max-w-sm', fullBleed = false, chil
         role="dialog"
         aria-modal="true"
         onClick={(event) => event.stopPropagation()}
-        className={`relative w-full bg-surface p-5 shadow-lg ${fullBleed ? 'h-full max-w-none rounded-none pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))]' : 'max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-xl'} ${className}`}
+        className={`relative w-full bg-surface p-5 shadow-lg ${fullBleed ? 'h-full max-w-none rounded-none' : 'max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-xl'} ${className}`}
       >
         {children}
       </div>
