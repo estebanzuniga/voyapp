@@ -4,15 +4,30 @@ import strawberry
 from sqlalchemy import func, select
 
 from app.auth.security import create_access_token, hash_password, verify_password
+from app.graphql.access import require_trip_access, require_trip_owner
 from app.graphql.types.auth import AuthPayload
 from app.graphql.types.day import Day
+from app.graphql.types.permission import PermissionLevel
+from app.graphql.types.share import Collaborator, ShareLink
 from app.graphql.types.stop import LocationInput, Stop
 from app.graphql.types.trip import Trip
 from app.graphql.types.user import User
 from app.models.day import Day as DayModel
 from app.models.stop import Stop as StopModel
 from app.models.trip import Trip as TripModel
+from app.models.trip_collaborator import MAX_COLLABORATORS_PER_TRIP
+from app.models.trip_collaborator import TripCollaborator as TripCollaboratorModel
+from app.models.trip_share_link import TripShareLink as TripShareLinkModel
 from app.models.user import User as UserModel
+
+
+async def _get_owned_share_link(session, trip_id: int, link_id: int) -> TripShareLinkModel | None:
+    return await session.scalar(
+        select(TripShareLinkModel).where(
+            TripShareLinkModel.id == link_id,
+            TripShareLinkModel.trip_id == trip_id,
+        )
+    )
 
 
 @strawberry.type
@@ -63,9 +78,7 @@ class Mutation:
             raise Exception("Not authenticated")
 
         session = info.context.session
-        trip = await session.get(TripModel, int(trip_id))
-        if trip is None or trip.user_id != user.id:
-            raise Exception("Trip not found")
+        trip = await require_trip_access(session, int(trip_id), user, editor=True)
 
         next_index = await session.scalar(
             select(func.coalesce(func.max(DayModel.order_index), -1)).where(
@@ -88,9 +101,9 @@ class Mutation:
         if day is None:
             return False
 
-        trip = await session.get(TripModel, day.trip_id)
-        if trip is None or trip.user_id != user.id:
-            raise Exception("Day not found")
+        await require_trip_access(
+            session, day.trip_id, user, editor=True, not_found_message="Day not found"
+        )
 
         await session.delete(day)
         await session.commit()
@@ -113,9 +126,9 @@ class Mutation:
         if day is None:
             raise Exception("Day not found")
 
-        trip = await session.get(TripModel, day.trip_id)
-        if trip is None or trip.user_id != user.id:
-            raise Exception("Day not found")
+        await require_trip_access(
+            session, day.trip_id, user, editor=True, not_found_message="Day not found"
+        )
 
         next_index = await session.scalar(
             select(func.coalesce(func.max(StopModel.order_index), -1)).where(
@@ -146,9 +159,9 @@ class Mutation:
         if day is None:
             raise Exception("Day not found")
 
-        trip = await session.get(TripModel, day.trip_id)
-        if trip is None or trip.user_id != user.id:
-            raise Exception("Day not found")
+        await require_trip_access(
+            session, day.trip_id, user, editor=True, not_found_message="Day not found"
+        )
 
         result = await session.execute(select(StopModel).where(StopModel.day_id == day.id))
         stops_by_id = {stop.id: stop for stop in result.scalars().all()}
@@ -180,14 +193,18 @@ class Mutation:
             raise Exception("Stop not found")
 
         source_day = await session.get(DayModel, stop.day_id)
-        source_trip = await session.get(TripModel, source_day.trip_id) if source_day else None
-        if source_trip is None or source_trip.user_id != user.id:
+        if source_day is None:
             raise Exception("Stop not found")
+        await require_trip_access(
+            session, source_day.trip_id, user, editor=True, not_found_message="Stop not found"
+        )
 
         target_day = await session.get(DayModel, int(to_day_id))
-        target_trip = await session.get(TripModel, target_day.trip_id) if target_day else None
-        if target_trip is None or target_trip.user_id != user.id:
+        if target_day is None:
             raise Exception("Day not found")
+        await require_trip_access(
+            session, target_day.trip_id, user, editor=True, not_found_message="Day not found"
+        )
 
         if target_day.id != source_day.id:
             remaining_result = await session.execute(
@@ -226,10 +243,157 @@ class Mutation:
             return False
 
         day = await session.get(DayModel, stop.day_id)
-        trip = await session.get(TripModel, day.trip_id) if day is not None else None
-        if trip is None or trip.user_id != user.id:
+        if day is None:
             raise Exception("Stop not found")
+        await require_trip_access(
+            session, day.trip_id, user, editor=True, not_found_message="Stop not found"
+        )
 
         await session.delete(stop)
+        await session.commit()
+        return True
+
+    # --- Sharing -----------------------------------------------------------
+    # These mutations manage the trip owner's share links (any number per
+    # permission level - each "Generate link" click makes an independent,
+    # separately revocable one) and the collaborators created when someone
+    # accepts one. Only the owner can call any of these except
+    # `accept_share_invite` itself - `require_trip_owner` (rather than
+    # `require_trip_access`) enforces that, so an editor-collaborator can't
+    # reshare or remove someone else's access just because they can edit
+    # stops.
+
+    @strawberry.mutation
+    async def create_share_link(
+        self, info: strawberry.Info, trip_id: strawberry.ID, permission: PermissionLevel
+    ) -> ShareLink:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        session = info.context.session
+        trip = await require_trip_owner(session, int(trip_id), user)
+
+        link = TripShareLinkModel(trip_id=trip.id, permission=permission)
+        session.add(link)
+        await session.commit()
+        return ShareLink.from_model(link)
+
+    @strawberry.mutation
+    async def revoke_share_link(
+        self, info: strawberry.Info, trip_id: strawberry.ID, link_id: strawberry.ID
+    ) -> bool:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        session = info.context.session
+        trip = await require_trip_owner(session, int(trip_id), user)
+
+        existing = await _get_owned_share_link(session, trip.id, int(link_id))
+        if existing is None:
+            return False
+
+        await session.delete(existing)
+        await session.commit()
+        return True
+
+    @strawberry.mutation
+    async def accept_share_invite(self, info: strawberry.Info, token: str) -> Trip:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        session = info.context.session
+        link = await session.scalar(
+            select(TripShareLinkModel).where(TripShareLinkModel.token == token)
+        )
+        if link is None or link.is_expired:
+            raise Exception("This invite link is invalid or has expired")
+
+        trip = await session.get(TripModel, link.trip_id)
+        if trip is None:
+            raise Exception("This invite link is invalid or has expired")
+
+        if trip.user_id == user.id:
+            # Owners already have full access - accepting your own link is a no-op.
+            return Trip.from_model(trip)
+
+        collaborator = await session.scalar(
+            select(TripCollaboratorModel).where(
+                TripCollaboratorModel.trip_id == trip.id,
+                TripCollaboratorModel.user_id == user.id,
+            )
+        )
+        if collaborator is None:
+            collaborator_count = await session.scalar(
+                select(func.count())
+                .select_from(TripCollaboratorModel)
+                .where(TripCollaboratorModel.trip_id == trip.id)
+            )
+            if collaborator_count >= MAX_COLLABORATORS_PER_TRIP:
+                raise Exception(
+                    f"This trip already has the maximum of {MAX_COLLABORATORS_PER_TRIP} collaborators"
+                )
+            session.add(
+                TripCollaboratorModel(trip_id=trip.id, user_id=user.id, permission=link.permission)
+            )
+        else:
+            collaborator.permission = link.permission
+
+        await session.commit()
+        return Trip.from_model(trip)
+
+    @strawberry.mutation
+    async def update_collaborator_permission(
+        self,
+        info: strawberry.Info,
+        trip_id: strawberry.ID,
+        user_id: strawberry.ID,
+        permission: PermissionLevel,
+    ) -> Collaborator:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        session = info.context.session
+        trip = await require_trip_owner(session, int(trip_id), user)
+
+        collaborator = await session.scalar(
+            select(TripCollaboratorModel).where(
+                TripCollaboratorModel.trip_id == trip.id,
+                TripCollaboratorModel.user_id == int(user_id),
+            )
+        )
+        if collaborator is None:
+            raise Exception("Collaborator not found")
+
+        collaborator.permission = permission
+        await session.commit()
+
+        collaborator_user = await session.get(UserModel, collaborator.user_id)
+        return Collaborator.from_model(collaborator, collaborator_user.email)
+
+    @strawberry.mutation
+    async def remove_collaborator(
+        self, info: strawberry.Info, trip_id: strawberry.ID, user_id: strawberry.ID
+    ) -> bool:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        session = info.context.session
+        trip = await require_trip_owner(session, int(trip_id), user)
+
+        collaborator = await session.scalar(
+            select(TripCollaboratorModel).where(
+                TripCollaboratorModel.trip_id == trip.id,
+                TripCollaboratorModel.user_id == int(user_id),
+            )
+        )
+        if collaborator is None:
+            return False
+
+        await session.delete(collaborator)
         await session.commit()
         return True

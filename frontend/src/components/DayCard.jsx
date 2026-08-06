@@ -11,9 +11,10 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { DayMapModal } from './DayMapModal'
 import { ClockIcon, GripVerticalIcon, MapPinIcon, PlusIcon, TrashIcon } from './Icons'
 
-function SortableStopRow({ stop, tripId }) {
+function SortableStopRow({ stop, tripId, canEdit }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: stop.id,
+    disabled: !canEdit,
   })
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
@@ -44,16 +45,18 @@ function SortableStopRow({ stop, tripId }) {
       style={style}
       className="flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-2 py-3"
     >
-      <button
-        type="button"
-        aria-label="Reorder stop"
-        className="cursor-grab touch-none rounded-lg p-2 text-muted hover:bg-surface active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-accent"
-        data-no-pull-refresh
-        {...attributes}
-        {...listeners}
-      >
-        <GripVerticalIcon size={18} />
-      </button>
+      {canEdit ? (
+        <button
+          type="button"
+          aria-label="Reorder stop"
+          className="cursor-grab touch-none rounded-lg p-2 text-muted hover:bg-surface active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-accent"
+          data-no-pull-refresh
+          {...attributes}
+          {...listeners}
+        >
+          <GripVerticalIcon size={18} />
+        </button>
+      ) : null}
       <div className="flex flex-1 flex-col gap-0.5">
         <div className="flex items-center justify-between gap-2">
           <span className="font-semibold text-ink">{stop.name}</span>
@@ -64,18 +67,20 @@ function SortableStopRow({ stop, tripId }) {
                 {stop.startTime}
               </span>
             ) : null}
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => {
-                setDeleteError(null)
-                setIsConfirmingDelete(true)
-              }}
-              aria-label={`Remove ${stop.name}`}
-              className="cursor-pointer rounded-lg p-2 text-muted hover:bg-red-50 hover:text-red-600 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
-            >
-              <TrashIcon size={16} />
-            </button>
+            {canEdit ? (
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => {
+                  setDeleteError(null)
+                  setIsConfirmingDelete(true)
+                }}
+                aria-label={`Remove ${stop.name}`}
+                className="cursor-pointer rounded-lg p-2 text-muted hover:bg-red-50 hover:text-red-600 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                <TrashIcon size={16} />
+              </button>
+            ) : null}
           </div>
         </div>
         {stop.notes ? <p className="text-sm text-muted">{stop.notes}</p> : null}
@@ -107,7 +112,7 @@ export function StopDragPreview({ stop }) {
   )
 }
 
-export function DayCard({ day, stops, tripId }) {
+export function DayCard({ day, stops, tripId, canEdit }) {
   const [isAddingStop, setIsAddingStop] = useState(false)
   const [isConfirmingDeleteDay, setIsConfirmingDeleteDay] = useState(false)
   const [deleteDayError, setDeleteDayError] = useState(null)
@@ -143,18 +148,20 @@ export function DayCard({ day, stops, tripId }) {
               View day map
             </button>
           ) : null}
-          <button
-            type="button"
-            disabled={deletingDay}
-            onClick={() => {
-              setDeleteDayError(null)
-              setIsConfirmingDeleteDay(true)
-            }}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg text-sm font-semibold text-muted hover:text-red-600 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
-          >
-            <TrashIcon size={16} />
-            Delete day
-          </button>
+          {canEdit ? (
+            <button
+              type="button"
+              disabled={deletingDay}
+              onClick={() => {
+                setDeleteDayError(null)
+                setIsConfirmingDeleteDay(true)
+              }}
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg text-sm font-semibold text-muted hover:text-red-600 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              <TrashIcon size={16} />
+              Delete day
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -177,26 +184,30 @@ export function DayCard({ day, stops, tripId }) {
         <ul ref={setNodeRef} className="flex min-h-14 flex-col gap-2">
           {stops.length === 0 ? (
             <li className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-muted">
-              Drag a stop here
+              {canEdit ? 'Drag a stop here' : 'No stops yet'}
             </li>
           ) : (
-            stops.map((stop) => <SortableStopRow key={stop.id} stop={stop} tripId={tripId} />)
+            stops.map((stop) => (
+              <SortableStopRow key={stop.id} stop={stop} tripId={tripId} canEdit={canEdit} />
+            ))
           )}
         </ul>
       </SortableContext>
 
-      {isAddingStop ? (
-        <AddStopForm dayId={day.id} tripId={tripId} onDone={() => setIsAddingStop(false)} />
-      ) : (
-        <button
-          type="button"
-          onClick={() => setIsAddingStop(true)}
-          className="flex cursor-pointer items-center gap-1.5 self-start rounded-lg text-sm font-semibold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
-        >
-          <PlusIcon size={16} />
-          Add stop
-        </button>
-      )}
+      {canEdit ? (
+        isAddingStop ? (
+          <AddStopForm dayId={day.id} tripId={tripId} onDone={() => setIsAddingStop(false)} />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsAddingStop(true)}
+            className="flex cursor-pointer items-center gap-1.5 self-start rounded-lg text-sm font-semibold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            <PlusIcon size={16} />
+            Add stop
+          </button>
+        )
+      ) : null}
     </div>
   )
 }

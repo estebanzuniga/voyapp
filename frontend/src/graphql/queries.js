@@ -7,6 +7,8 @@ export const MY_TRIPS_QUERY = gql`
       title
       startDate
       endDate
+      isOwner
+      myPermission
     }
   }
 `
@@ -18,6 +20,8 @@ export const TRIP_QUERY = gql`
       title
       startDate
       endDate
+      isOwner
+      myPermission
       days {
         id
         date
@@ -34,6 +38,38 @@ export const TRIP_QUERY = gql`
           }
         }
       }
+    }
+  }
+`
+
+export const TRIP_SHARING_QUERY = gql`
+  query TripSharing($id: ID!) {
+    trip(id: $id) {
+      id
+      title
+      isOwner
+      shareLinks {
+        id
+        token
+        permission
+        createdAt
+        expiresAt
+      }
+      collaborators {
+        userId
+        email
+        permission
+      }
+    }
+  }
+`
+
+export const SHARE_INVITE_PREVIEW_QUERY = gql`
+  query ShareInvitePreview($token: String!) {
+    shareInvitePreview(token: $token) {
+      valid
+      tripTitle
+      permission
     }
   }
 `

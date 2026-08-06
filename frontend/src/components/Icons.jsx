@@ -155,3 +155,63 @@ export function RefreshCwIcon(props) {
     </Icon>
   )
 }
+
+export function CopyIcon(props) {
+  return (
+    <Icon {...props}>
+      <rect x="9" y="9" width="13" height="13" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </Icon>
+  )
+}
+
+export function CheckIcon(props) {
+  return (
+    <Icon {...props}>
+      <polyline points="20 6 9 17 4 12" />
+    </Icon>
+  )
+}
+
+export function QrCodeIcon(props) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <path d="M14 14h3v3h-3zM19 19h2v2h-2zM14 19h2v2h-2zM19 14h2v2h-2z" />
+    </Icon>
+  )
+}
+
+export function UsersIcon(props) {
+  return (
+    <Icon {...props}>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </Icon>
+  )
+}
+
+export function ShareIcon(props) {
+  return (
+    <Icon {...props}>
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+    </Icon>
+  )
+}
+
+export function EyeIcon(props) {
+  return (
+    <Icon {...props}>
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" />
+      <circle cx="12" cy="12" r="3" />
+    </Icon>
+  )
+}

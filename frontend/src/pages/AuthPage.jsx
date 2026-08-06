@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation } from '@apollo/client/react'
 import { useAuth } from '../hooks/useAuth'
 import { LOGIN_MUTATION, SIGNUP_MUTATION } from '../graphql/mutations'
@@ -29,16 +29,21 @@ export function AuthPage({ mode }) {
   const [password, setPassword] = useState('')
   const { login } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const copy = COPY[mode]
   const [runMutation, { loading, error }] = useMutation(
     mode === 'signup' ? SIGNUP_MUTATION : LOGIN_MUTATION,
   )
 
+  // Coming from an invite link (e.g. /login?redirect=/invite/TOKEN) sends
+  // the user back to accept it instead of the dashboard.
+  const redirectTo = searchParams.get('redirect') || '/trips'
+
   async function handleSubmit(event) {
     event.preventDefault()
     const { data } = await runMutation({ variables: { email, password } })
-    login(data[mode])
-    navigate('/trips')
+    await login(data[mode])
+    navigate(redirectTo)
   }
 
   return (
@@ -100,7 +105,10 @@ export function AuthPage({ mode }) {
 
           <p className="mt-6 text-sm text-muted">
             {copy.switchPrompt}{' '}
-            <Link to={copy.switchTo} className="font-semibold text-accent hover:underline">
+            <Link
+              to={searchParams.get('redirect') ? `${copy.switchTo}?redirect=${searchParams.get('redirect')}` : copy.switchTo}
+              className="font-semibold text-accent hover:underline"
+            >
               {copy.switchLabel}
             </Link>
           </p>

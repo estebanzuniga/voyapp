@@ -15,7 +15,8 @@ import { ADD_DAY_MUTATION, MOVE_STOP_MUTATION, REORDER_STOPS_MUTATION } from '..
 import { formatDate, formatDateRange, enumerateDates } from '../lib/dates'
 import { DayCard, StopDragPreview } from '../components/DayCard'
 import { Skeleton } from '../components/Skeleton'
-import { ArrowLeftIcon, PlusIcon } from '../components/Icons'
+import { ShareModal } from '../components/ShareModal'
+import { ArrowLeftIcon, EyeIcon, PlusIcon, ShareIcon } from '../components/Icons'
 
 function findContainerId(stopsByDay, stopId) {
   return Object.keys(stopsByDay).find((dayId) =>
@@ -33,6 +34,9 @@ export function TripDetailPage() {
   const [addDayError, setAddDayError] = useState(null)
   const [dragError, setDragError] = useState(null)
   const [activeStop, setActiveStop] = useState(null)
+  const [isShareOpen, setIsShareOpen] = useState(false)
+
+  const canEdit = trip?.myPermission === 'EDITOR'
 
   useEffect(() => {
     if (trip) {
@@ -146,7 +150,7 @@ export function TripDetailPage() {
 
   return (
     <div className="min-h-dvh bg-bg px-4 pb-8 pt-4 sm:px-8 sm:pt-6 lg:px-12">
-      <div className="mx-auto flex max-w-4xl flex-col gap-8">
+      <div className="mx-auto flex max-w-4xl flex-col gap-4">
         <Link
           to="/trips"
           className="flex items-center gap-1.5 rounded-lg text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
@@ -180,10 +184,30 @@ export function TripDetailPage() {
 
         {trip ? (
           <>
-            <header className="flex flex-col gap-1">
-              <h1 className="font-display text-2xl text-ink text-balance">{trip.title}</h1>
-              <p className="text-muted">{formatDateRange(trip.startDate, trip.endDate)}</p>
+            <header className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex flex-col gap-1">
+                <h1 className="font-display text-2xl text-ink text-balance">{trip.title}</h1>
+                <p className="text-muted">{formatDateRange(trip.startDate, trip.endDate)}</p>
+                {!trip.isOwner ? (
+                  <span className="flex w-fit items-center gap-1.5 rounded-full bg-surface-2 px-2.5 py-1 text-xs font-semibold text-muted">
+                    <EyeIcon size={14} />
+                    Shared with you — {canEdit ? 'can edit' : 'view only'}
+                  </span>
+                ) : null}
+              </div>
+              {trip.isOwner ? (
+                <button
+                  type="button"
+                  onClick={() => setIsShareOpen(true)}
+                  className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink hover:border-accent focus-visible:outline-2 focus-visible:outline-accent"
+                >
+                  <ShareIcon size={16} />
+                  Share
+                </button>
+              ) : null}
             </header>
+
+            {isShareOpen ? <ShareModal tripId={id} onClose={() => setIsShareOpen(false)} /> : null}
 
             {dragError ? <p className="text-sm text-red-600">{dragError}</p> : null}
 
@@ -203,6 +227,7 @@ export function TripDetailPage() {
                       day={day}
                       stops={stopsByDay[day.id] ?? day.stops}
                       tripId={id}
+                      canEdit={canEdit}
                     />
                   ))}
                 </div>
@@ -210,7 +235,7 @@ export function TripDetailPage() {
               </DndContext>
             )}
 
-            {missingDates.length > 0 ? (
+            {canEdit && missingDates.length > 0 ? (
               <div className="flex flex-col gap-3">
                 <h2 className="text-sm font-semibold text-muted">Start a day</h2>
                 {addDayError ? <p className="text-sm text-red-600">{addDayError}</p> : null}

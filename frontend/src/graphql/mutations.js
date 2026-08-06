@@ -78,3 +78,44 @@ export const MOVE_STOP_MUTATION = gql`
     }
   }
 `
+
+export const CREATE_SHARE_LINK_MUTATION = gql`
+  mutation CreateShareLink($tripId: ID!, $permission: PermissionLevel!) {
+    createShareLink(tripId: $tripId, permission: $permission) {
+      id
+      token
+      permission
+      createdAt
+      expiresAt
+    }
+  }
+`
+
+export const REVOKE_SHARE_LINK_MUTATION = gql`
+  mutation RevokeShareLink($tripId: ID!, $linkId: ID!) {
+    revokeShareLink(tripId: $tripId, linkId: $linkId)
+  }
+`
+
+export const ACCEPT_SHARE_INVITE_MUTATION = gql`
+  mutation AcceptShareInvite($token: String!) {
+    acceptShareInvite(token: $token) {
+      id
+    }
+  }
+`
+
+export const UPDATE_COLLABORATOR_PERMISSION_MUTATION = gql`
+  mutation UpdateCollaboratorPermission($tripId: ID!, $userId: ID!, $permission: PermissionLevel!) {
+    updateCollaboratorPermission(tripId: $tripId, userId: $userId, permission: $permission) {
+      userId
+      permission
+    }
+  }
+`
+
+export const REMOVE_COLLABORATOR_MUTATION = gql`
+  mutation RemoveCollaborator($tripId: ID!, $userId: ID!) {
+    removeCollaborator(tripId: $tripId, userId: $userId)
+  }
+`
