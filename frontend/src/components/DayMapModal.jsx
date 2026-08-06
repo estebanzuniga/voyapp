@@ -7,31 +7,45 @@ const DayMap = lazy(() => import('./DayMap').then((module) => ({ default: module
 export function DayMapModal({ dayLabel, stops, onClose }) {
   const [isFullscreen, setIsFullscreen] = useState(false)
 
-  return (
-    <Modal onClose={onClose} className={isFullscreen ? '' : 'max-w-2xl'} fullBleed={isFullscreen}>
-      <div
-        className={`absolute right-1 flex items-center gap-1 ${isFullscreen ? 'top-[max(0.25rem,env(safe-area-inset-top))]' : 'top-1'}`}
+  const controls = (
+    <>
+      <button
+        type="button"
+        onClick={() => setIsFullscreen((prev) => !prev)}
+        aria-label={isFullscreen ? 'Exit full screen' : 'View full screen'}
+        className="cursor-pointer rounded-full p-2 text-muted hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
       >
-        <button
-          type="button"
-          onClick={() => setIsFullscreen((prev) => !prev)}
-          aria-label={isFullscreen ? 'Exit full screen' : 'View full screen'}
-          className="cursor-pointer rounded-full p-2 text-muted hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
-        >
-          {isFullscreen ? <MinimizeIcon size={18} /> : <MaximizeIcon size={18} />}
-        </button>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="cursor-pointer rounded-full p-2 text-muted hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
-        >
-          <XIcon size={18} />
-        </button>
-      </div>
+        {isFullscreen ? <MinimizeIcon size={18} /> : <MaximizeIcon size={18} />}
+      </button>
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close"
+        className="cursor-pointer rounded-full p-2 text-muted hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+      >
+        <XIcon size={18} />
+      </button>
+    </>
+  )
+
+  return (
+    <Modal onClose={onClose} className={isFullscreen ? 'pt-0' : 'max-w-2xl'} fullBleed={isFullscreen}>
+      {/* Non-fullscreen: buttons float over the top-right corner of the small dialog, same as before. */}
+      {!isFullscreen && <div className="absolute right-1 top-1 flex items-center gap-1">{controls}</div>}
 
       <div className={`flex flex-col gap-3 ${isFullscreen ? 'h-full' : ''}`}>
-        <h2 className="font-display pr-20 text-lg text-ink">{dayLabel}</h2>
+        {isFullscreen ? (
+          // Fullscreen: title and buttons share one row so they move down together, by
+          // exactly the safe-area inset (status bar/notch) and nothing more - avoids both
+          // the earlier overlap bug and the "too much margin" it caused when the whole
+          // dialog's padding was inflated instead of just this row.
+          <div className="flex items-center justify-between gap-2 pt-[max(0.25rem,env(safe-area-inset-top))]">
+            <h2 className="font-display text-lg text-ink">{dayLabel}</h2>
+            <div className="flex items-center gap-1">{controls}</div>
+          </div>
+        ) : (
+          <h2 className="font-display pr-20 text-lg text-ink">{dayLabel}</h2>
+        )}
 
         <div
           className={

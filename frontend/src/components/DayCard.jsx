@@ -48,6 +48,7 @@ function SortableStopRow({ stop, tripId }) {
         type="button"
         aria-label="Reorder stop"
         className="cursor-grab touch-none rounded-lg p-2 text-muted hover:bg-surface active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-accent"
+        data-no-pull-refresh
         {...attributes}
         {...listeners}
       >
