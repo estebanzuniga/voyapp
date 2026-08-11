@@ -1,14 +1,15 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery } from '@apollo/client/react'
 import { useAuth } from '../hooks/useAuth'
 import { MY_TRIPS_QUERY } from '../graphql/queries'
 import { TripCard } from '../components/TripCard'
 import { NewTripForm } from '../components/NewTripForm'
 import { Skeleton } from '../components/Skeleton'
-import { LogOutIcon, PlusIcon } from '../components/Icons'
+import { PlusIcon, UserIcon } from '../components/Icons'
 
 export function DashboardPage() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const [isCreating, setIsCreating] = useState(false)
   const { data, loading, error } = useQuery(MY_TRIPS_QUERY)
 
@@ -22,14 +23,13 @@ export function DashboardPage() {
             <p className="font-display text-xl text-ink">VoyApp</p>
             {user?.email ? <p className="text-sm text-muted">{user.email}</p> : null}
           </div>
-          <button
-            type="button"
-            onClick={logout}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+          <Link
+            to="/profile"
+            aria-label="Profile"
+            className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-accent/10 text-accent hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
-            <LogOutIcon size={16} />
-            Log out
-          </button>
+            <UserIcon size={18} />
+          </Link>
         </header>
 
         <div className="flex flex-col gap-4">

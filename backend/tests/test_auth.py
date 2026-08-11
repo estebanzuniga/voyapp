@@ -63,3 +63,18 @@ async def test_login_rejects_wrong_password(session, context, user):
 
     assert result.errors is not None
     assert "Invalid email or password" in result.errors[0].message
+
+
+async def test_me_returns_current_user(auth_context, user):
+    result = await schema.execute("query { me { id email } }", context_value=auth_context)
+
+    assert result.errors is None
+    assert result.data["me"]["email"] == user.email
+    assert result.data["me"]["id"] == str(user.id)
+
+
+async def test_me_requires_auth(context):
+    result = await schema.execute("query { me { email } }", context_value=context)
+
+    assert result.errors is not None
+    assert "Not authenticated" in result.errors[0].message

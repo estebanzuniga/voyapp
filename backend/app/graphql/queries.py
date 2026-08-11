@@ -4,6 +4,7 @@ from sqlalchemy import or_, select
 from app.graphql.access import get_viewer_permission
 from app.graphql.types.share import ShareInvitePreview
 from app.graphql.types.trip import Trip
+from app.graphql.types.user import User
 from app.models.trip import Trip as TripModel
 from app.models.trip_collaborator import TripCollaborator as TripCollaboratorModel
 from app.models.trip_share_link import TripShareLink as TripShareLinkModel
@@ -14,6 +15,17 @@ class Query:
     @strawberry.field
     def hello(self) -> str:
         return "Hello, Voyapp!"
+
+    @strawberry.field
+    async def me(self, info: strawberry.Info) -> User:
+        # The frontend only persists the JWT across page loads (not the user
+        # object it got back from login/signup), so the Profile page - and
+        # anything else that needs "who's logged in" after a refresh - calls
+        # this to rehydrate it from the token instead.
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+        return User.from_model(user)
 
     @strawberry.field
     async def my_trips(self, info: strawberry.Info) -> list[Trip]:

@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthPage } from './pages/AuthPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { InviteAcceptPage } from './pages/InviteAcceptPage'
+import { ProfilePage } from './pages/ProfilePage'
 import { TripDetailPage } from './pages/TripDetailPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { PullToRefresh } from './components/PullToRefresh'
@@ -31,6 +32,14 @@ function App() {
           element={
             <ProtectedRoute>
               <TripDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
             </ProtectedRoute>
           }
         />

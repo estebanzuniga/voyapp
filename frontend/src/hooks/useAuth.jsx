@@ -1,5 +1,7 @@
-import { createContext, useCallback, useContext, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { useQuery } from '@apollo/client/react'
 import { apolloClient } from '../apollo/client'
+import { ME_QUERY } from '../graphql/queries'
 
 const TOKEN_KEY = 'voyapp_token'
 
@@ -8,6 +10,32 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
   const [user, setUser] = useState(null)
+
+  // We only ever persist the JWT to localStorage, not the user object it
+  // came with - so on a hard refresh `token` says "logged in" but `user`
+  // starts out null. Fetch it once here (skipped once we already have it,
+  // e.g. right after login/signup set it directly) instead of making every
+  // page that wants `user.email` fetch it itself.
+  const { data: meData, error: meError } = useQuery(ME_QUERY, {
+    skip: !token || Boolean(user),
+    fetchPolicy: 'network-only',
+  })
+
+  useEffect(() => {
+    if (meData?.me) {
+      setUser(meData.me)
+    }
+  }, [meData])
+
+  useEffect(() => {
+    // The stored token is no longer valid (expired, or the secret rotated) -
+    // drop it rather than leave the app thinking it's logged in while every
+    // real query 401s.
+    if (meError) {
+      localStorage.removeItem(TOKEN_KEY)
+      setToken(null)
+    }
+  }, [meError])
 
   const login = useCallback(async (authPayload) => {
     localStorage.setItem(TOKEN_KEY, authPayload.token)
