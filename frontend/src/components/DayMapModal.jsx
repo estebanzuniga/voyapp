@@ -33,7 +33,16 @@ export function DayMapModal({ dayLabel, stops, onClose }) {
       {/* Non-fullscreen: buttons float over the top-right corner of the small dialog, same as before. */}
       {!isFullscreen && <div className="absolute right-1 top-1 flex items-center gap-1">{controls}</div>}
 
-      <div className={`flex flex-col gap-3 ${isFullscreen ? 'h-full' : ''}`}>
+      <div
+        className={`flex flex-col gap-3 ${
+          isFullscreen
+            ? // Rotating to landscape moves the notch/rounded-corner from the top
+              // edge to whichever side it ends up on - same reasoning as the
+              // pt-[...] on the row below, just for the two side edges instead.
+              'h-full pl-[max(0.25rem,env(safe-area-inset-left))] pr-[max(0.25rem,env(safe-area-inset-right))]'
+            : ''
+        }`}
+      >
         {isFullscreen ? (
           // Fullscreen: title and buttons share one row so they move down together, by
           // exactly the safe-area inset (status bar/notch) and nothing more - avoids both
