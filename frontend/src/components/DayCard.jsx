@@ -64,7 +64,7 @@ function SortableStopRow({ stop, tripId, canEdit }) {
         <button
           type="button"
           aria-label="Reorder stop"
-          className="cursor-grab touch-none rounded-lg p-2 text-muted hover:bg-surface active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-accent"
+          className="cursor-grab touch-none rounded-lg text-muted hover:bg-surface active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-accent"
           data-no-pull-refresh
           {...attributes}
           {...listeners}
@@ -83,12 +83,12 @@ function SortableStopRow({ stop, tripId, canEdit }) {
               </span>
             ) : null}
             {canEdit ? (
-              <>
+              <div className="flex items-center gap-2 mr-2">
                 <button
                   type="button"
                   onClick={() => setIsEditing(true)}
                   aria-label={`Edit ${stop.name}`}
-                  className="cursor-pointer rounded-lg p-2 text-muted hover:bg-surface hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+                  className="cursor-pointer rounded-lg text-muted hover:bg-surface hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
                 >
                   <PencilIcon size={16} />
                 </button>
@@ -100,11 +100,11 @@ function SortableStopRow({ stop, tripId, canEdit }) {
                     setIsConfirmingDelete(true)
                   }}
                   aria-label={`Remove ${stop.name}`}
-                  className="cursor-pointer rounded-lg p-2 text-muted hover:bg-red-50 hover:text-red-600 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
+                  className="cursor-pointer rounded-lg text-muted hover:bg-red-50 hover:text-red-600 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
                 >
                   <TrashIcon size={16} />
                 </button>
-              </>
+              </div>
             ) : null}
           </div>
         </div>
