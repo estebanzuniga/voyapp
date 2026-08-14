@@ -9,7 +9,8 @@ import { formatFullDate } from '../lib/dates'
 import { AddStopForm } from './AddStopForm'
 import { ConfirmDialog } from './ConfirmDialog'
 import { DayMapModal } from './DayMapModal'
-import { ClockIcon, GripVerticalIcon, MapPinIcon, PlusIcon, TrashIcon } from './Icons'
+import { EditStopForm } from './EditStopForm'
+import { ClockIcon, GripVerticalIcon, MapPinIcon, PencilIcon, PlusIcon, TrashIcon } from './Icons'
 
 function SortableStopRow({ stop, tripId, canEdit }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -18,6 +19,7 @@ function SortableStopRow({ stop, tripId, canEdit }) {
   })
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
+  const [isEditing, setIsEditing] = useState(false)
   const [runDeleteStop, { loading }] = useMutation(DELETE_STOP_MUTATION, {
     refetchQueries: [{ query: TRIP_QUERY, variables: { id: tripId } }],
     awaitRefetchQueries: true,
@@ -37,6 +39,19 @@ function SortableStopRow({ stop, tripId, canEdit }) {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.6 : 1,
+  }
+
+  if (isEditing) {
+    return (
+      <li ref={setNodeRef} style={style}>
+        <EditStopForm
+          stop={stop}
+          tripId={tripId}
+          onDone={() => setIsEditing(false)}
+          onCancel={() => setIsEditing(false)}
+        />
+      </li>
+    )
   }
 
   return (
@@ -68,18 +83,28 @@ function SortableStopRow({ stop, tripId, canEdit }) {
               </span>
             ) : null}
             {canEdit ? (
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => {
-                  setDeleteError(null)
-                  setIsConfirmingDelete(true)
-                }}
-                aria-label={`Remove ${stop.name}`}
-                className="cursor-pointer rounded-lg p-2 text-muted hover:bg-red-50 hover:text-red-600 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
-              >
-                <TrashIcon size={16} />
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(true)}
+                  aria-label={`Edit ${stop.name}`}
+                  className="cursor-pointer rounded-lg p-2 text-muted hover:bg-surface hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+                >
+                  <PencilIcon size={16} />
+                </button>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => {
+                    setDeleteError(null)
+                    setIsConfirmingDelete(true)
+                  }}
+                  aria-label={`Remove ${stop.name}`}
+                  className="cursor-pointer rounded-lg p-2 text-muted hover:bg-red-50 hover:text-red-600 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
+                >
+                  <TrashIcon size={16} />
+                </button>
+              </>
             ) : null}
           </div>
         </div>

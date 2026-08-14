@@ -233,6 +233,36 @@ class Mutation:
         return Stop.from_model(stop)
 
     @strawberry.mutation
+    async def update_stop(
+        self,
+        info: strawberry.Info,
+        id: strawberry.ID,
+        name: str,
+        location: LocationInput,
+    ) -> Stop:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        session = info.context.session
+        stop = await session.get(StopModel, int(id))
+        if stop is None:
+            raise Exception("Stop not found")
+
+        day = await session.get(DayModel, stop.day_id)
+        if day is None:
+            raise Exception("Stop not found")
+        await require_trip_access(
+            session, day.trip_id, user, editor=True, not_found_message="Stop not found"
+        )
+
+        stop.name = name
+        stop.lat = location.lat
+        stop.lng = location.lng
+        await session.commit()
+        return Stop.from_model(stop)
+
+    @strawberry.mutation
     async def delete_stop(self, info: strawberry.Info, id: strawberry.ID) -> bool:
         user = info.context.current_user
         if user is None:

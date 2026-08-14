@@ -57,6 +57,19 @@ export const ADD_STOP_MUTATION = gql`
   }
 `
 
+export const UPDATE_STOP_MUTATION = gql`
+  mutation UpdateStop($id: ID!, $name: String!, $location: LocationInput!) {
+    updateStop(id: $id, name: $name, location: $location) {
+      id
+      name
+      location {
+        lat
+        lng
+      }
+    }
+  }
+`
+
 export const DELETE_STOP_MUTATION = gql`
   mutation DeleteStop($id: ID!) {
     deleteStop(id: $id)

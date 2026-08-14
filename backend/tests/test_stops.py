@@ -25,6 +25,12 @@ mutation($dayId: ID!, $stopIds: [ID!]!) {
 }
 """
 
+UPDATE_STOP = """
+mutation($id: ID!, $name: String!, $location: LocationInput!) {
+  updateStop(id: $id, name: $name, location: $location) { id name location { lat lng } }
+}
+"""
+
 DELETE_STOP = """
 mutation($id: ID!) {
   deleteStop(id: $id)
@@ -130,6 +136,48 @@ async def test_reorder_stops_rejects_mismatched_ids(auth_context):
 
     assert result.errors is not None
     assert "stopIds must match the day's current stops exactly" in result.errors[0].message
+
+
+async def test_update_stop_changes_name_and_location(auth_context):
+    day_id = await create_trip_and_day(auth_context)
+    stop = await add_stop(auth_context, day_id, "Shibuya")
+
+    new_location = {"lat": 35.7, "lng": 139.8}
+    result = await schema.execute(
+        UPDATE_STOP,
+        variable_values={"id": stop["id"], "name": "Shibuya Crossing", "location": new_location},
+        context_value=auth_context,
+    )
+
+    assert result.errors is None
+    assert result.data["updateStop"]["name"] == "Shibuya Crossing"
+    assert result.data["updateStop"]["location"] == new_location
+
+
+async def test_update_stop_requires_auth(context):
+    result = await schema.execute(
+        UPDATE_STOP,
+        variable_values={"id": "1", "name": "Shibuya", "location": LOCATION},
+        context_value=context,
+    )
+
+    assert result.errors is not None
+    assert "Not authenticated" in result.errors[0].message
+
+
+async def test_update_stop_rejects_other_users_stop(session, auth_context, other_user):
+    day_id = await create_trip_and_day(auth_context)
+    stop = await add_stop(auth_context, day_id, "Shibuya")
+
+    other_context = make_context(session, other_user)
+    result = await schema.execute(
+        UPDATE_STOP,
+        variable_values={"id": stop["id"], "name": "Hacked", "location": LOCATION},
+        context_value=other_context,
+    )
+
+    assert result.errors is not None
+    assert "Stop not found" in result.errors[0].message
 
 
 async def test_delete_stop_rejects_other_users_stop(session, auth_context, other_user):
