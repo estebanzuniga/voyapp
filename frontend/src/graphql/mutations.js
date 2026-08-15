@@ -96,6 +96,14 @@ export const UPDATE_STOP_MUTATION = gql`
   }
 `
 
+export const DUPLICATE_STOP_MUTATION = gql`
+  mutation DuplicateStop($id: ID!) {
+    duplicateStop(id: $id) {
+      id
+    }
+  }
+`
+
 export const DELETE_STOP_MUTATION = gql`
   mutation DeleteStop($id: ID!) {
     deleteStop(id: $id)

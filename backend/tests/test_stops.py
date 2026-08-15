@@ -37,6 +37,12 @@ mutation($id: ID!) {
 }
 """
 
+DUPLICATE_STOP = """
+mutation($id: ID!) {
+  duplicateStop(id: $id) { id name orderIndex notes startTime }
+}
+"""
+
 LOCATION = {"lat": 35.6, "lng": 139.7}
 
 
@@ -242,6 +248,84 @@ async def test_delete_stop_rejects_other_users_stop(session, auth_context, other
     other_context = make_context(session, other_user)
     result = await schema.execute(
         DELETE_STOP, variable_values={"id": stop["id"]}, context_value=other_context
+    )
+
+    assert result.errors is not None
+    assert "Stop not found" in result.errors[0].message
+
+
+async def test_duplicate_stop_inserts_copy_after_original(auth_context):
+    day_id = await create_trip_and_day(auth_context)
+    stops = [await add_stop(auth_context, day_id, name) for name in ("Shibuya", "Shinjuku", "Ueno")]
+
+    result = await schema.execute(
+        DUPLICATE_STOP, variable_values={"id": stops[0]["id"]}, context_value=auth_context
+    )
+
+    assert result.errors is None
+    duplicate = result.data["duplicateStop"]
+    assert duplicate["name"] == "Shibuya"
+    assert duplicate["orderIndex"] == 1
+
+    reorder_result = await schema.execute(
+        REORDER_STOPS,
+        variable_values={
+            "dayId": day_id,
+            "stopIds": [stops[0]["id"], duplicate["id"], stops[1]["id"], stops[2]["id"]],
+        },
+        context_value=auth_context,
+    )
+    assert reorder_result.errors is None
+    assert [s["orderIndex"] for s in reorder_result.data["reorderStops"]] == [0, 1, 2, 3]
+
+
+async def test_duplicate_stop_copies_notes_and_start_time(auth_context):
+    day_id = await create_trip_and_day(auth_context)
+    add_result = await schema.execute(
+        """
+        mutation($dayId: ID!, $name: String!, $location: LocationInput!, $notes: String, $startTime: Time) {
+          addStop(dayId: $dayId, name: $name, location: $location, notes: $notes, startTime: $startTime) {
+            id
+          }
+        }
+        """,
+        variable_values={
+            "dayId": day_id,
+            "name": "Shibuya",
+            "location": LOCATION,
+            "notes": "Meet at the statue",
+            "startTime": "09:30:00",
+        },
+        context_value=auth_context,
+    )
+    assert add_result.errors is None
+    stop_id = add_result.data["addStop"]["id"]
+
+    result = await schema.execute(
+        DUPLICATE_STOP, variable_values={"id": stop_id}, context_value=auth_context
+    )
+
+    assert result.errors is None
+    assert result.data["duplicateStop"]["notes"] == "Meet at the statue"
+    assert result.data["duplicateStop"]["startTime"] == "09:30:00"
+
+
+async def test_duplicate_stop_requires_auth(context):
+    result = await schema.execute(
+        DUPLICATE_STOP, variable_values={"id": "1"}, context_value=context
+    )
+
+    assert result.errors is not None
+    assert "Not authenticated" in result.errors[0].message
+
+
+async def test_duplicate_stop_rejects_other_users_stop(session, auth_context, other_user):
+    day_id = await create_trip_and_day(auth_context)
+    stop = await add_stop(auth_context, day_id, "Shibuya")
+
+    other_context = make_context(session, other_user)
+    result = await schema.execute(
+        DUPLICATE_STOP, variable_values={"id": stop["id"]}, context_value=other_context
     )
 
     assert result.errors is not None

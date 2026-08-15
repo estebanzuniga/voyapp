@@ -3,14 +3,14 @@ import { useMutation } from '@apollo/client/react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { DELETE_DAY_MUTATION, DELETE_STOP_MUTATION } from '../graphql/mutations'
+import { DELETE_DAY_MUTATION, DELETE_STOP_MUTATION, DUPLICATE_STOP_MUTATION } from '../graphql/mutations'
 import { TRIP_QUERY } from '../graphql/queries'
 import { formatFullDate, formatTime } from '../lib/dates'
 import { AddStopForm } from './AddStopForm'
 import { ConfirmDialog } from './ConfirmDialog'
 import { DayMapModal } from './DayMapModal'
 import { EditStopForm } from './EditStopForm'
-import { ClockIcon, GripVerticalIcon, MapPinIcon, NotesIcon, PencilIcon, PlusIcon, TrashIcon } from './Icons'
+import { ClockIcon, CopyIcon, GripVerticalIcon, MapPinIcon, NotesIcon, PencilIcon, PlusIcon, TrashIcon } from './Icons'
 
 function SortableStopRow({ stop, tripId, canEdit }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -19,9 +19,15 @@ function SortableStopRow({ stop, tripId, canEdit }) {
   })
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
+  const [isConfirmingDuplicate, setIsConfirmingDuplicate] = useState(false)
+  const [duplicateError, setDuplicateError] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
   const [areNotesExpanded, setAreNotesExpanded] = useState(false)
   const [runDeleteStop, { loading }] = useMutation(DELETE_STOP_MUTATION, {
+    refetchQueries: [{ query: TRIP_QUERY, variables: { id: tripId } }],
+    awaitRefetchQueries: true,
+  })
+  const [runDuplicateStop, { loading: duplicating }] = useMutation(DUPLICATE_STOP_MUTATION, {
     refetchQueries: [{ query: TRIP_QUERY, variables: { id: tripId } }],
     awaitRefetchQueries: true,
   })
@@ -33,6 +39,16 @@ function SortableStopRow({ stop, tripId, canEdit }) {
       setIsConfirmingDelete(false)
     } catch (err) {
       setDeleteError(err.message)
+    }
+  }
+
+  async function handleConfirmDuplicate() {
+    setDuplicateError(null)
+    try {
+      await runDuplicateStop({ variables: { id: stop.id } })
+      setIsConfirmingDuplicate(false)
+    } catch (err) {
+      setDuplicateError(err.message)
     }
   }
 
@@ -111,6 +127,18 @@ function SortableStopRow({ stop, tripId, canEdit }) {
             </button>
             <button
               type="button"
+              disabled={duplicating}
+              onClick={() => {
+                setDuplicateError(null)
+                setIsConfirmingDuplicate(true)
+              }}
+              aria-label={`Duplicate ${stop.name}`}
+              className="cursor-pointer rounded-lg text-muted hover:bg-surface hover:text-ink disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              <CopyIcon size={16} />
+            </button>
+            <button
+              type="button"
               disabled={loading}
               onClick={() => {
                 setDeleteError(null)
@@ -124,6 +152,21 @@ function SortableStopRow({ stop, tripId, canEdit }) {
           </div>
         ) : null}
       </div>
+
+      {isConfirmingDuplicate ? (
+        <ConfirmDialog
+          title="Duplicate stop"
+          message={`Add a copy of "${stop.name}" right after it?`}
+          confirmLabel="Duplicate"
+          loadingLabel="Duplicating…"
+          icon={CopyIcon}
+          tone="accent"
+          onConfirm={handleConfirmDuplicate}
+          onCancel={() => setIsConfirmingDuplicate(false)}
+          loading={duplicating}
+          error={duplicateError}
+        />
+      ) : null}
 
       {isConfirmingDelete ? (
         <ConfirmDialog

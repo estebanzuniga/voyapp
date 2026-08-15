@@ -275,6 +275,49 @@ class Mutation:
         return Stop.from_model(stop)
 
     @strawberry.mutation
+    async def duplicate_stop(self, info: strawberry.Info, id: strawberry.ID) -> Stop:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        session = info.context.session
+        stop = await session.get(StopModel, int(id))
+        if stop is None:
+            raise Exception("Stop not found")
+
+        day = await session.get(DayModel, stop.day_id)
+        if day is None:
+            raise Exception("Stop not found")
+        await require_trip_access(
+            session, day.trip_id, user, editor=True, not_found_message="Stop not found"
+        )
+
+        # Insert the copy right after the original, renumbering everything
+        # from there on (same "no gaps" approach as reorder_stops) rather
+        # than tacking the copy onto the end of the day.
+        new_index = stop.order_index + 1
+        later_stops = await session.execute(
+            select(StopModel).where(
+                StopModel.day_id == day.id, StopModel.order_index >= new_index
+            )
+        )
+        for later_stop in later_stops.scalars().all():
+            later_stop.order_index += 1
+
+        duplicate = StopModel(
+            day_id=stop.day_id,
+            name=stop.name,
+            lat=stop.lat,
+            lng=stop.lng,
+            order_index=new_index,
+            notes=stop.notes,
+            start_time=stop.start_time,
+        )
+        session.add(duplicate)
+        await session.commit()
+        return Stop.from_model(duplicate)
+
+    @strawberry.mutation
     async def delete_stop(self, info: strawberry.Info, id: strawberry.ID) -> bool:
         user = info.context.current_user
         if user is None:
