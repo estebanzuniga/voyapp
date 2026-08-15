@@ -73,55 +73,55 @@ function SortableStopRow({ stop, tripId, canEdit }) {
           <GripVerticalIcon size={18} />
         </button>
       ) : null}
-      <div className="flex flex-1 flex-col gap-0.5">
-        <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-1 items-start justify-between gap-2">
+        <div className="flex flex-col gap-0.5">
+          <span className="font-semibold text-ink">{stop.name}</span>
           {stop.startTime ? (
             <span className="flex items-center gap-1 text-sm text-muted">
               <ClockIcon size={14} />
               {formatTime(stop.startTime)}
             </span>
           ) : null}
-          {canEdit ? (
-            <div className="flex items-center gap-2 mr-2">
+          {stop.notes ? (
+            <>
               <button
                 type="button"
-                onClick={() => setIsEditing(true)}
-                aria-label={`Edit ${stop.name}`}
-                className="cursor-pointer rounded-lg text-muted hover:bg-surface hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+                onClick={() => setAreNotesExpanded((prev) => !prev)}
+                aria-expanded={areNotesExpanded}
+                className="flex w-fit cursor-pointer items-center gap-1.5 text-sm font-semibold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
               >
-                <PencilIcon size={16} />
+                <NotesIcon size={14} />
+                {areNotesExpanded ? 'Hide notes' : 'View notes'}
               </button>
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => {
-                  setDeleteError(null)
-                  setIsConfirmingDelete(true)
-                }}
-                aria-label={`Remove ${stop.name}`}
-                className="cursor-pointer rounded-lg text-muted hover:bg-red-50 hover:text-red-600 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
-              >
-                <TrashIcon size={16} />
-              </button>
-            </div>
+              {areNotesExpanded ? (
+                <p className="whitespace-pre-wrap text-sm text-muted">{stop.notes}</p>
+              ) : null}
+            </>
           ) : null}
         </div>
-        <span className="font-semibold text-ink">{stop.name}</span>
-        {stop.notes ? (
-          <>
+        {canEdit ? (
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setAreNotesExpanded((prev) => !prev)}
-              aria-expanded={areNotesExpanded}
-              className="flex w-fit cursor-pointer items-center gap-1.5 text-sm font-semibold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
+              onClick={() => setIsEditing(true)}
+              aria-label={`Edit ${stop.name}`}
+              className="cursor-pointer rounded-lg text-muted hover:bg-surface hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
             >
-              <NotesIcon size={14} />
-              {areNotesExpanded ? 'Hide notes' : 'View notes'}
+              <PencilIcon size={16} />
             </button>
-            {areNotesExpanded ? (
-              <p className="whitespace-pre-wrap text-sm text-muted">{stop.notes}</p>
-            ) : null}
-          </>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => {
+                setDeleteError(null)
+                setIsConfirmingDelete(true)
+              }}
+              aria-label={`Remove ${stop.name}`}
+              className="cursor-pointer rounded-lg text-muted hover:bg-red-50 hover:text-red-600 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              <TrashIcon size={16} />
+            </button>
+          </div>
         ) : null}
       </div>
 
