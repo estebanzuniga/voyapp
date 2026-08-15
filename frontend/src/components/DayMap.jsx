@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { MapContainer, Marker, Polyline, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { formatTime } from '../lib/dates'
 import { ClockIcon } from './Icons'
 
 const SINGLE_STOP_ZOOM = 14
@@ -70,7 +71,7 @@ export function DayMap({ stops }) {
               {stop.startTime ? (
                 <p className="flex items-center gap-1 text-sm text-muted">
                   <ClockIcon size={14} />
-                  {stop.startTime}
+                  {formatTime(stop.startTime)}
                 </p>
               ) : null}
               {stop.notes ? <p className="text-sm text-muted">{stop.notes}</p> : null}

@@ -138,6 +138,61 @@ async def test_reorder_stops_rejects_mismatched_ids(auth_context):
     assert "stopIds must match the day's current stops exactly" in result.errors[0].message
 
 
+async def test_add_stop_accepts_notes_and_start_time(auth_context):
+    day_id = await create_trip_and_day(auth_context)
+
+    result = await schema.execute(
+        """
+        mutation($dayId: ID!, $name: String!, $location: LocationInput!, $notes: String, $startTime: Time) {
+          addStop(dayId: $dayId, name: $name, location: $location, notes: $notes, startTime: $startTime) {
+            notes
+            startTime
+          }
+        }
+        """,
+        variable_values={
+            "dayId": day_id,
+            "name": "Shibuya",
+            "location": LOCATION,
+            "notes": "Meet at the statue",
+            "startTime": "09:30:00",
+        },
+        context_value=auth_context,
+    )
+
+    assert result.errors is None
+    assert result.data["addStop"]["notes"] == "Meet at the statue"
+    assert result.data["addStop"]["startTime"] == "09:30:00"
+
+
+async def test_update_stop_changes_notes_and_start_time(auth_context):
+    day_id = await create_trip_and_day(auth_context)
+    stop = await add_stop(auth_context, day_id, "Shibuya")
+
+    result = await schema.execute(
+        """
+        mutation($id: ID!, $name: String!, $location: LocationInput!, $notes: String, $startTime: Time) {
+          updateStop(id: $id, name: $name, location: $location, notes: $notes, startTime: $startTime) {
+            notes
+            startTime
+          }
+        }
+        """,
+        variable_values={
+            "id": stop["id"],
+            "name": stop["name"],
+            "location": LOCATION,
+            "notes": "Bring cash",
+            "startTime": "14:00:00",
+        },
+        context_value=auth_context,
+    )
+
+    assert result.errors is None
+    assert result.data["updateStop"]["notes"] == "Bring cash"
+    assert result.data["updateStop"]["startTime"] == "14:00:00"
+
+
 async def test_update_stop_changes_name_and_location(auth_context):
     day_id = await create_trip_and_day(auth_context)
     stop = await add_stop(auth_context, day_id, "Shibuya")

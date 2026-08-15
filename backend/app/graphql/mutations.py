@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, time
 
 import strawberry
 from sqlalchemy import func, select
@@ -117,6 +117,8 @@ class Mutation:
         day_id: strawberry.ID,
         name: str,
         location: LocationInput,
+        notes: str | None = None,
+        start_time: time | None = None,
     ) -> Stop:
         user = info.context.current_user
         if user is None:
@@ -142,6 +144,8 @@ class Mutation:
             lat=location.lat,
             lng=location.lng,
             order_index=next_index + 1,
+            notes=notes,
+            start_time=start_time,
         )
         session.add(stop)
         await session.commit()
@@ -239,6 +243,8 @@ class Mutation:
         id: strawberry.ID,
         name: str,
         location: LocationInput,
+        notes: str | None = None,
+        start_time: time | None = None,
     ) -> Stop:
         user = info.context.current_user
         if user is None:
@@ -259,6 +265,12 @@ class Mutation:
         stop.name = name
         stop.lat = location.lat
         stop.lng = location.lng
+        # Like name/location, these are a full replace rather than a partial
+        # patch - the edit form always sends its current field values
+        # (including `None` for a field the user cleared), so there's no
+        # "unset" case to distinguish from "leave unchanged" here.
+        stop.notes = notes
+        stop.start_time = start_time
         await session.commit()
         return Stop.from_model(stop)
 

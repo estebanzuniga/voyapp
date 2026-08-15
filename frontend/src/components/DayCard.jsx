@@ -5,12 +5,12 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { DELETE_DAY_MUTATION, DELETE_STOP_MUTATION } from '../graphql/mutations'
 import { TRIP_QUERY } from '../graphql/queries'
-import { formatFullDate } from '../lib/dates'
+import { formatFullDate, formatTime } from '../lib/dates'
 import { AddStopForm } from './AddStopForm'
 import { ConfirmDialog } from './ConfirmDialog'
 import { DayMapModal } from './DayMapModal'
 import { EditStopForm } from './EditStopForm'
-import { ClockIcon, GripVerticalIcon, MapPinIcon, PencilIcon, PlusIcon, TrashIcon } from './Icons'
+import { ClockIcon, GripVerticalIcon, MapPinIcon, NotesIcon, PencilIcon, PlusIcon, TrashIcon } from './Icons'
 
 function SortableStopRow({ stop, tripId, canEdit }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -20,6 +20,7 @@ function SortableStopRow({ stop, tripId, canEdit }) {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
+  const [areNotesExpanded, setAreNotesExpanded] = useState(false)
   const [runDeleteStop, { loading }] = useMutation(DELETE_STOP_MUTATION, {
     refetchQueries: [{ query: TRIP_QUERY, variables: { id: tripId } }],
     awaitRefetchQueries: true,
@@ -74,41 +75,54 @@ function SortableStopRow({ stop, tripId, canEdit }) {
       ) : null}
       <div className="flex flex-1 flex-col gap-0.5">
         <div className="flex items-center justify-between gap-2">
-          <span className="font-semibold text-ink">{stop.name}</span>
-          <div className="flex items-center gap-3">
-            {stop.startTime ? (
-              <span className="flex items-center gap-1 text-sm text-muted">
-                <ClockIcon size={14} />
-                {stop.startTime}
-              </span>
-            ) : null}
-            {canEdit ? (
-              <div className="flex items-center gap-2 mr-2">
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(true)}
-                  aria-label={`Edit ${stop.name}`}
-                  className="cursor-pointer rounded-lg text-muted hover:bg-surface hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
-                >
-                  <PencilIcon size={16} />
-                </button>
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => {
-                    setDeleteError(null)
-                    setIsConfirmingDelete(true)
-                  }}
-                  aria-label={`Remove ${stop.name}`}
-                  className="cursor-pointer rounded-lg text-muted hover:bg-red-50 hover:text-red-600 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
-                >
-                  <TrashIcon size={16} />
-                </button>
-              </div>
-            ) : null}
-          </div>
+          {stop.startTime ? (
+            <span className="flex items-center gap-1 text-sm text-muted">
+              <ClockIcon size={14} />
+              {formatTime(stop.startTime)}
+            </span>
+          ) : null}
+          {canEdit ? (
+            <div className="flex items-center gap-2 mr-2">
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                aria-label={`Edit ${stop.name}`}
+                className="cursor-pointer rounded-lg text-muted hover:bg-surface hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                <PencilIcon size={16} />
+              </button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => {
+                  setDeleteError(null)
+                  setIsConfirmingDelete(true)
+                }}
+                aria-label={`Remove ${stop.name}`}
+                className="cursor-pointer rounded-lg text-muted hover:bg-red-50 hover:text-red-600 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                <TrashIcon size={16} />
+              </button>
+            </div>
+          ) : null}
         </div>
-        {stop.notes ? <p className="text-sm text-muted">{stop.notes}</p> : null}
+        <span className="font-semibold text-ink">{stop.name}</span>
+        {stop.notes ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setAreNotesExpanded((prev) => !prev)}
+              aria-expanded={areNotesExpanded}
+              className="flex w-fit cursor-pointer items-center gap-1.5 text-sm font-semibold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              <NotesIcon size={14} />
+              {areNotesExpanded ? 'Hide notes' : 'View notes'}
+            </button>
+            {areNotesExpanded ? (
+              <p className="whitespace-pre-wrap text-sm text-muted">{stop.notes}</p>
+            ) : null}
+          </>
+        ) : null}
       </div>
 
       {isConfirmingDelete ? (
@@ -131,7 +145,12 @@ export function StopDragPreview({ stop }) {
       <span className="px-1 text-muted">⠿</span>
       <div className="flex flex-1 flex-col gap-0.5">
         <span className="font-semibold text-ink">{stop.name}</span>
-        {stop.notes ? <p className="text-sm text-muted">{stop.notes}</p> : null}
+        {stop.startTime ? (
+          <span className="flex items-center gap-1 text-sm text-muted">
+            <ClockIcon size={14} />
+            {formatTime(stop.startTime)}
+          </span>
+        ) : null}
       </div>
     </div>
   )

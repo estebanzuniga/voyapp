@@ -50,18 +50,44 @@ export const DELETE_DAY_MUTATION = gql`
 `
 
 export const ADD_STOP_MUTATION = gql`
-  mutation AddStop($dayId: ID!, $name: String!, $location: LocationInput!) {
-    addStop(dayId: $dayId, name: $name, location: $location) {
+  mutation AddStop(
+    $dayId: ID!
+    $name: String!
+    $location: LocationInput!
+    $notes: String
+    $startTime: Time
+  ) {
+    addStop(
+      dayId: $dayId
+      name: $name
+      location: $location
+      notes: $notes
+      startTime: $startTime
+    ) {
       id
     }
   }
 `
 
 export const UPDATE_STOP_MUTATION = gql`
-  mutation UpdateStop($id: ID!, $name: String!, $location: LocationInput!) {
-    updateStop(id: $id, name: $name, location: $location) {
+  mutation UpdateStop(
+    $id: ID!
+    $name: String!
+    $location: LocationInput!
+    $notes: String
+    $startTime: Time
+  ) {
+    updateStop(
+      id: $id
+      name: $name
+      location: $location
+      notes: $notes
+      startTime: $startTime
+    ) {
       id
       name
+      notes
+      startTime
       location {
         lat
         lng
