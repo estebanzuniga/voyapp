@@ -73,7 +73,7 @@ function SortableStopRow({ stop, tripId, canEdit }) {
           <GripVerticalIcon size={18} />
         </button>
       ) : null}
-      <div className="flex flex-1 items-start justify-between gap-2">
+      <div className="flex flex-1 items-center justify-between gap-2">
         <div className="flex flex-col gap-0.5">
           <span className="font-semibold text-ink">{stop.name}</span>
           {stop.startTime ? (
