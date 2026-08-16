@@ -6,7 +6,8 @@ import { MY_TRIPS_QUERY } from '../graphql/queries'
 import { TripCard } from '../components/TripCard'
 import { NewTripForm } from '../components/NewTripForm'
 import { Skeleton } from '../components/Skeleton'
-import { PlusIcon, UserIcon } from '../components/Icons'
+import { getInitials } from '../lib/avatar'
+import { PlusIcon } from '../components/Icons'
 
 export function DashboardPage() {
   const { user } = useAuth()
@@ -21,14 +22,15 @@ export function DashboardPage() {
         <header className="flex items-center justify-between gap-4">
           <div>
             <p className="font-display text-xl text-ink">VoyApp</p>
-            {user?.email ? <p className="text-sm text-muted">{user.email}</p> : null}
+            {user ? <p className="text-sm text-muted">{`${user.firstName} ${user.lastName}`}</p> : null}
           </div>
           <Link
             to="/profile"
             aria-label="Profile"
-            className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-accent/10 text-accent hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full font-display text-sm text-white hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            style={{ backgroundColor: user?.avatarColor ?? 'var(--color-accent)' }}
           >
-            <UserIcon size={18} />
+            {getInitials(user)}
           </Link>
         </header>
 

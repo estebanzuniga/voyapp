@@ -58,7 +58,14 @@ export function AuthProvider({ children }) {
     await apolloClient.clearStore()
   }, [])
 
-  const value = { token, user, isAuthenticated: Boolean(token), login, logout }
+  // Merges a partial update (e.g. { avatarColor } after updateAvatarColor
+  // resolves) into the cached user object, so a component like ProfilePage
+  // can reflect a change immediately instead of waiting on a refetch.
+  const updateUser = useCallback((patch) => {
+    setUser((prev) => (prev ? { ...prev, ...patch } : prev))
+  }, [])
+
+  const value = { token, user, isAuthenticated: Boolean(token), login, logout, updateUser }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

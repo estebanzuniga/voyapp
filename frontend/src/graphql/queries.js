@@ -5,7 +5,16 @@ export const ME_QUERY = gql`
     me {
       id
       email
+      firstName
+      lastName
+      avatarColor
     }
+  }
+`
+
+export const AVATAR_COLOR_OPTIONS_QUERY = gql`
+  query AvatarColorOptions {
+    avatarColorOptions
   }
 `
 

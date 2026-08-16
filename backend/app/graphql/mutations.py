@@ -1,3 +1,4 @@
+import random
 from datetime import date, time
 
 import strawberry
@@ -18,6 +19,7 @@ from app.models.trip import Trip as TripModel
 from app.models.trip_collaborator import MAX_COLLABORATORS_PER_TRIP
 from app.models.trip_collaborator import TripCollaborator as TripCollaboratorModel
 from app.models.trip_share_link import TripShareLink as TripShareLinkModel
+from app.models.user import AVATAR_COLORS
 from app.models.user import User as UserModel
 
 
@@ -33,13 +35,34 @@ async def _get_owned_share_link(session, trip_id: int, link_id: int) -> TripShar
 @strawberry.type
 class Mutation:
     @strawberry.mutation
-    async def signup(self, info: strawberry.Info, email: str, password: str) -> AuthPayload:
+    async def signup(
+        self,
+        info: strawberry.Info,
+        email: str,
+        password: str,
+        first_name: str,
+        last_name: str,
+    ) -> AuthPayload:
+        first_name = first_name.strip()
+        last_name = last_name.strip()
+        if not first_name or not last_name:
+            raise Exception("First name and last name are required")
+
         session = info.context.session
         existing = await session.execute(select(UserModel).where(UserModel.email == email))
         if existing.scalar_one_or_none() is not None:
             raise Exception("A user with that email already exists")
 
-        user = UserModel(email=email, password_hash=hash_password(password))
+        user = UserModel(
+            email=email,
+            password_hash=hash_password(password),
+            first_name=first_name,
+            last_name=last_name,
+            # Picked once at signup so there's always something to render
+            # (initials + a color) before the user ever visits their
+            # profile - `update_avatar_color` is how they change it later.
+            avatar_color=random.choice(AVATAR_COLORS),
+        )
         session.add(user)
         await session.commit()
 
@@ -338,6 +361,39 @@ class Mutation:
         await session.delete(stop)
         await session.commit()
         return True
+
+    @strawberry.mutation
+    async def update_name(
+        self, info: strawberry.Info, first_name: str, last_name: str
+    ) -> User:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        first_name = first_name.strip()
+        last_name = last_name.strip()
+        if not first_name or not last_name:
+            raise Exception("First name and last name are required")
+
+        session = info.context.session
+        user.first_name = first_name
+        user.last_name = last_name
+        await session.commit()
+        return User.from_model(user)
+
+    @strawberry.mutation
+    async def update_avatar_color(self, info: strawberry.Info, avatar_color: str) -> User:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        if avatar_color not in AVATAR_COLORS:
+            raise Exception("Invalid avatar color")
+
+        session = info.context.session
+        user.avatar_color = avatar_color
+        await session.commit()
+        return User.from_model(user)
 
     # --- Sharing -----------------------------------------------------------
     # These mutations manage the trip owner's share links (any number per

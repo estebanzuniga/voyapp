@@ -40,7 +40,13 @@ async def session(db_engine):
 
 @pytest_asyncio.fixture
 async def user(session: AsyncSession) -> UserModel:
-    owner = UserModel(email="owner@example.com", password_hash=hash_password("password123"))
+    owner = UserModel(
+        email="owner@example.com",
+        password_hash=hash_password("password123"),
+        first_name="Owner",
+        last_name="Test",
+        avatar_color="#3b82f6",
+    )
     session.add(owner)
     await session.commit()
     return owner
@@ -48,7 +54,13 @@ async def user(session: AsyncSession) -> UserModel:
 
 @pytest_asyncio.fixture
 async def other_user(session: AsyncSession) -> UserModel:
-    intruder = UserModel(email="intruder@example.com", password_hash=hash_password("password123"))
+    intruder = UserModel(
+        email="intruder@example.com",
+        password_hash=hash_password("password123"),
+        first_name="Intruder",
+        last_name="Test",
+        avatar_color="#ef4444",
+    )
     session.add(intruder)
     await session.commit()
     return intruder

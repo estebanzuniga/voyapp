@@ -1,14 +1,53 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useMutation, useQuery } from '@apollo/client/react'
 import { useAuth } from '../hooks/useAuth'
-import { ArrowLeftIcon, LogOutIcon, UserIcon } from '../components/Icons'
+import { AVATAR_COLOR_OPTIONS_QUERY } from '../graphql/queries'
+import { UPDATE_AVATAR_COLOR_MUTATION, UPDATE_NAME_MUTATION } from '../graphql/mutations'
+import { getInitials } from '../lib/avatar'
+import { ArrowLeftIcon, CheckIcon, LogOutIcon, PencilIcon, XIcon } from '../components/Icons'
 
 export function ProfilePage() {
-  const { user, logout } = useAuth()
+  const { user, logout, updateUser } = useAuth()
   const navigate = useNavigate()
+  const { data } = useQuery(AVATAR_COLOR_OPTIONS_QUERY)
+  const [runUpdateAvatarColor, { loading: savingColor, error: colorError }] = useMutation(
+    UPDATE_AVATAR_COLOR_MUTATION,
+  )
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [firstNameDraft, setFirstNameDraft] = useState('')
+  const [lastNameDraft, setLastNameDraft] = useState('')
+  const [runUpdateName, { loading: savingName, error: nameError }] = useMutation(
+    UPDATE_NAME_MUTATION,
+  )
 
   const handleLogout = async () => {
     await logout()
     navigate('/login', { replace: true })
+  }
+
+  async function handlePickColor(color) {
+    if (color === user?.avatarColor) return
+    const { data: result } = await runUpdateAvatarColor({ variables: { avatarColor: color } })
+    updateUser({ avatarColor: result.updateAvatarColor.avatarColor })
+  }
+
+  function startEditingName() {
+    setFirstNameDraft(user?.firstName ?? '')
+    setLastNameDraft(user?.lastName ?? '')
+    setIsEditingName(true)
+  }
+
+  async function handleSaveName(event) {
+    event.preventDefault()
+    const { data: result } = await runUpdateName({
+      variables: { firstName: firstNameDraft, lastName: lastNameDraft },
+    })
+    updateUser({
+      firstName: result.updateName.firstName,
+      lastName: result.updateName.lastName,
+    })
+    setIsEditingName(false)
   }
 
   return (
@@ -28,13 +67,97 @@ export function ProfilePage() {
 
         <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5 shadow-sm sm:p-6">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
-              <UserIcon size={28} />
+            <div
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full font-display text-lg text-white"
+              style={{ backgroundColor: user?.avatarColor ?? 'var(--color-accent)' }}
+            >
+              {getInitials(user)}
             </div>
-            <div className="min-w-0">
-              <p className="truncate font-semibold text-ink">{user?.email ?? 'Loading…'}</p>
-              <p className="text-sm text-muted">VoyApp account</p>
-            </div>
+
+            {isEditingName ? (
+              <form onSubmit={handleSaveName} className="flex min-w-0 flex-1 flex-col gap-2">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    required
+                    autoFocus
+                    value={firstNameDraft}
+                    onChange={(event) => setFirstNameDraft(event.target.value)}
+                    placeholder="First name"
+                    className="w-1/2 rounded-lg border border-border bg-surface-2 px-3 py-1.5 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
+                  />
+                  <input
+                    type="text"
+                    required
+                    value={lastNameDraft}
+                    onChange={(event) => setLastNameDraft(event.target.value)}
+                    placeholder="Last name"
+                    className="w-1/2 rounded-lg border border-border bg-surface-2 px-3 py-1.5 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
+                  />
+                </div>
+                {nameError ? <p className="text-sm text-red-600">{nameError.message}</p> : null}
+                <div className="flex items-center gap-3">
+                  <button
+                    type="submit"
+                    disabled={savingName}
+                    className="cursor-pointer rounded-lg bg-accent px-3 py-1.5 text-sm font-semibold text-accent-ink disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                  >
+                    {savingName ? 'Saving…' : 'Save'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingName(false)}
+                    className="flex cursor-pointer items-center gap-1 rounded-lg text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+                  >
+                    <XIcon size={14} />
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-ink">
+                    {user ? `${user.firstName} ${user.lastName}` : 'Loading…'}
+                  </p>
+                  <p className="truncate text-sm text-muted">{user?.email}</p>
+                </div>
+                {user ? (
+                  <button
+                    type="button"
+                    onClick={startEditingName}
+                    aria-label="Edit name"
+                    className="cursor-pointer rounded-lg p-2 text-muted hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+                  >
+                    <PencilIcon size={16} />
+                  </button>
+                ) : null}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-5 shadow-sm sm:p-6">
+          <h2 className="font-semibold text-ink">Avatar color</h2>
+          {colorError ? <p className="text-sm text-red-600">{colorError.message}</p> : null}
+          <div className="flex flex-wrap gap-3">
+            {(data?.avatarColorOptions ?? []).map((color) => {
+              const isSelected = color === user?.avatarColor
+              return (
+                <button
+                  key={color}
+                  type="button"
+                  disabled={savingColor}
+                  onClick={() => handlePickColor(color)}
+                  aria-label={`Use ${color} as avatar color`}
+                  aria-pressed={isSelected}
+                  className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                  style={{ backgroundColor: color }}
+                >
+                  {isSelected ? <CheckIcon size={18} className="text-white" /> : null}
+                </button>
+              )
+            })}
           </div>
         </div>
 

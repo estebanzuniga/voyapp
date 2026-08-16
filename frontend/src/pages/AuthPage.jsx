@@ -27,6 +27,8 @@ const COPY = {
 export function AuthPage({ mode }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const { login } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -41,7 +43,9 @@ export function AuthPage({ mode }) {
 
   async function handleSubmit(event) {
     event.preventDefault()
-    const { data } = await runMutation({ variables: { email, password } })
+    const variables =
+      mode === 'signup' ? { email, password, firstName, lastName } : { email, password }
+    const { data } = await runMutation({ variables })
     await login(data[mode])
     navigate(redirectTo)
   }
@@ -59,6 +63,41 @@ export function AuthPage({ mode }) {
           <p className="mb-8 max-w-[34ch] text-muted">{copy.subtext}</p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            {mode === 'signup' ? (
+              <div className="flex gap-3">
+                <div className="flex flex-1 flex-col gap-1">
+                  <label htmlFor="firstName" className="text-sm font-semibold text-ink">
+                    First name
+                  </label>
+                  <input
+                    id="firstName"
+                    type="text"
+                    required
+                    value={firstName}
+                    onChange={(event) => setFirstName(event.target.value)}
+                    placeholder="Ada"
+                    autoComplete="given-name"
+                    className="rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
+                  />
+                </div>
+                <div className="flex flex-1 flex-col gap-1">
+                  <label htmlFor="lastName" className="text-sm font-semibold text-ink">
+                    Last name
+                  </label>
+                  <input
+                    id="lastName"
+                    type="text"
+                    required
+                    value={lastName}
+                    onChange={(event) => setLastName(event.target.value)}
+                    placeholder="Lovelace"
+                    autoComplete="family-name"
+                    className="rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
+                  />
+                </div>
+              </div>
+            ) : null}
+
             <div className="flex flex-col gap-1">
               <label htmlFor="email" className="text-sm font-semibold text-ink">
                 Email

@@ -305,7 +305,13 @@ async def test_accept_share_invite_enforces_max_collaborators(session, auth_cont
     token = link_result.data["createShareLink"]["token"]
 
     async def accept_as_new_user(index):
-        new_user = UserModel(email=f"guest{index}@example.com", password_hash=hash_password("password123"))
+        new_user = UserModel(
+            email=f"guest{index}@example.com",
+            password_hash=hash_password("password123"),
+            first_name="Guest",
+            last_name=str(index),
+            avatar_color="#3b82f6",
+        )
         session.add(new_user)
         await session.commit()
         return await schema.execute(

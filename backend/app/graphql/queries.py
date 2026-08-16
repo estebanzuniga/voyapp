@@ -8,6 +8,7 @@ from app.graphql.types.user import User
 from app.models.trip import Trip as TripModel
 from app.models.trip_collaborator import TripCollaborator as TripCollaboratorModel
 from app.models.trip_share_link import TripShareLink as TripShareLinkModel
+from app.models.user import AVATAR_COLORS
 
 
 @strawberry.type
@@ -15,6 +16,14 @@ class Query:
     @strawberry.field
     def hello(self) -> str:
         return "Hello, Voyapp!"
+
+    @strawberry.field
+    def avatar_color_options(self) -> list[str]:
+        # Backend stays the single source of truth for the palette (also
+        # used to validate `updateAvatarColor`) - the profile page's color
+        # picker renders whatever this returns instead of hardcoding its
+        # own copy of the list.
+        return list(AVATAR_COLORS)
 
     @strawberry.field
     async def me(self, info: strawberry.Info) -> User:

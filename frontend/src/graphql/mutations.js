@@ -1,12 +1,15 @@
 import { gql } from '@apollo/client'
 
 export const SIGNUP_MUTATION = gql`
-  mutation Signup($email: String!, $password: String!) {
-    signup(email: $email, password: $password) {
+  mutation Signup($email: String!, $password: String!, $firstName: String!, $lastName: String!) {
+    signup(email: $email, password: $password, firstName: $firstName, lastName: $lastName) {
       token
       user {
         id
         email
+        firstName
+        lastName
+        avatarColor
       }
     }
   }
@@ -19,7 +22,29 @@ export const LOGIN_MUTATION = gql`
       user {
         id
         email
+        firstName
+        lastName
+        avatarColor
       }
+    }
+  }
+`
+
+export const UPDATE_NAME_MUTATION = gql`
+  mutation UpdateName($firstName: String!, $lastName: String!) {
+    updateName(firstName: $firstName, lastName: $lastName) {
+      id
+      firstName
+      lastName
+    }
+  }
+`
+
+export const UPDATE_AVATAR_COLOR_MUTATION = gql`
+  mutation UpdateAvatarColor($avatarColor: String!) {
+    updateAvatarColor(avatarColor: $avatarColor) {
+      id
+      avatarColor
     }
   }
 `
