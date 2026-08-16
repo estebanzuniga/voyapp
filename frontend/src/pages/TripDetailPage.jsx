@@ -16,11 +16,67 @@ import { formatDate, formatDateRange, enumerateDates } from '../lib/dates'
 import { DayCard, StopDragPreview } from '../components/DayCard'
 import { Skeleton } from '../components/Skeleton'
 import { ShareModal } from '../components/ShareModal'
-import { ArrowLeftIcon, EyeIcon, PlusIcon, ShareIcon } from '../components/Icons'
+import { ArrowLeftIcon, ChevronDownIcon, EyeIcon, PlusIcon, ShareIcon } from '../components/Icons'
 
 function findContainerId(stopsByDay, stopId) {
   return Object.keys(stopsByDay).find((dayId) =>
     stopsByDay[dayId].some((stop) => stop.id === stopId),
+  )
+}
+
+// A run of one missing date renders as a single "Add <date>" button - no
+// point collapsing one thing. Two or more missing dates in a row collapse
+// behind a "N days pending" toggle, so a big gap doesn't dump a wall of
+// buttons between the days on either side of it.
+function AddDayGap({ dates, addingDate, onAddDay }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  if (dates.length === 1) {
+    const date = dates[0]
+    return (
+      <button
+        type="button"
+        disabled={addingDate === date}
+        onClick={() => onAddDay(date)}
+        className="flex cursor-pointer items-center gap-1.5 self-start rounded-lg border border-dashed border-border px-4 py-2 text-sm font-semibold text-muted hover:border-accent hover:text-accent disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
+      >
+        <PlusIcon size={14} />
+        Add {formatDate(date)}
+      </button>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-dashed border-border p-3">
+      <button
+        type="button"
+        onClick={() => setIsExpanded((prev) => !prev)}
+        aria-expanded={isExpanded}
+        className="flex cursor-pointer items-center gap-1 self-start rounded-lg text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+      >
+        {dates.length} days pending
+        <ChevronDownIcon
+          size={14}
+          className={isExpanded ? 'rotate-180 transition-transform' : 'transition-transform'}
+        />
+      </button>
+      {isExpanded ? (
+        <div className="flex max-h-64 flex-wrap gap-2 overflow-y-auto">
+          {dates.map((date) => (
+            <button
+              key={date}
+              type="button"
+              disabled={addingDate === date}
+              onClick={() => onAddDay(date)}
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-ink hover:border-accent disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              <PlusIcon size={14} />
+              {addingDate === date ? 'Adding…' : formatDate(date)}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -143,10 +199,29 @@ export function TripDetailPage() {
     }
   }
 
-  const existingDates = new Set(trip?.days.map((day) => day.date) ?? [])
-  const missingDates = trip
-    ? enumerateDates(trip.startDate, trip.endDate).filter((date) => !existingDates.has(date))
-    : []
+  // Walk every date in the trip range and interleave existing days with runs
+  // of missing dates, so "add day 2" renders between day 1 and day 3 instead
+  // of every missing date being dumped into one section after all the days.
+  const dayByDate = new Map((trip?.days ?? []).map((day) => [day.date, day]))
+  const timeline = []
+  if (trip) {
+    let pendingGap = []
+    for (const date of enumerateDates(trip.startDate, trip.endDate)) {
+      const day = dayByDate.get(date)
+      if (day) {
+        if (pendingGap.length > 0) {
+          timeline.push({ type: 'gap', dates: pendingGap })
+          pendingGap = []
+        }
+        timeline.push({ type: 'day', day })
+      } else {
+        pendingGap.push(date)
+      }
+    }
+    if (pendingGap.length > 0) {
+      timeline.push({ type: 'gap', dates: pendingGap })
+    }
+  }
 
   return (
     <div className="min-h-dvh bg-bg px-4 pb-8 pt-4 sm:px-8 sm:pt-6 lg:px-12">
@@ -210,10 +285,11 @@ export function TripDetailPage() {
             {isShareOpen ? <ShareModal tripId={id} onClose={() => setIsShareOpen(false)} /> : null}
 
             {dragError ? <p className="text-sm text-red-600">{dragError}</p> : null}
+            {addDayError ? <p className="text-sm text-red-600">{addDayError}</p> : null}
 
-            {trip.days.length === 0 ? (
-              <p className="text-muted">No days added yet.</p>
-            ) : (
+            {trip.days.length === 0 ? <p className="text-muted">No days added yet.</p> : null}
+
+            {timeline.length > 0 ? (
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCorners}
@@ -221,39 +297,32 @@ export function TripDetailPage() {
                 onDragEnd={handleDragEnd}
               >
                 <div className="flex flex-col gap-4">
-                  {trip.days.map((day) => (
-                    <DayCard
-                      key={day.id}
-                      day={day}
-                      stops={stopsByDay[day.id] ?? day.stops}
-                      tripId={id}
-                      canEdit={canEdit}
-                    />
-                  ))}
+                  {timeline.map((item) =>
+                    item.type === 'day' ? (
+                      <DayCard
+                        key={item.day.id}
+                        day={item.day}
+                        stops={stopsByDay[item.day.id] ?? item.day.stops}
+                        tripId={id}
+                        canEdit={canEdit}
+                      />
+                    ) : canEdit ? (
+                      // Keyed by the full date range, not just the first date: when
+                      // adding a day splits this gap in two, each half needs a fresh
+                      // key (and therefore a fresh, collapsed isExpanded state) rather
+                      // than reusing the old gap's key/state for whichever half kept
+                      // the same start date.
+                      <AddDayGap
+                        key={`gap:${item.dates.join(',')}`}
+                        dates={item.dates}
+                        addingDate={addingDate}
+                        onAddDay={handleAddDay}
+                      />
+                    ) : null,
+                  )}
                 </div>
                 <DragOverlay>{activeStop ? <StopDragPreview stop={activeStop} /> : null}</DragOverlay>
               </DndContext>
-            )}
-
-            {canEdit && missingDates.length > 0 ? (
-              <div className="flex flex-col gap-3">
-                <h2 className="text-sm font-semibold text-muted">Start a day</h2>
-                {addDayError ? <p className="text-sm text-red-600">{addDayError}</p> : null}
-                <div className="flex flex-wrap gap-2">
-                  {missingDates.map((date) => (
-                    <button
-                      key={date}
-                      type="button"
-                      disabled={addingDate === date}
-                      onClick={() => handleAddDay(date)}
-                      className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-ink hover:border-accent disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
-                    >
-                      <PlusIcon size={14} />
-                      {addingDate === date ? 'Adding…' : formatDate(date)}
-                    </button>
-                  ))}
-                </div>
-              </div>
             ) : null}
           </>
         ) : null}
