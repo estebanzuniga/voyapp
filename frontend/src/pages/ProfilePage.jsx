@@ -5,7 +5,8 @@ import { useAuth } from '../hooks/useAuth'
 import { AVATAR_COLOR_OPTIONS_QUERY } from '../graphql/queries'
 import { UPDATE_AVATAR_COLOR_MUTATION, UPDATE_NAME_MUTATION } from '../graphql/mutations'
 import { getInitials } from '../lib/avatar'
-import { ArrowLeftIcon, CheckIcon, LogOutIcon, PencilIcon, XIcon } from '../components/Icons'
+import { ChangePasswordModal } from '../components/ChangePasswordModal'
+import { ArrowLeftIcon, CheckIcon, KeyIcon, LogOutIcon, PencilIcon, XIcon } from '../components/Icons'
 
 export function ProfilePage() {
   const { user, logout, updateUser } = useAuth()
@@ -20,6 +21,7 @@ export function ProfilePage() {
   const [runUpdateName, { loading: savingName, error: nameError }] = useMutation(
     UPDATE_NAME_MUTATION,
   )
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
 
   const handleLogout = async () => {
     await logout()
@@ -160,6 +162,21 @@ export function ProfilePage() {
             })}
           </div>
         </div>
+
+        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm sm:p-6">
+          <button
+            type="button"
+            onClick={() => setIsChangingPassword(true)}
+            className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border px-4 py-2.5 font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto sm:justify-start sm:border-none sm:px-0 sm:py-0"
+          >
+            <KeyIcon size={16} />
+            Change password
+          </button>
+        </div>
+
+        {isChangingPassword ? (
+          <ChangePasswordModal onClose={() => setIsChangingPassword(false)} />
+        ) : null}
 
         <div className="rounded-xl border border-border bg-surface p-5 shadow-sm sm:p-6">
           <button

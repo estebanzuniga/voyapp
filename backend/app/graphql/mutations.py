@@ -382,6 +382,27 @@ class Mutation:
         return User.from_model(user)
 
     @strawberry.mutation
+    async def change_password(
+        self, info: strawberry.Info, current_password: str, new_password: str
+    ) -> bool:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        if not verify_password(current_password, user.password_hash):
+            raise Exception("Current password is incorrect")
+
+        # Same floor as the signup form's `minLength={8}` - enforced here too
+        # since a GraphQL client isn't bound by the frontend's HTML validation.
+        if len(new_password) < 8:
+            raise Exception("New password must be at least 8 characters")
+
+        session = info.context.session
+        user.password_hash = hash_password(new_password)
+        await session.commit()
+        return True
+
+    @strawberry.mutation
     async def update_avatar_color(self, info: strawberry.Info, avatar_color: str) -> User:
         user = info.context.current_user
         if user is None:

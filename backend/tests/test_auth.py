@@ -204,6 +204,69 @@ async def test_update_name_requires_auth(context):
     assert "Not authenticated" in result.errors[0].message
 
 
+CHANGE_PASSWORD = """
+mutation($currentPassword: String!, $newPassword: String!) {
+  changePassword(currentPassword: $currentPassword, newPassword: $newPassword)
+}
+"""
+
+
+async def test_change_password_updates_password(auth_context, user):
+    result = await schema.execute(
+        CHANGE_PASSWORD,
+        variable_values={"currentPassword": "password123", "newPassword": "newpassword456"},
+        context_value=auth_context,
+    )
+
+    assert result.errors is None
+    assert result.data["changePassword"] is True
+
+    login_result = await schema.execute(
+        """
+        mutation($email: String!, $password: String!) {
+          login(email: $email, password: $password) { token }
+        }
+        """,
+        variable_values={"email": user.email, "password": "newpassword456"},
+        context_value=auth_context,
+    )
+    assert login_result.errors is None
+    assert login_result.data["login"]["token"]
+
+
+async def test_change_password_rejects_wrong_current_password(auth_context):
+    result = await schema.execute(
+        CHANGE_PASSWORD,
+        variable_values={"currentPassword": "wrong-password", "newPassword": "newpassword456"},
+        context_value=auth_context,
+    )
+
+    assert result.errors is not None
+    assert "Current password is incorrect" in result.errors[0].message
+
+
+async def test_change_password_rejects_short_new_password(auth_context):
+    result = await schema.execute(
+        CHANGE_PASSWORD,
+        variable_values={"currentPassword": "password123", "newPassword": "short"},
+        context_value=auth_context,
+    )
+
+    assert result.errors is not None
+    assert "New password must be at least 8 characters" in result.errors[0].message
+
+
+async def test_change_password_requires_auth(context):
+    result = await schema.execute(
+        CHANGE_PASSWORD,
+        variable_values={"currentPassword": "password123", "newPassword": "newpassword456"},
+        context_value=context,
+    )
+
+    assert result.errors is not None
+    assert "Not authenticated" in result.errors[0].message
+
+
 async def test_avatar_color_options_returns_palette(context):
     result = await schema.execute("query { avatarColorOptions }", context_value=context)
 

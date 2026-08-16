@@ -136,7 +136,7 @@ export function AuthPage({ mode }) {
             <button
               type="submit"
               disabled={loading}
-              className="mt-1 rounded-lg bg-accent px-4 py-3 font-semibold text-accent-ink disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              className="mt-1 cursor-pointer rounded-lg bg-accent px-4 py-3 font-semibold text-accent-ink disabled:cursor-default disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
               {loading ? 'Please wait…' : copy.cta}
             </button>

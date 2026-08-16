@@ -56,7 +56,7 @@ export function InviteAcceptPage() {
                 type="button"
                 disabled={accepting}
                 onClick={handleAccept}
-                className="rounded-lg bg-accent px-4 py-3 font-semibold text-accent-ink disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="cursor-pointer rounded-lg bg-accent px-4 py-3 font-semibold text-accent-ink disabled:cursor-default disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
                 {accepting ? 'Joining…' : 'Accept invite'}
               </button>

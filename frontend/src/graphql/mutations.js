@@ -40,6 +40,12 @@ export const UPDATE_NAME_MUTATION = gql`
   }
 `
 
+export const CHANGE_PASSWORD_MUTATION = gql`
+  mutation ChangePassword($currentPassword: String!, $newPassword: String!) {
+    changePassword(currentPassword: $currentPassword, newPassword: $newPassword)
+  }
+`
+
 export const UPDATE_AVATAR_COLOR_MUTATION = gql`
   mutation UpdateAvatarColor($avatarColor: String!) {
     updateAvatarColor(avatarColor: $avatarColor) {

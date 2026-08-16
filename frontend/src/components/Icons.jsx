@@ -26,6 +26,17 @@ export function PlusIcon(props) {
   )
 }
 
+export function KeyIcon(props) {
+  return (
+    <Icon {...props}>
+      <path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l1.8-1.8a1 1 0 0 0 0-1.4L18.6 4.3a1 1 0 0 0-1.4 0l-1.8 1.8a1 1 0 0 0 0 1.4Z" />
+      <path d="m14 9-8.5 8.5" />
+      <path d="m8 13 1.5 1.5" />
+      <circle cx="4.5" cy="19.5" r="1.5" />
+    </Icon>
+  )
+}
+
 export function ChevronDownIcon(props) {
   return (
     <Icon {...props}>
