@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery } from '@apollo/client/react'
 import {
@@ -91,6 +91,10 @@ export function TripDetailPage() {
   const [dragError, setDragError] = useState(null)
   const [activeStop, setActiveStop] = useState(null)
   const [isShareOpen, setIsShareOpen] = useState(false)
+  // Set at drag start, read (and cleared) at drag end - not state, since
+  // updating them shouldn't itself trigger a re-render.
+  const dragOriginDayIdRef = useRef(null)
+  const dragSnapshotRef = useRef(null)
 
   const canEdit = trip?.myPermission === 'EDITOR'
 
@@ -131,68 +135,97 @@ export function TripDetailPage() {
     const dayId = findContainerId(stopsByDay, stopId)
     if (!dayId) return
     setActiveStop(stopsByDay[dayId].find((stop) => stop.id === stopId))
+    dragOriginDayIdRef.current = dayId
+    dragSnapshotRef.current = stopsByDay
   }
 
-  async function handleDragEnd(event) {
-    try {
-      await moveOrReorder(event)
-    } finally {
-      setActiveStop(null)
-    }
-  }
-
-  async function moveOrReorder(event) {
+  // Fires continuously while dragging. When the stop is hovered over a
+  // *different* day than the one it currently lives in, move it into that
+  // day's array right away - that's what makes @dnd-kit reserve a gap
+  // (placeholder) for it there while still dragging, instead of the target
+  // day only updating once the stop is dropped. Reordering within the same
+  // day is still handled by @dnd-kit itself purely visually, so there's
+  // nothing to do here when active and over share a day.
+  function handleDragOver(event) {
     const { active, over } = event
     if (!over) return
 
     const activeStopId = active.id
-    const sourceDayId = findContainerId(stopsByDay, activeStopId)
-    if (!sourceDayId) return
+    const activeDayId = findContainerId(stopsByDay, activeStopId)
+    if (!activeDayId) return
 
     const overIsDayContainer = typeof over.id === 'string' && over.id.startsWith('day:')
-    const targetDayId = overIsDayContainer ? over.id.slice(4) : findContainerId(stopsByDay, over.id)
-    if (!targetDayId) return
+    const overDayId = overIsDayContainer ? over.id.slice(4) : findContainerId(stopsByDay, over.id)
+    if (!overDayId || activeDayId === overDayId) return
 
-    const sourceList = stopsByDay[sourceDayId]
-    const activeIndex = sourceList.findIndex((stop) => stop.id === activeStopId)
-    const movingStop = sourceList[activeIndex]
-    const previousStopsByDay = stopsByDay
+    setStopsByDay((prev) => {
+      const activeList = prev[activeDayId]
+      const overList = prev[overDayId]
+      const activeIndex = activeList.findIndex((stop) => stop.id === activeStopId)
+      if (activeIndex === -1) return prev
+      const movingStop = activeList[activeIndex]
 
-    if (sourceDayId === targetDayId) {
       const overIndex = overIsDayContainer
-        ? sourceList.length - 1
-        : sourceList.findIndex((stop) => stop.id === over.id)
-      if (activeIndex === overIndex) return
+        ? overList.length
+        : overList.findIndex((stop) => stop.id === over.id)
 
-      const reordered = arrayMove(sourceList, activeIndex, overIndex)
-      setStopsByDay((prev) => ({ ...prev, [sourceDayId]: reordered }))
-      setDragError(null)
-      try {
-        await runReorderStops({
-          variables: { dayId: sourceDayId, stopIds: reordered.map((stop) => stop.id) },
-        })
-      } catch (err) {
-        setStopsByDay(previousStopsByDay)
-        setDragError(err.message)
-      }
-      return
-    }
+      const newActiveList = activeList.filter((stop) => stop.id !== activeStopId)
+      const newOverList = [...overList]
+      newOverList.splice(overIndex === -1 ? overList.length : overIndex, 0, movingStop)
 
-    const targetList = stopsByDay[targetDayId]
-    const insertAt = overIsDayContainer
-      ? targetList.length
-      : targetList.findIndex((stop) => stop.id === over.id)
+      return { ...prev, [activeDayId]: newActiveList, [overDayId]: newOverList }
+    })
+  }
 
-    const newSource = sourceList.filter((stop) => stop.id !== activeStopId)
-    const newTarget = [...targetList]
-    newTarget.splice(insertAt, 0, movingStop)
-
-    setStopsByDay((prev) => ({ ...prev, [sourceDayId]: newSource, [targetDayId]: newTarget }))
-    setDragError(null)
+  async function handleDragEnd(event) {
     try {
-      await runMoveStop({
-        variables: { stopId: activeStopId, toDayId: targetDayId, toIndex: insertAt },
-      })
+      await finalizeDrag(event)
+    } finally {
+      setActiveStop(null)
+      dragOriginDayIdRef.current = null
+      dragSnapshotRef.current = null
+    }
+  }
+
+  // By the time this runs, onDragOver has already relocated the stop into
+  // whichever day it's being dropped on - so all that's left is figuring out
+  // its final index within that day's (already-current) array from `over`,
+  // then persisting: reorderStops if it never left its original day,
+  // moveStop if onDragOver moved it into a different one.
+  async function finalizeDrag(event) {
+    const { active, over } = event
+    const originDayId = dragOriginDayIdRef.current
+    const previousStopsByDay = dragSnapshotRef.current
+    if (!over || !originDayId || !previousStopsByDay) return
+
+    const activeStopId = active.id
+    const currentDayId = findContainerId(stopsByDay, activeStopId)
+    if (!currentDayId) return
+
+    const list = stopsByDay[currentDayId]
+    const activeIndex = list.findIndex((stop) => stop.id === activeStopId)
+    if (activeIndex === -1) return
+
+    const overIsDayContainer = typeof over.id === 'string' && over.id.startsWith('day:')
+    const overIndex = overIsDayContainer ? list.length - 1 : list.findIndex((stop) => stop.id === over.id)
+    const finalIndex = overIndex === -1 ? list.length - 1 : overIndex
+
+    if (currentDayId === originDayId && activeIndex === finalIndex) return
+
+    const reordered = arrayMove(list, activeIndex, finalIndex)
+    setStopsByDay((prev) => ({ ...prev, [currentDayId]: reordered }))
+    setDragError(null)
+
+    try {
+      if (currentDayId === originDayId) {
+        await runReorderStops({
+          variables: { dayId: currentDayId, stopIds: reordered.map((stop) => stop.id) },
+        })
+      } else {
+        await runMoveStop({
+          variables: { stopId: activeStopId, toDayId: currentDayId, toIndex: finalIndex },
+        })
+      }
     } catch (err) {
       setStopsByDay(previousStopsByDay)
       setDragError(err.message)
@@ -294,6 +327,7 @@ export function TripDetailPage() {
                 sensors={sensors}
                 collisionDetection={closestCorners}
                 onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
               >
                 <div className="flex flex-col gap-4">
