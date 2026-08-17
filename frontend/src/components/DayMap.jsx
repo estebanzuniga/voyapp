@@ -46,7 +46,7 @@ export function DayMap({ stops }) {
   if (positions.length === 0) return null
 
   return (
-    <MapContainer center={positions[0]} zoom={SINGLE_STOP_ZOOM} className="h-full w-full" scrollWheelZoom={false}>
+    <MapContainer center={positions[0]} zoom={SINGLE_STOP_ZOOM} className="h-full w-full" scrollWheelZoom>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
