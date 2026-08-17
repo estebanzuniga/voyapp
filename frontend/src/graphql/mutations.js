@@ -87,6 +87,8 @@ export const ADD_STOP_MUTATION = gql`
     $location: LocationInput!
     $notes: String
     $startTime: Time
+    $isImportant: Boolean!
+    $isOptional: Boolean!
   ) {
     addStop(
       dayId: $dayId
@@ -94,6 +96,8 @@ export const ADD_STOP_MUTATION = gql`
       location: $location
       notes: $notes
       startTime: $startTime
+      isImportant: $isImportant
+      isOptional: $isOptional
     ) {
       id
     }
@@ -107,6 +111,8 @@ export const UPDATE_STOP_MUTATION = gql`
     $location: LocationInput!
     $notes: String
     $startTime: Time
+    $isImportant: Boolean!
+    $isOptional: Boolean!
   ) {
     updateStop(
       id: $id
@@ -114,11 +120,15 @@ export const UPDATE_STOP_MUTATION = gql`
       location: $location
       notes: $notes
       startTime: $startTime
+      isImportant: $isImportant
+      isOptional: $isOptional
     ) {
       id
       name
       notes
       startTime
+      isImportant
+      isOptional
       location {
         lat
         lng

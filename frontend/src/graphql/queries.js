@@ -49,6 +49,8 @@ export const TRIP_QUERY = gql`
           notes
           startTime
           orderIndex
+          isImportant
+          isOptional
           location {
             lat
             lng

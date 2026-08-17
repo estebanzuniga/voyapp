@@ -25,6 +25,8 @@ class Stop:
     notes: str | None
     start_time: time | None
     order_index: int
+    is_important: bool
+    is_optional: bool
 
     @classmethod
     def from_model(cls, stop: StopModel) -> "Stop":
@@ -35,4 +37,6 @@ class Stop:
             notes=stop.notes,
             start_time=stop.start_time,
             order_index=stop.order_index,
+            is_important=stop.is_important,
+            is_optional=stop.is_optional,
         )

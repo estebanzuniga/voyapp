@@ -142,6 +142,8 @@ class Mutation:
         location: LocationInput,
         notes: str | None = None,
         start_time: time | None = None,
+        is_important: bool = False,
+        is_optional: bool = False,
     ) -> Stop:
         user = info.context.current_user
         if user is None:
@@ -169,6 +171,8 @@ class Mutation:
             order_index=next_index + 1,
             notes=notes,
             start_time=start_time,
+            is_important=is_important,
+            is_optional=is_optional,
         )
         session.add(stop)
         await session.commit()
@@ -268,6 +272,8 @@ class Mutation:
         location: LocationInput,
         notes: str | None = None,
         start_time: time | None = None,
+        is_important: bool = False,
+        is_optional: bool = False,
     ) -> Stop:
         user = info.context.current_user
         if user is None:
@@ -290,10 +296,12 @@ class Mutation:
         stop.lng = location.lng
         # Like name/location, these are a full replace rather than a partial
         # patch - the edit form always sends its current field values
-        # (including `None` for a field the user cleared), so there's no
-        # "unset" case to distinguish from "leave unchanged" here.
+        # (including `None`/`False` for a field the user cleared), so
+        # there's no "unset" case to distinguish from "leave unchanged" here.
         stop.notes = notes
         stop.start_time = start_time
+        stop.is_important = is_important
+        stop.is_optional = is_optional
         await session.commit()
         return Stop.from_model(stop)
 
@@ -335,6 +343,8 @@ class Mutation:
             order_index=new_index,
             notes=stop.notes,
             start_time=stop.start_time,
+            is_important=stop.is_important,
+            is_optional=stop.is_optional,
         )
         session.add(duplicate)
         await session.commit()

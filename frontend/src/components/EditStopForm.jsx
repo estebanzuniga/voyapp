@@ -15,6 +15,8 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
   // understands "HH:MM" - trim the seconds off going in, the backend adds
   // them back on save (parsing "HH:MM" as a time defaults seconds to :00).
   const [startTime, setStartTime] = useState(stop.startTime?.slice(0, 5) ?? '')
+  const [isImportant, setIsImportant] = useState(stop.isImportant)
+  const [isOptional, setIsOptional] = useState(stop.isOptional)
   const [runUpdateStop, { loading, error }] = useMutation(UPDATE_STOP_MUTATION, {
     refetchQueries: [{ query: TRIP_QUERY, variables: { id: tripId } }],
     awaitRefetchQueries: true,
@@ -30,6 +32,8 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
         location: { lat, lng },
         notes: notes.trim() || null,
         startTime: startTime || null,
+        isImportant,
+        isOptional,
       },
     })
     onDone()
@@ -73,6 +77,28 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
           rows={2}
           className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
         />
+      </div>
+
+      <div className="flex gap-4">
+        <span className="text-sm text-ink">This field is: </span>
+        <label className="flex cursor-pointer items-center gap-1.5 text-sm text-ink">
+          <input
+            type="checkbox"
+            checked={isImportant}
+            onChange={(event) => setIsImportant(event.target.checked)}
+            className="cursor-pointer"
+          />
+          Important
+        </label>
+        <label className="flex cursor-pointer items-center gap-1.5 text-sm text-ink">
+          <input
+            type="checkbox"
+            checked={isOptional}
+            onChange={(event) => setIsOptional(event.target.checked)}
+            className="cursor-pointer"
+          />
+          Optional
+        </label>
       </div>
 
       {error ? <p className="text-sm text-red-600">{error.message}</p> : null}

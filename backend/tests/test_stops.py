@@ -330,3 +330,131 @@ async def test_duplicate_stop_rejects_other_users_stop(session, auth_context, ot
 
     assert result.errors is not None
     assert "Stop not found" in result.errors[0].message
+
+
+async def test_add_stop_defaults_flags_to_false(auth_context):
+    day_id = await create_trip_and_day(auth_context)
+
+    result = await schema.execute(
+        """
+        mutation($dayId: ID!, $name: String!, $location: LocationInput!) {
+          addStop(dayId: $dayId, name: $name, location: $location) { isImportant isOptional }
+        }
+        """,
+        variable_values={"dayId": day_id, "name": "Shibuya", "location": LOCATION},
+        context_value=auth_context,
+    )
+
+    assert result.errors is None
+    assert result.data["addStop"]["isImportant"] is False
+    assert result.data["addStop"]["isOptional"] is False
+
+
+async def test_add_stop_accepts_important_and_optional_flags(auth_context):
+    day_id = await create_trip_and_day(auth_context)
+
+    result = await schema.execute(
+        """
+        mutation($dayId: ID!, $name: String!, $location: LocationInput!, $isImportant: Boolean!, $isOptional: Boolean!) {
+          addStop(
+            dayId: $dayId
+            name: $name
+            location: $location
+            isImportant: $isImportant
+            isOptional: $isOptional
+          ) {
+            isImportant
+            isOptional
+          }
+        }
+        """,
+        variable_values={
+            "dayId": day_id,
+            "name": "Shibuya",
+            "location": LOCATION,
+            "isImportant": True,
+            "isOptional": True,
+        },
+        context_value=auth_context,
+    )
+
+    assert result.errors is None
+    assert result.data["addStop"]["isImportant"] is True
+    assert result.data["addStop"]["isOptional"] is True
+
+
+async def test_update_stop_changes_important_and_optional_flags(auth_context):
+    day_id = await create_trip_and_day(auth_context)
+    stop = await add_stop(auth_context, day_id, "Shibuya")
+
+    result = await schema.execute(
+        """
+        mutation($id: ID!, $name: String!, $location: LocationInput!, $isImportant: Boolean!, $isOptional: Boolean!) {
+          updateStop(
+            id: $id
+            name: $name
+            location: $location
+            isImportant: $isImportant
+            isOptional: $isOptional
+          ) {
+            isImportant
+            isOptional
+          }
+        }
+        """,
+        variable_values={
+            "id": stop["id"],
+            "name": stop["name"],
+            "location": LOCATION,
+            "isImportant": True,
+            "isOptional": False,
+        },
+        context_value=auth_context,
+    )
+
+    assert result.errors is None
+    assert result.data["updateStop"]["isImportant"] is True
+    assert result.data["updateStop"]["isOptional"] is False
+
+
+async def test_duplicate_stop_copies_important_and_optional_flags(auth_context):
+    day_id = await create_trip_and_day(auth_context)
+    add_result = await schema.execute(
+        """
+        mutation($dayId: ID!, $name: String!, $location: LocationInput!, $isImportant: Boolean!, $isOptional: Boolean!) {
+          addStop(
+            dayId: $dayId
+            name: $name
+            location: $location
+            isImportant: $isImportant
+            isOptional: $isOptional
+          ) {
+            id
+          }
+        }
+        """,
+        variable_values={
+            "dayId": day_id,
+            "name": "Shibuya",
+            "location": LOCATION,
+            "isImportant": True,
+            "isOptional": True,
+        },
+        context_value=auth_context,
+    )
+    assert add_result.errors is None
+    stop_id = add_result.data["addStop"]["id"]
+
+    result = await schema.execute(
+        """
+        mutation($id: ID!) {
+          duplicateStop(id: $id) { isImportant isOptional }
+        }
+        """,
+        variable_values={"id": stop_id},
+        context_value=auth_context,
+    )
+
+    assert result.errors is None
+    assert result.data["duplicateStop"]["isImportant"] is True
+    assert result.data["duplicateStop"]["isOptional"] is True

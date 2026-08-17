@@ -12,6 +12,8 @@ export function AddStopForm({ dayId, tripId, onDone }) {
   const [lng, setLng] = useState(null)
   const [notes, setNotes] = useState('')
   const [startTime, setStartTime] = useState('')
+  const [isImportant, setIsImportant] = useState(false)
+  const [isOptional, setIsOptional] = useState(false)
   const [runAddStop, { loading, error }] = useMutation(ADD_STOP_MUTATION, {
     refetchQueries: [{ query: TRIP_QUERY, variables: { id: tripId } }],
     awaitRefetchQueries: true,
@@ -27,6 +29,8 @@ export function AddStopForm({ dayId, tripId, onDone }) {
         location: { lat, lng },
         notes: notes.trim() || null,
         startTime: startTime || null,
+        isImportant,
+        isOptional,
       },
     })
     onDone()
@@ -70,6 +74,28 @@ export function AddStopForm({ dayId, tripId, onDone }) {
           rows={2}
           className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
         />
+      </div>
+
+      <div className="flex gap-4">
+        <span className="text-sm text-ink">This field is: </span>
+        <label className="flex cursor-pointer items-center gap-1.5 text-sm text-ink">
+          <input
+            type="checkbox"
+            checked={isImportant}
+            onChange={(event) => setIsImportant(event.target.checked)}
+            className="cursor-pointer"
+          />
+          Important
+        </label>
+        <label className="flex cursor-pointer items-center gap-1.5 text-sm text-ink">
+          <input
+            type="checkbox"
+            checked={isOptional}
+            onChange={(event) => setIsOptional(event.target.checked)}
+            className="cursor-pointer"
+          />
+          Optional
+        </label>
       </div>
 
       {error ? <p className="text-sm text-red-600">{error.message}</p> : null}
