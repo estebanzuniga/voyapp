@@ -15,6 +15,7 @@ import {
   ClockIcon,
   CopyIcon,
   GripVerticalIcon,
+  MapIcon,
   MapPinIcon,
   NotesIcon,
   PencilIcon,
@@ -22,6 +23,8 @@ import {
   StarIcon,
   TrashIcon,
 } from './Icons'
+
+const googleMapsUrl = 'https://www.google.com/maps/dir/?api=1&travelmode=walking'
 
 function StopName({ stop, t }) {
   return (
@@ -33,7 +36,7 @@ function StopName({ stop, t }) {
   )
 }
 
-function SortableStopRow({ stop, tripId, canEdit }) {
+function SortableStopRow({ stop, prevStop, tripId, canEdit }) {
   const { t } = useTranslation()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: stop.id,
@@ -126,6 +129,16 @@ function SortableStopRow({ stop, tripId, canEdit }) {
         </div>
         {canEdit ? (
           <div className="flex items-center gap-2">
+            { prevStop && (
+              <button
+                type="button"
+                onClick={() => window.open(`${googleMapsUrl}&origin=${prevStop.location.lat},${prevStop.location.lng}&destination=${stop.location.lat},${stop.location.lng}`, '_blank')}
+                aria-label={t('dayCard.howToGetToAria', { name: stop.name })}
+                className="cursor-pointer rounded-lg text-muted hover:bg-surface hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                <MapIcon size={16} />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setIsEditing(true)}
@@ -293,8 +306,14 @@ export function DayCard({ day, stops, tripId, canEdit }) {
               {canEdit ? t('dayCard.dragHere') : t('dayCard.noStopsYet')}
             </li>
           ) : (
-            stops.map((stop) => (
-              <SortableStopRow key={stop.id} stop={stop} tripId={tripId} canEdit={canEdit} />
+            stops.map((stop, index) => (
+              <SortableStopRow
+                key={stop.id}
+                stop={stop}
+                prevStop={index > 0 ? stops[index - 1] : null}
+                tripId={tripId}
+                canEdit={canEdit}
+              />
             ))
           )}
         </ul>

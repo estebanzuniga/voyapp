@@ -132,6 +132,7 @@ export const translations = {
     'dayCard.viewDayMap': 'View day map',
     'dayCard.deleteDay': 'Delete day',
     'dayCard.reorderAria': 'Reorder stop',
+    'dayCard.howToGetToAria': 'How to get to {name}',
     'dayCard.editAria': 'Edit {name}',
     'dayCard.duplicateAria': 'Duplicate {name}',
     'dayCard.removeAria': 'Remove {name}',
