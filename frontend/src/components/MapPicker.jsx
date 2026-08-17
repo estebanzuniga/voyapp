@@ -92,7 +92,7 @@ export function MapPicker({ lat, lng, onSelect }) {
           className="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3 text-sm text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
         />
         {results.length > 0 ? (
-          <ul className="absolute z-1000 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg">
+          <ul className="absolute z-1000 mt-1 max-h-30 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg">
             {results.map((result) => (
               <li key={result.place_id}>
                 <button
@@ -109,8 +109,13 @@ export function MapPicker({ lat, lng, onSelect }) {
         {searching ? <p className="mt-1 text-xs text-muted">Searching…</p> : null}
       </div>
 
-      <div className="h-56 w-full overflow-hidden rounded-lg border border-border sm:h-64">
-        <MapContainer center={position ?? DEFAULT_CENTER} zoom={position ? SELECTED_ZOOM : DEFAULT_ZOOM} className="h-full w-full">
+      <div className="h-50 w-full overflow-hidden rounded-lg border border-border">
+        <MapContainer
+          center={position ?? DEFAULT_CENTER}
+          zoom={position ? SELECTED_ZOOM : DEFAULT_ZOOM}
+          className="h-full w-full"
+          zoomControl={false}
+        >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

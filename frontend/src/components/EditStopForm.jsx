@@ -40,7 +40,7 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3 rounded-lg border border-border bg-surface-2 p-3">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
         <label className="text-xs font-semibold text-ink">Stop name</label>
         <input
@@ -80,7 +80,7 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
       </div>
 
       <div className="flex gap-4">
-        <span className="text-sm text-ink">This field is: </span>
+        <span className="text-xs font-semibold text-ink">This field is: </span>
         <label className="flex cursor-pointer items-center gap-1.5 text-sm text-ink">
           <input
             type="checkbox"

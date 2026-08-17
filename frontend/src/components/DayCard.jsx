@@ -6,10 +6,10 @@ import { CSS } from '@dnd-kit/utilities'
 import { DELETE_DAY_MUTATION, DELETE_STOP_MUTATION, DUPLICATE_STOP_MUTATION } from '../graphql/mutations'
 import { TRIP_QUERY } from '../graphql/queries'
 import { formatFullDate, formatTime } from '../lib/dates'
-import { AddStopForm } from './AddStopForm'
+import { AddStopModal } from './AddStopModal'
 import { ConfirmDialog } from './ConfirmDialog'
 import { DayMapModal } from './DayMapModal'
-import { EditStopForm } from './EditStopForm'
+import { EditStopModal } from './EditStopModal'
 import { ClockIcon, CopyIcon, GripVerticalIcon, MapPinIcon, NotesIcon, PencilIcon, PlusIcon, TrashIcon } from './Icons'
 
 function SortableStopRow({ stop, tripId, canEdit }) {
@@ -56,19 +56,6 @@ function SortableStopRow({ stop, tripId, canEdit }) {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.6 : 1,
-  }
-
-  if (isEditing) {
-    return (
-      <li ref={setNodeRef} style={style}>
-        <EditStopForm
-          stop={stop}
-          tripId={tripId}
-          onDone={() => setIsEditing(false)}
-          onCancel={() => setIsEditing(false)}
-        />
-      </li>
-    )
   }
 
   return (
@@ -178,6 +165,10 @@ function SortableStopRow({ stop, tripId, canEdit }) {
           error={deleteError}
         />
       ) : null}
+
+      {isEditing ? (
+        <EditStopModal stop={stop} tripId={tripId} onClose={() => setIsEditing(false)} />
+      ) : null}
     </li>
   )
 }
@@ -282,18 +273,18 @@ export function DayCard({ day, stops, tripId, canEdit }) {
       </SortableContext>
 
       {canEdit ? (
-        isAddingStop ? (
-          <AddStopForm dayId={day.id} tripId={tripId} onDone={() => setIsAddingStop(false)} />
-        ) : (
-          <button
-            type="button"
-            onClick={() => setIsAddingStop(true)}
-            className="flex cursor-pointer items-center gap-1.5 self-start rounded-lg text-sm font-semibold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
-          >
-            <PlusIcon size={16} />
-            Add stop
-          </button>
-        )
+        <button
+          type="button"
+          onClick={() => setIsAddingStop(true)}
+          className="flex cursor-pointer items-center gap-1.5 self-start rounded-lg text-sm font-semibold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
+        >
+          <PlusIcon size={16} />
+          Add stop
+        </button>
+      ) : null}
+
+      {isAddingStop ? (
+        <AddStopModal dayId={day.id} tripId={tripId} onClose={() => setIsAddingStop(false)} />
       ) : null}
     </div>
   )
