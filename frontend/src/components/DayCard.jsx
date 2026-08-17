@@ -10,7 +10,17 @@ import { AddStopModal } from './AddStopModal'
 import { ConfirmDialog } from './ConfirmDialog'
 import { DayMapModal } from './DayMapModal'
 import { EditStopModal } from './EditStopModal'
-import { ClockIcon, CopyIcon, GripVerticalIcon, MapPinIcon, NotesIcon, PencilIcon, PlusIcon, TrashIcon } from './Icons'
+import {
+  ClockIcon,
+  CopyIcon,
+  GripVerticalIcon,
+  MapPinIcon,
+  NotesIcon,
+  PencilIcon,
+  PlusIcon,
+  StarIcon,
+  TrashIcon,
+} from './Icons'
 
 function SortableStopRow({ stop, tripId, canEdit }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -78,7 +88,11 @@ function SortableStopRow({ stop, tripId, canEdit }) {
       ) : null}
       <div className="flex flex-1 items-center justify-between gap-2">
         <div className="flex flex-col gap-0.5">
-          <span className="font-semibold text-ink">{stop.name}</span>
+          <span className="inline-flex items-center gap-1 font-semibold text-ink">
+            {stop.isImportant ? <StarIcon size={14} className="shrink-0 text-accent" /> : null}
+            {stop.name}
+            {stop.isOptional ? <span className="font-light text-muted">(optional)</span> : null}
+          </span>
           {stop.startTime ? (
             <span className="flex items-center gap-1 text-sm text-muted">
               <ClockIcon size={14} />
@@ -178,7 +192,11 @@ export function StopDragPreview({ stop }) {
     <div className="flex items-center gap-2 rounded-lg border border-accent bg-surface-2 px-2 py-3 shadow-lg">
       <span className="px-1 text-muted">⠿</span>
       <div className="flex flex-1 flex-col gap-0.5">
-        <span className="font-semibold text-ink">{stop.name}</span>
+        <span className="inline-flex items-center gap-1 font-semibold text-ink">
+          {stop.isImportant ? <StarIcon size={14} className="shrink-0 text-accent" /> : null}
+          {stop.name}
+          {stop.isOptional ? <span className="font-light text-muted">(optional)</span> : null}
+        </span>
         {stop.startTime ? (
           <span className="flex items-center gap-1 text-sm text-muted">
             <ClockIcon size={14} />

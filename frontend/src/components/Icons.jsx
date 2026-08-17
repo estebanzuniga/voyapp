@@ -253,6 +253,17 @@ export function ShareIcon(props) {
   )
 }
 
+export function StarIcon(props) {
+  return (
+    <Icon {...props}>
+      <path
+        d="M12 2.5l2.9 6.02 6.6.79-4.86 4.5 1.28 6.53L12 16.98l-5.92 3.36 1.28-6.53-4.86-4.5 6.6-.79L12 2.5Z"
+        fill="currentColor"
+      />
+    </Icon>
+  )
+}
+
 export function EyeIcon(props) {
   return (
     <Icon {...props}>
