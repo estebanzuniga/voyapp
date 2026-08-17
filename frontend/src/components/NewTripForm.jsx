@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useMutation } from '@apollo/client/react'
+import { useTranslation } from '../hooks/useTranslation'
 import { CREATE_TRIP_MUTATION } from '../graphql/mutations'
 import { MY_TRIPS_QUERY } from '../graphql/queries'
 import { PlusIcon, XIcon } from './Icons'
 
 export function NewTripForm({ onCreated, onCancel }) {
+  const { t } = useTranslation()
   const [title, setTitle] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -28,7 +30,7 @@ export function NewTripForm({ onCreated, onCancel }) {
     >
       <div className="flex flex-col gap-1">
         <label htmlFor="title" className="text-sm font-semibold text-ink">
-          Trip title
+          {t('newTrip.title.label')}
         </label>
         <input
           id="title"
@@ -36,7 +38,7 @@ export function NewTripForm({ onCreated, onCancel }) {
           required
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder={`Eurotrip ${currentYear}`}
+          placeholder={t('newTrip.title.placeholder', { year: currentYear })}
           className="rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
         />
       </div>
@@ -44,7 +46,7 @@ export function NewTripForm({ onCreated, onCancel }) {
       <div className="flex flex-col gap-4 sm:flex-row">
         <div className="flex flex-1 flex-col gap-1">
           <label htmlFor="startDate" className="text-sm font-semibold text-ink">
-            Start date
+            {t('newTrip.startDate.label')}
           </label>
           <input
             id="startDate"
@@ -58,7 +60,7 @@ export function NewTripForm({ onCreated, onCancel }) {
 
         <div className="flex flex-1 flex-col gap-1">
           <label htmlFor="endDate" className="text-sm font-semibold text-ink">
-            End date
+            {t('newTrip.endDate.label')}
           </label>
           <input
             id="endDate"
@@ -81,7 +83,7 @@ export function NewTripForm({ onCreated, onCancel }) {
           className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent px-4 py-2.5 font-semibold text-accent-ink disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           <PlusIcon size={18} />
-          {loading ? 'Creating…' : 'Create trip'}
+          {loading ? t('newTrip.creating') : t('newTrip.create')}
         </button>
         <button
           type="button"
@@ -89,7 +91,7 @@ export function NewTripForm({ onCreated, onCancel }) {
           className="flex cursor-pointer items-center gap-1.5 rounded-lg px-4 py-2.5 font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
         >
           <XIcon size={18} />
-          Cancel
+          {t('common.cancel')}
         </button>
       </div>
     </form>

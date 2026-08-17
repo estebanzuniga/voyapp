@@ -8,7 +8,7 @@ from app.graphql.types.user import User
 from app.models.trip import Trip as TripModel
 from app.models.trip_collaborator import TripCollaborator as TripCollaboratorModel
 from app.models.trip_share_link import TripShareLink as TripShareLinkModel
-from app.models.user import AVATAR_COLORS
+from app.models.user import AVATAR_COLORS, LANGUAGE_OPTIONS
 
 
 @strawberry.type
@@ -24,6 +24,10 @@ class Query:
         # picker renders whatever this returns instead of hardcoding its
         # own copy of the list.
         return list(AVATAR_COLORS)
+
+    @strawberry.field
+    def language_options(self) -> list[str]:
+        return list(LANGUAGE_OPTIONS)
 
     @strawberry.field
     async def me(self, info: strawberry.Info) -> User:

@@ -2,28 +2,10 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation } from '@apollo/client/react'
 import { useAuth } from '../hooks/useAuth'
+import { useTranslation } from '../hooks/useTranslation'
 import { LOGIN_MUTATION, SIGNUP_MUTATION } from '../graphql/mutations'
 import { AuthVisualPanel } from '../components/AuthVisualPanel'
 import { PasswordInput } from '../components/PasswordInput'
-
-const COPY = {
-  login: {
-    heading: 'Welcome back',
-    subtext: 'Log in to keep planning your next trip.',
-    cta: 'Log in',
-    switchPrompt: 'New to Voyapp?',
-    switchLabel: 'Create an account',
-    switchTo: '/signup',
-  },
-  signup: {
-    heading: 'Start your story',
-    subtext: 'Create an account to begin your next itinerary.',
-    cta: 'Create account',
-    switchPrompt: 'Already have an account?',
-    switchLabel: 'Log in instead',
-    switchTo: '/login',
-  },
-}
 
 export function AuthPage({ mode }) {
   const [email, setEmail] = useState('')
@@ -31,9 +13,27 @@ export function AuthPage({ mode }) {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const { login } = useAuth()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const copy = COPY[mode]
+  const copy =
+    mode === 'signup'
+      ? {
+          heading: t('auth.signup.heading'),
+          subtext: t('auth.signup.subtext'),
+          cta: t('auth.signup.cta'),
+          switchPrompt: t('auth.signup.switchPrompt'),
+          switchLabel: t('auth.signup.switchLabel'),
+          switchTo: '/login',
+        }
+      : {
+          heading: t('auth.login.heading'),
+          subtext: t('auth.login.subtext'),
+          cta: t('auth.login.cta'),
+          switchPrompt: t('auth.login.switchPrompt'),
+          switchLabel: t('auth.login.switchLabel'),
+          switchTo: '/signup',
+        }
   const [runMutation, { loading, error }] = useMutation(
     mode === 'signup' ? SIGNUP_MUTATION : LOGIN_MUTATION,
   )
@@ -53,7 +53,7 @@ export function AuthPage({ mode }) {
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1.05fr_1fr]">
-      <AuthVisualPanel tagline="Every itinerary starts with a spark of somewhere else." />
+      <AuthVisualPanel tagline={t('common.tagline')} />
 
       <div className="flex flex-col justify-center bg-surface px-8 py-12 sm:px-16">
         <div className="mx-auto w-full max-w-sm">
@@ -68,7 +68,7 @@ export function AuthPage({ mode }) {
               <div className="flex gap-3">
                 <div className="flex flex-1 flex-col gap-1">
                   <label htmlFor="firstName" className="text-sm font-semibold text-ink">
-                    First name
+                    {t('auth.firstName.label')}
                   </label>
                   <input
                     id="firstName"
@@ -76,14 +76,14 @@ export function AuthPage({ mode }) {
                     required
                     value={firstName}
                     onChange={(event) => setFirstName(event.target.value)}
-                    placeholder="Ada"
+                    placeholder={t('auth.firstName.placeholder')}
                     autoComplete="given-name"
                     className="rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
                   />
                 </div>
                 <div className="flex flex-1 flex-col gap-1">
                   <label htmlFor="lastName" className="text-sm font-semibold text-ink">
-                    Last name
+                    {t('auth.lastName.label')}
                   </label>
                   <input
                     id="lastName"
@@ -91,7 +91,7 @@ export function AuthPage({ mode }) {
                     required
                     value={lastName}
                     onChange={(event) => setLastName(event.target.value)}
-                    placeholder="Lovelace"
+                    placeholder={t('auth.lastName.placeholder')}
                     autoComplete="family-name"
                     className="rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
                   />
@@ -101,7 +101,7 @@ export function AuthPage({ mode }) {
 
             <div className="flex flex-col gap-1">
               <label htmlFor="email" className="text-sm font-semibold text-ink">
-                Email
+                {t('auth.email.label')}
               </label>
               <input
                 id="email"
@@ -109,7 +109,7 @@ export function AuthPage({ mode }) {
                 required
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@example.com"
+                placeholder={t('auth.email.placeholder')}
                 autoComplete="email"
                 className="rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
               />
@@ -118,11 +118,11 @@ export function AuthPage({ mode }) {
             <div className="flex flex-col gap-1">
               <div className="flex items-baseline justify-between">
                 <label htmlFor="password" className="text-sm font-semibold text-ink">
-                  Password
+                  {t('auth.password.label')}
                 </label>
                 {mode === 'login' ? (
                   <Link to="/forgot-password" className="text-sm font-semibold text-accent hover:underline">
-                    Forgot password?
+                    {t('auth.forgotPassword')}
                   </Link>
                 ) : null}
               </div>
@@ -145,7 +145,7 @@ export function AuthPage({ mode }) {
               disabled={loading}
               className="mt-1 cursor-pointer rounded-lg bg-accent px-4 py-3 font-semibold text-accent-ink disabled:cursor-default disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
-              {loading ? 'Please wait…' : copy.cta}
+              {loading ? t('auth.submitting') : copy.cta}
             </button>
           </form>
 

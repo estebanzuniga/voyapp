@@ -22,7 +22,7 @@ from app.models.trip import Trip as TripModel
 from app.models.trip_collaborator import MAX_COLLABORATORS_PER_TRIP
 from app.models.trip_collaborator import TripCollaborator as TripCollaboratorModel
 from app.models.trip_share_link import TripShareLink as TripShareLinkModel
-from app.models.user import AVATAR_COLORS
+from app.models.user import AVATAR_COLORS, LANGUAGE_OPTIONS
 from app.models.user import User as UserModel
 
 
@@ -468,6 +468,20 @@ class Mutation:
 
         session = info.context.session
         user.avatar_color = avatar_color
+        await session.commit()
+        return User.from_model(user)
+
+    @strawberry.mutation
+    async def update_language(self, info: strawberry.Info, language: str) -> User:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        if language not in LANGUAGE_OPTIONS:
+            raise Exception("Invalid language")
+
+        session = info.context.session
+        user.language = language
         await session.commit()
         return User.from_model(user)
 

@@ -7,6 +7,7 @@ import {
   UPDATE_COLLABORATOR_PERMISSION_MUTATION,
 } from '../graphql/mutations'
 import { TRIP_SHARING_QUERY } from '../graphql/queries'
+import { useTranslation } from '../hooks/useTranslation'
 import { ConfirmDialog } from './ConfirmDialog'
 import {
   AlertTriangleIcon,
@@ -31,16 +32,20 @@ const MAX_COLLABORATORS = 10
 // showing you a new access key's secret exactly once).
 const REVEAL_WINDOW_MS = 15000
 
-const LINK_KINDS = [
-  { permission: 'VIEWER', label: 'View-only links' },
-  { permission: 'EDITOR', label: 'Editor links' },
-]
+function useLinkKinds() {
+  const { t } = useTranslation()
+  return [
+    { permission: 'VIEWER', label: t('shareModal.viewOnlyLinks') },
+    { permission: 'EDITOR', label: t('shareModal.editorLinks') },
+  ]
+}
 
 function refetchSharing(tripId) {
   return { refetchQueries: [{ query: TRIP_SHARING_QUERY, variables: { id: tripId } }], awaitRefetchQueries: true }
 }
 
 function ShareLinkCard({ tripId, link, remainingMs }) {
+  const { t } = useTranslation()
   const [showQr, setShowQr] = useState(false)
   const [copied, setCopied] = useState(false)
   const [isConfirmingRevoke, setIsConfirmingRevoke] = useState(false)
@@ -75,7 +80,7 @@ function ShareLinkCard({ tripId, link, remainingMs }) {
         <button
           type="button"
           onClick={handleCopy}
-          aria-label="Copy link"
+          aria-label={t('shareModal.copyLinkAria')}
           className="shrink-0 cursor-pointer rounded-lg p-2 text-muted hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
         >
           {copied ? <CheckIcon size={18} /> : <CopyIcon size={18} />}
@@ -83,7 +88,7 @@ function ShareLinkCard({ tripId, link, remainingMs }) {
         <button
           type="button"
           onClick={() => setShowQr((prev) => !prev)}
-          aria-label="Show QR code"
+          aria-label={t('shareModal.showQrAria')}
           className={`shrink-0 cursor-pointer rounded-lg p-2 focus-visible:outline-2 focus-visible:outline-accent ${
             showQr ? 'bg-surface-2 text-accent' : 'text-muted hover:bg-surface-2 hover:text-ink'
           }`}
@@ -97,7 +102,7 @@ function ShareLinkCard({ tripId, link, remainingMs }) {
           <Suspense
             fallback={
               <div className="flex h-50 w-50 items-center justify-center text-sm text-muted">
-                Loading…
+                {t('common.loading')}
               </div>
             }
           >
@@ -109,22 +114,22 @@ function ShareLinkCard({ tripId, link, remainingMs }) {
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
         <span className="flex items-center gap-1 font-semibold text-accent">
           <AlertTriangleIcon size={13} />
-          Copy it now — disappears in {secondsLeft}s
+          {t('shareModal.copyNow', { seconds: secondsLeft })}
         </span>
         <button
           type="button"
           onClick={() => setIsConfirmingRevoke(true)}
           className="cursor-pointer font-semibold text-muted hover:text-red-600 focus-visible:outline-2 focus-visible:outline-accent"
         >
-          Revoke
+          {t('shareModal.revoke')}
         </button>
       </div>
 
       {isConfirmingRevoke ? (
         <ConfirmDialog
-          title="Revoke link"
-          message="Anyone who opens this specific link from now on will be turned away. Other links, and people who already joined, are unaffected."
-          confirmLabel="Revoke"
+          title={t('shareModal.revokeLinkTitle')}
+          message={t('shareModal.revokeLinkMessage')}
+          confirmLabel={t('shareModal.revoke')}
           onConfirm={handleRevoke}
           onCancel={() => setIsConfirmingRevoke(false)}
           loading={revoking}
@@ -136,6 +141,7 @@ function ShareLinkCard({ tripId, link, remainingMs }) {
 }
 
 function ShareLinkSection({ tripId, permission, label, links }) {
+  const { t } = useTranslation()
   const [runCreate, { loading: creating, error: createError }] = useMutation(
     CREATE_SHARE_LINK_MUTATION,
     refetchSharing(tripId),
@@ -169,7 +175,11 @@ function ShareLinkSection({ tripId, permission, label, links }) {
           className="flex cursor-pointer items-center gap-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-xs font-semibold text-ink hover:border-accent disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
         >
           <PlusIcon size={12} />
-          {creating ? 'Generating…' : isLocked ? `Wait ${Math.ceil(revealed[0].remainingMs / 1000)}s` : 'New link'}
+          {creating
+            ? t('shareModal.generating')
+            : isLocked
+              ? t('shareModal.waitSeconds', { seconds: Math.ceil(revealed[0].remainingMs / 1000) })
+              : t('shareModal.newLink')}
         </button>
       </div>
 
@@ -178,8 +188,10 @@ function ShareLinkSection({ tripId, permission, label, links }) {
       {revealed.length === 0 ? (
         <p className="text-sm text-muted">
           {hasHiddenLinks
-            ? "A link was generated but already shown once - generate a new one to share it again."
-            : `No ${permission === 'EDITOR' ? 'editor' : 'view-only'} links yet.`}
+            ? t('shareModal.linkAlreadyShown')
+            : t('shareModal.noLinksYet', {
+                kind: permission === 'EDITOR' ? t('shareModal.editorWord') : t('shareModal.viewOnlyWord'),
+              })}
         </p>
       ) : (
         <div className="flex flex-col gap-2">
@@ -193,6 +205,7 @@ function ShareLinkSection({ tripId, permission, label, links }) {
 }
 
 function CollaboratorRow({ tripId, collaborator }) {
+  const { t } = useTranslation()
   const [runUpdate, { loading: updating, error: updateError }] = useMutation(
     UPDATE_COLLABORATOR_PERMISSION_MUTATION,
     refetchSharing(tripId),
@@ -223,13 +236,13 @@ function CollaboratorRow({ tripId, collaborator }) {
             }
             className="rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-sm text-ink focus:outline-2 focus:outline-accent"
           >
-            <option value="VIEWER">Can view</option>
-            <option value="EDITOR">Can edit</option>
+            <option value="VIEWER">{t('shareModal.canView')}</option>
+            <option value="EDITOR">{t('shareModal.canEdit')}</option>
           </select>
           <button
             type="button"
             onClick={() => setIsConfirmingRemove(true)}
-            aria-label={`Remove ${collaborator.email}`}
+            aria-label={t('shareModal.removeAria', { email: collaborator.email })}
             className="cursor-pointer rounded-lg p-2 text-muted hover:bg-red-50 hover:text-red-600 focus-visible:outline-2 focus-visible:outline-accent"
           >
             <TrashIcon size={16} />
@@ -241,9 +254,9 @@ function CollaboratorRow({ tripId, collaborator }) {
 
       {isConfirmingRemove ? (
         <ConfirmDialog
-          title="Remove access"
-          message={`${collaborator.email} will no longer be able to view or edit this trip.`}
-          confirmLabel="Remove"
+          title={t('shareModal.removeAccessTitle')}
+          message={t('shareModal.removeAccessMessage', { email: collaborator.email })}
+          confirmLabel={t('shareModal.remove')}
           onConfirm={handleRemove}
           onCancel={() => setIsConfirmingRemove(false)}
           loading={removing}
@@ -255,6 +268,8 @@ function CollaboratorRow({ tripId, collaborator }) {
 }
 
 export function ShareModal({ tripId, onClose }) {
+  const { t } = useTranslation()
+  const linkKinds = useLinkKinds()
   const { data, loading, error } = useQuery(TRIP_SHARING_QUERY, { variables: { id: tripId } })
   const trip = data?.trip
   const linksByPermission = { VIEWER: [], EDITOR: [] }
@@ -267,7 +282,7 @@ export function ShareModal({ tripId, onClose }) {
       <button
         type="button"
         onClick={onClose}
-        aria-label="Close"
+        aria-label={t('common.close')}
         className="absolute right-2 top-2 cursor-pointer rounded-full p-2 text-muted hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
       >
         <XIcon size={18} />
@@ -275,16 +290,16 @@ export function ShareModal({ tripId, onClose }) {
 
       <div className="flex flex-col gap-5">
         <h2 className="font-display pr-6 text-lg text-ink text-balance">
-          Share {trip ? `"${trip.title}"` : ''}
+          {t('shareModal.title', { title: trip ? `"${trip.title}"` : '' })}
         </h2>
 
-        {loading ? <p className="text-sm text-muted">Loading…</p> : null}
+        {loading ? <p className="text-sm text-muted">{t('common.loading')}</p> : null}
         {error ? <p className="text-sm text-red-600">{error.message}</p> : null}
 
         {trip ? (
           <>
             <div className="flex flex-col gap-4">
-              {LINK_KINDS.map(({ permission, label }) => (
+              {linkKinds.map(({ permission, label }) => (
                 <ShareLinkSection
                   key={permission}
                   tripId={tripId}
@@ -298,10 +313,10 @@ export function ShareModal({ tripId, onClose }) {
             <div className="flex flex-col gap-2">
               <h3 className="flex items-center gap-1.5 text-sm font-semibold text-ink">
                 <UsersIcon size={16} />
-                People with access ({trip.collaborators.length}/{MAX_COLLABORATORS})
+                {t('shareModal.peopleWithAccess', { count: trip.collaborators.length, max: MAX_COLLABORATORS })}
               </h3>
               {trip.collaborators.length === 0 ? (
-                <p className="text-sm text-muted">No one has accepted an invite yet.</p>
+                <p className="text-sm text-muted">{t('shareModal.noOneAccepted')}</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {trip.collaborators.map((collaborator) => (

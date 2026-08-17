@@ -8,6 +8,7 @@ export const ME_QUERY = gql`
       firstName
       lastName
       avatarColor
+      language
     }
   }
 `
@@ -15,6 +16,12 @@ export const ME_QUERY = gql`
 export const AVATAR_COLOR_OPTIONS_QUERY = gql`
   query AvatarColorOptions {
     avatarColorOptions
+  }
+`
+
+export const LANGUAGE_OPTIONS_QUERY = gql`
+  query LanguageOptions {
+    languageOptions
   }
 `
 

@@ -10,6 +10,7 @@ class User:
     first_name: str
     last_name: str
     avatar_color: str
+    language: str
 
     @classmethod
     def from_model(cls, user: UserModel) -> "User":
@@ -19,4 +20,5 @@ class User:
             first_name=user.first_name,
             last_name=user.last_name,
             avatar_color=user.avatar_color,
+            language=user.language,
         )

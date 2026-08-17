@@ -12,6 +12,7 @@ import {
 import { arrayMove } from '@dnd-kit/sortable'
 import { TRIP_QUERY } from '../graphql/queries'
 import { ADD_DAY_MUTATION, MOVE_STOP_MUTATION, REORDER_STOPS_MUTATION } from '../graphql/mutations'
+import { useTranslation } from '../hooks/useTranslation'
 import { formatDate, formatDateRange, enumerateDates } from '../lib/dates'
 import { DayCard, StopDragPreview } from '../components/DayCard'
 import { Skeleton } from '../components/Skeleton'
@@ -28,7 +29,8 @@ function findContainerId(stopsByDay, stopId) {
 // point collapsing one thing. Two or more missing dates in a row collapse
 // behind a "N days pending" toggle, so a big gap doesn't dump a wall of
 // buttons between the days on either side of it.
-function AddDayGap({ dates, addingDate, onAddDay }) {
+function AddDayGap({ dates, addingDate, onAddDay, locale }) {
+  const { t } = useTranslation()
   const [isExpanded, setIsExpanded] = useState(false)
 
   if (dates.length === 1) {
@@ -41,7 +43,7 @@ function AddDayGap({ dates, addingDate, onAddDay }) {
         className="flex cursor-pointer items-center gap-1.5 self-start rounded-lg border border-dashed border-border px-4 py-2 text-sm font-semibold text-muted hover:border-accent hover:text-accent disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
       >
         <PlusIcon size={14} />
-        Add {formatDate(date)}
+        {t('tripDetail.addDay', { date: formatDate(date, locale) })}
       </button>
     )
   }
@@ -54,7 +56,7 @@ function AddDayGap({ dates, addingDate, onAddDay }) {
         aria-expanded={isExpanded}
         className="flex cursor-pointer items-center gap-1 self-start rounded-lg text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
       >
-        {dates.length} days pending
+        {t('tripDetail.daysPending', { count: dates.length })}
         <ChevronDownIcon
           size={14}
           className={isExpanded ? 'rotate-180 transition-transform' : 'transition-transform'}
@@ -71,7 +73,7 @@ function AddDayGap({ dates, addingDate, onAddDay }) {
               className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-ink hover:border-accent disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
             >
               <PlusIcon size={14} />
-              {addingDate === date ? 'Adding…' : formatDate(date)}
+              {addingDate === date ? t('common.adding') : formatDate(date, locale)}
             </button>
           ))}
         </div>
@@ -83,6 +85,7 @@ function AddDayGap({ dates, addingDate, onAddDay }) {
 export function TripDetailPage() {
   const { id } = useParams()
   const { data, loading, error } = useQuery(TRIP_QUERY, { variables: { id } })
+  const { t, locale } = useTranslation()
   const trip = data?.trip
 
   const [stopsByDay, setStopsByDay] = useState({})
@@ -264,7 +267,7 @@ export function TripDetailPage() {
           className="flex items-center gap-1.5 rounded-lg text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
         >
           <ArrowLeftIcon size={16} />
-          Back to trips
+          {t('tripDetail.backToTrips')}
         </Link>
 
         {loading ? (
@@ -288,18 +291,20 @@ export function TripDetailPage() {
           </div>
         ) : null}
         {error ? <p className="text-sm text-red-600">{error.message}</p> : null}
-        {!loading && !error && !trip ? <p className="text-muted">Trip not found.</p> : null}
+        {!loading && !error && !trip ? <p className="text-muted">{t('tripDetail.tripNotFound')}</p> : null}
 
         {trip ? (
           <>
             <header className="flex flex-wrap items-start justify-between gap-3">
               <div className="flex flex-col gap-1">
                 <h1 className="font-display text-2xl text-ink text-balance">{trip.title}</h1>
-                <p className="text-muted">{formatDateRange(trip.startDate, trip.endDate)}</p>
+                <p className="text-muted">{formatDateRange(trip.startDate, trip.endDate, locale)}</p>
                 {!trip.isOwner ? (
                   <span className="flex w-fit items-center gap-1.5 rounded-full bg-surface-2 px-2.5 py-1 text-xs font-semibold text-muted">
                     <EyeIcon size={14} />
-                    Shared with you — {canEdit ? 'can edit' : 'view only'}
+                    {t('tripDetail.sharedWith', {
+                      permission: canEdit ? t('tripDetail.canEdit') : t('tripDetail.viewOnly'),
+                    })}
                   </span>
                 ) : null}
               </div>
@@ -310,7 +315,7 @@ export function TripDetailPage() {
                   className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink hover:border-accent focus-visible:outline-2 focus-visible:outline-accent"
                 >
                   <ShareIcon size={16} />
-                  Share
+                  {t('tripDetail.share')}
                 </button>
               ) : null}
             </header>
@@ -320,7 +325,7 @@ export function TripDetailPage() {
             {dragError ? <p className="text-sm text-red-600">{dragError}</p> : null}
             {addDayError ? <p className="text-sm text-red-600">{addDayError}</p> : null}
 
-            {trip.days.length === 0 ? <p className="text-muted">No days added yet.</p> : null}
+            {trip.days.length === 0 ? <p className="text-muted">{t('tripDetail.noDaysYet')}</p> : null}
 
             {timeline.length > 0 ? (
               <DndContext
@@ -351,6 +356,7 @@ export function TripDetailPage() {
                         dates={item.dates}
                         addingDate={addingDate}
                         onAddDay={handleAddDay}
+                        locale={locale}
                       />
                     ) : null,
                   )}

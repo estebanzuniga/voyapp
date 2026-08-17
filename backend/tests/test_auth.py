@@ -21,7 +21,7 @@ SIGNUP = """
 mutation($email: String!, $password: String!, $firstName: String!, $lastName: String!) {
   signup(email: $email, password: $password, firstName: $firstName, lastName: $lastName) {
     token
-    user { email firstName lastName avatarColor }
+    user { email firstName lastName avatarColor language }
   }
 }
 """
@@ -289,6 +289,74 @@ async def test_avatar_color_options_returns_palette(context):
 
     assert result.errors is None
     assert "#8b5cf6" in result.data["avatarColorOptions"]
+
+
+async def test_signup_defaults_language_to_en(session, context):
+    result = await schema.execute(
+        SIGNUP,
+        variable_values={
+            "email": "lang@example.com",
+            "password": "password123",
+            "firstName": "Ada",
+            "lastName": "Lovelace",
+        },
+        context_value=context,
+    )
+
+    assert result.errors is None
+    assert result.data["signup"]["user"]["language"] == "en"
+
+
+async def test_update_language_changes_language(auth_context):
+    result = await schema.execute(
+        """
+        mutation($language: String!) {
+          updateLanguage(language: $language) { language }
+        }
+        """,
+        variable_values={"language": "es"},
+        context_value=auth_context,
+    )
+
+    assert result.errors is None
+    assert result.data["updateLanguage"]["language"] == "es"
+
+
+async def test_update_language_rejects_invalid_language(auth_context):
+    result = await schema.execute(
+        """
+        mutation($language: String!) {
+          updateLanguage(language: $language) { language }
+        }
+        """,
+        variable_values={"language": "fr"},
+        context_value=auth_context,
+    )
+
+    assert result.errors is not None
+    assert "Invalid language" in result.errors[0].message
+
+
+async def test_update_language_requires_auth(context):
+    result = await schema.execute(
+        """
+        mutation($language: String!) {
+          updateLanguage(language: $language) { language }
+        }
+        """,
+        variable_values={"language": "es"},
+        context_value=context,
+    )
+
+    assert result.errors is not None
+    assert "Not authenticated" in result.errors[0].message
+
+
+async def test_language_options_returns_supported_languages(context):
+    result = await schema.execute("query { languageOptions }", context_value=context)
+
+    assert result.errors is None
+    assert set(result.data["languageOptions"]) == {"en", "es"}
 
 
 async def test_request_password_reset_creates_token_for_known_email(session, context, user):

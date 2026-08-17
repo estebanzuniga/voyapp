@@ -2,11 +2,13 @@ import { Suspense, lazy, useState } from 'react'
 import { useMutation } from '@apollo/client/react'
 import { UPDATE_STOP_MUTATION } from '../graphql/mutations'
 import { TRIP_QUERY } from '../graphql/queries'
+import { useTranslation } from '../hooks/useTranslation'
 import { CheckIcon, XIcon } from './Icons'
 
 const MapPicker = lazy(() => import('./MapPicker').then((module) => ({ default: module.MapPicker })))
 
 export function EditStopForm({ stop, tripId, onDone, onCancel }) {
+  const { t } = useTranslation()
   const [name, setName] = useState(stop.name)
   const [lat, setLat] = useState(stop.location.lat)
   const [lng, setLng] = useState(stop.location.lng)
@@ -42,7 +44,7 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-semibold text-ink">Stop name</label>
+        <label className="text-xs font-semibold text-ink">{t('stopForm.name.label')}</label>
         <input
           type="text"
           required
@@ -53,14 +55,14 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-semibold text-ink">Location</label>
-        <Suspense fallback={<div className="flex h-40 items-center justify-center text-sm text-muted">Loading map…</div>}>
+        <label className="text-xs font-semibold text-ink">{t('stopForm.location.label')}</label>
+        <Suspense fallback={<div className="flex h-40 items-center justify-center text-sm text-muted">{t('common.loadingMap')}</div>}>
           <MapPicker lat={lat} lng={lng} onSelect={(newLat, newLng) => { setLat(newLat); setLng(newLng) }} />
         </Suspense>
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-semibold text-ink">Start time (optional)</label>
+        <label className="text-xs font-semibold text-ink">{t('stopForm.startTime.label')}</label>
         <input
           type="time"
           value={startTime}
@@ -70,7 +72,7 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-semibold text-ink">Notes (optional)</label>
+        <label className="text-xs font-semibold text-ink">{t('stopForm.notes.label')}</label>
         <textarea
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
@@ -80,7 +82,7 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
       </div>
 
       <div className="flex gap-4">
-        <span className="text-xs font-semibold text-ink">This field is: </span>
+        <span className="text-xs font-semibold text-ink">{t('stopForm.thisFieldIs')}</span>
         <label className="flex cursor-pointer items-center gap-1.5 text-sm text-ink">
           <input
             type="checkbox"
@@ -88,7 +90,7 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
             onChange={(event) => setIsImportant(event.target.checked)}
             className="cursor-pointer"
           />
-          Important
+          {t('stopForm.important')}
         </label>
         <label className="flex cursor-pointer items-center gap-1.5 text-sm text-ink">
           <input
@@ -97,7 +99,7 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
             onChange={(event) => setIsOptional(event.target.checked)}
             className="cursor-pointer"
           />
-          Optional
+          {t('stopForm.optional')}
         </label>
       </div>
 
@@ -110,7 +112,7 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
           className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-accent-ink disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           <CheckIcon size={16} />
-          {loading ? 'Saving…' : 'Save changes'}
+          {loading ? t('common.saving') : t('stopForm.saveChanges')}
         </button>
         <button
           type="button"
@@ -118,7 +120,7 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
           className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
         >
           <XIcon size={16} />
-          Cancel
+          {t('common.cancel')}
         </button>
       </div>
     </form>

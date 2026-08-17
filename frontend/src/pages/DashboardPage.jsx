@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@apollo/client/react'
 import { useAuth } from '../hooks/useAuth'
+import { useTranslation } from '../hooks/useTranslation'
 import { MY_TRIPS_QUERY } from '../graphql/queries'
 import { TripCard } from '../components/TripCard'
 import { NewTripForm } from '../components/NewTripForm'
@@ -11,6 +12,7 @@ import { PlusIcon } from '../components/Icons'
 
 export function DashboardPage() {
   const { user } = useAuth()
+  const { t } = useTranslation()
   const [isCreating, setIsCreating] = useState(false)
   const { data, loading, error } = useQuery(MY_TRIPS_QUERY)
 
@@ -26,7 +28,7 @@ export function DashboardPage() {
           </div>
           <Link
             to="/profile"
-            aria-label="Profile"
+            aria-label={t('dashboard.profileAria')}
             className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full font-display text-sm text-white hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             style={{ backgroundColor: user?.avatarColor ?? 'var(--color-accent)' }}
           >
@@ -36,7 +38,7 @@ export function DashboardPage() {
 
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-4">
-            <h1 className="font-display text-2xl text-ink">Your trips</h1>
+            <h1 className="font-display text-2xl text-ink">{t('dashboard.yourTrips')}</h1>
             {isCreating ? null : (
               <button
                 type="button"
@@ -44,7 +46,7 @@ export function DashboardPage() {
                 className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent px-4 py-2 font-semibold text-accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
                 <PlusIcon size={18} />
-                New trip
+                {t('dashboard.newTrip')}
               </button>
             )}
           </div>
@@ -69,7 +71,7 @@ export function DashboardPage() {
           {error ? <p className="text-sm text-red-600">{error.message}</p> : null}
 
           {!loading && !error && trips.length === 0 ? (
-            <p className="text-muted">No trips yet — create your first one above.</p>
+            <p className="text-muted">{t('dashboard.noTripsYet')}</p>
           ) : null}
 
           {trips.length > 0 ? (

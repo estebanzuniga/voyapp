@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import { apolloClient } from './apollo/client.js'
 import { AuthProvider } from './hooks/useAuth.jsx'
+import { TranslationProvider } from './hooks/useTranslation.jsx'
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(
@@ -12,7 +13,9 @@ createRoot(document.getElementById('root')).render(
     <ApolloProvider client={apolloClient}>
       <BrowserRouter>
         <AuthProvider>
-          <App />
+          <TranslationProvider>
+            <App />
+          </TranslationProvider>
         </AuthProvider>
       </BrowserRouter>
     </ApolloProvider>

@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useMutation } from '@apollo/client/react'
+import { useTranslation } from '../hooks/useTranslation'
 import { CHANGE_PASSWORD_MUTATION } from '../graphql/mutations'
 import { Modal } from './Modal'
 import { CheckIcon, XIcon } from './Icons'
 import { PasswordInput } from './PasswordInput'
 
 export function ChangePasswordModal({ onClose }) {
+  const { t } = useTranslation()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -18,7 +20,7 @@ export function ChangePasswordModal({ onClose }) {
   async function handleSubmit(event) {
     event.preventDefault()
     if (newPassword !== confirmPassword) {
-      setFormError("New password and confirmation don't match")
+      setFormError(t('common.passwordMismatch'))
       return
     }
     setFormError(null)
@@ -33,7 +35,7 @@ export function ChangePasswordModal({ onClose }) {
       <button
         type="button"
         onClick={onClose}
-        aria-label="Close"
+        aria-label={t('common.close')}
         className="absolute right-2 top-2 cursor-pointer rounded-full p-2 text-muted hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
       >
         <XIcon size={18} />
@@ -47,16 +49,16 @@ export function ChangePasswordModal({ onClose }) {
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-2/10 text-accent-2">
             <CheckIcon size={24} />
           </span>
-          <p className="font-semibold text-ink">Password updated.</p>
+          <p className="font-semibold text-ink">{t('changePassword.updated')}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          <h2 className="font-display pr-6 text-lg text-ink">Change password</h2>
+          <h2 className="font-display pr-6 text-lg text-ink">{t('changePassword.title')}</h2>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
               <label htmlFor="currentPassword" className="text-sm font-semibold text-ink">
-                Current password
+                {t('changePassword.currentPassword.label')}
               </label>
               <PasswordInput
                 id="currentPassword"
@@ -70,7 +72,7 @@ export function ChangePasswordModal({ onClose }) {
 
             <div className="flex flex-col gap-1">
               <label htmlFor="newPassword" className="text-sm font-semibold text-ink">
-                New password
+                {t('auth.newPassword.label')}
               </label>
               <PasswordInput
                 id="newPassword"
@@ -85,7 +87,7 @@ export function ChangePasswordModal({ onClose }) {
 
             <div className="flex flex-col gap-1">
               <label htmlFor="confirmPassword" className="text-sm font-semibold text-ink">
-                Confirm new password
+                {t('changePassword.confirmPassword.label')}
               </label>
               <PasswordInput
                 id="confirmPassword"
@@ -105,7 +107,7 @@ export function ChangePasswordModal({ onClose }) {
               disabled={loading}
               className="mt-1 cursor-pointer rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-ink disabled:cursor-default disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
-              {loading ? 'Saving…' : 'Change password'}
+              {loading ? t('common.saving') : t('changePassword.title')}
             </button>
           </form>
         </div>

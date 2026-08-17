@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
+import { useTranslation } from '../hooks/useTranslation'
 
 export function QRCodeImage({ value, size = 200 }) {
+  const { t } = useTranslation()
   const [dataUrl, setDataUrl] = useState(null)
   const [error, setError] = useState(null)
 
@@ -24,7 +26,7 @@ export function QRCodeImage({ value, size = 200 }) {
   }, [value, size])
 
   if (error) {
-    return <p className="text-sm text-red-600">Couldn't generate the QR code.</p>
+    return <p className="text-sm text-red-600">{t('qrCode.error')}</p>
   }
 
   if (!dataUrl) {
@@ -33,7 +35,7 @@ export function QRCodeImage({ value, size = 200 }) {
         className="flex animate-pulse items-center justify-center rounded-lg bg-surface-2 text-sm text-muted"
         style={{ width: size, height: size }}
       >
-        Loading…
+        {t('common.loading')}
       </div>
     )
   }
@@ -41,7 +43,7 @@ export function QRCodeImage({ value, size = 200 }) {
   return (
     <img
       src={dataUrl}
-      alt="Scan to open this share link"
+      alt={t('qrCode.alt')}
       width={size}
       height={size}
       className="rounded-lg border border-border"

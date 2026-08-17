@@ -10,6 +10,7 @@ export const SIGNUP_MUTATION = gql`
         firstName
         lastName
         avatarColor
+        language
       }
     }
   }
@@ -25,6 +26,7 @@ export const LOGIN_MUTATION = gql`
         firstName
         lastName
         avatarColor
+        language
       }
     }
   }
@@ -63,6 +65,15 @@ export const UPDATE_AVATAR_COLOR_MUTATION = gql`
     updateAvatarColor(avatarColor: $avatarColor) {
       id
       avatarColor
+    }
+  }
+`
+
+export const UPDATE_LANGUAGE_MUTATION = gql`
+  mutation UpdateLanguage($language: String!) {
+    updateLanguage(language: $language) {
+      id
+      language
     }
   }
 `

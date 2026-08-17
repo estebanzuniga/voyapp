@@ -1,3 +1,4 @@
+import { useTranslation } from '../hooks/useTranslation'
 import { Modal } from './Modal'
 import { AlertTriangleIcon, XIcon } from './Icons'
 
@@ -19,8 +20,8 @@ const TONE_STYLES = {
 export function ConfirmDialog({
   title,
   message,
-  confirmLabel = 'Delete',
-  loadingLabel = 'Deleting…',
+  confirmLabel,
+  loadingLabel,
   icon: IconComponent = AlertTriangleIcon,
   tone = 'red',
   onConfirm,
@@ -28,14 +29,17 @@ export function ConfirmDialog({
   loading,
   error,
 }) {
+  const { t } = useTranslation()
   const toneStyles = TONE_STYLES[tone]
+  const resolvedConfirmLabel = confirmLabel ?? t('common.delete')
+  const resolvedLoadingLabel = loadingLabel ?? t('common.deleting')
 
   return (
     <Modal onClose={onCancel} className="max-w-sm">
       <button
         type="button"
         onClick={onCancel}
-        aria-label="Close"
+        aria-label={t('common.close')}
         className="absolute right-2 top-2 cursor-pointer rounded-full p-2 text-muted hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
       >
         <XIcon size={18} />
@@ -60,7 +64,7 @@ export function ConfirmDialog({
             onClick={onCancel}
             className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             type="button"
@@ -68,7 +72,7 @@ export function ConfirmDialog({
             onClick={onConfirm}
             className={`cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 ${toneStyles.button}`}
           >
-            {loading ? loadingLabel : confirmLabel}
+            {loading ? resolvedLoadingLabel : resolvedConfirmLabel}
           </button>
         </div>
       </div>

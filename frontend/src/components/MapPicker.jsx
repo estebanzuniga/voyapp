@@ -5,6 +5,7 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
 import 'leaflet/dist/leaflet.css'
+import { useTranslation } from '../hooks/useTranslation'
 import { MapPinIcon, SearchIcon } from './Icons'
 
 const markerPinIcon = L.icon({
@@ -41,6 +42,7 @@ function FlyToPosition({ position }) {
 }
 
 export function MapPicker({ lat, lng, onSelect }) {
+  const { t } = useTranslation()
   const position = lat != null && lng != null ? [lat, lng] : null
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
@@ -88,7 +90,7 @@ export function MapPicker({ lat, lng, onSelect }) {
           type="text"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search for a place…"
+          placeholder={t('mapPicker.searchPlaceholder')}
           className="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3 text-sm text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
         />
         {results.length > 0 ? (
@@ -106,7 +108,7 @@ export function MapPicker({ lat, lng, onSelect }) {
             ))}
           </ul>
         ) : null}
-        {searching ? <p className="mt-1 text-xs text-muted">Searching…</p> : null}
+        {searching ? <p className="mt-1 text-xs text-muted">{t('mapPicker.searching')}</p> : null}
       </div>
 
       <div className="h-50 w-full overflow-hidden rounded-lg border border-border">
@@ -129,8 +131,8 @@ export function MapPicker({ lat, lng, onSelect }) {
       <p className="flex items-center gap-1.5 text-xs text-muted">
         <MapPinIcon size={14} />
         {position
-          ? `Selected: ${position[0].toFixed(5)}, ${position[1].toFixed(5)}`
-          : 'Search or tap the map to choose a location.'}
+          ? t('mapPicker.selected', { lat: position[0].toFixed(5), lng: position[1].toFixed(5) })
+          : t('mapPicker.prompt')}
       </p>
     </div>
   )

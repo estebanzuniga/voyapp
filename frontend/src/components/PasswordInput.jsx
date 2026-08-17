@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from '../hooks/useTranslation'
 import { EyeIcon, EyeOffIcon } from './Icons'
 
 // Wraps a plain <input> with a show/hide toggle - `className` styles the
@@ -6,6 +7,7 @@ import { EyeIcon, EyeOffIcon } from './Icons'
 // button); everything else (id, value, onChange, required, ...) forwards
 // straight through, same as using <input> directly.
 export function PasswordInput({ className, ...props }) {
+  const { t } = useTranslation()
   const [visible, setVisible] = useState(false)
 
   return (
@@ -14,7 +16,7 @@ export function PasswordInput({ className, ...props }) {
       <button
         type="button"
         onClick={() => setVisible((current) => !current)}
-        aria-label={visible ? 'Hide password' : 'Show password'}
+        aria-label={visible ? t('passwordInput.hide') : t('passwordInput.show')}
         className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer rounded p-0.5 text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
       >
         {visible ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}

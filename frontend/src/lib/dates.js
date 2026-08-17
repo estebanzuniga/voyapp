@@ -1,20 +1,44 @@
-const dayFormatter = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' })
-const fullDateFormatter = new Intl.DateTimeFormat(undefined, {
-  weekday: 'long',
-  month: 'long',
-  day: 'numeric',
-})
+// Formatters are cached per locale (constructing an Intl.DateTimeFormat
+// isn't free) rather than built once at module load, since which locale we
+// need now depends on the signed-in user's chosen language instead of being
+// fixed for the whole app - see useTranslation's `locale`.
+const dayFormatters = new Map()
+const fullDateFormatters = new Map()
 
-export function formatDate(isoDate) {
-  return dayFormatter.format(new Date(`${isoDate}T00:00:00`))
+function dayFormatter(locale) {
+  if (!dayFormatters.has(locale)) {
+    dayFormatters.set(locale, new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }))
+  }
+  return dayFormatters.get(locale)
 }
 
-export function formatFullDate(isoDate) {
-  return fullDateFormatter.format(new Date(`${isoDate}T00:00:00`))
+function fullDateFormatter(locale) {
+  if (!fullDateFormatters.has(locale)) {
+    fullDateFormatters.set(
+      locale,
+      new Intl.DateTimeFormat(locale, { weekday: 'long', month: 'long', day: 'numeric' }),
+    )
+  }
+  return fullDateFormatters.get(locale)
 }
 
-export function formatDateRange(startDate, endDate) {
-  return `${formatDate(startDate)} – ${formatDate(endDate)}`
+function capitalizeFirst(text) {
+  return text.length > 0 ? text[0].toUpperCase() + text.slice(1) : text
+}
+
+// `locale` defaults to the browser's own locale (same as passing `undefined`
+// to Intl.DateTimeFormat) so any caller that doesn't have one handy - or
+// hasn't been updated yet - keeps working exactly as before.
+export function formatDate(isoDate, locale) {
+  return dayFormatter(locale).format(new Date(`${isoDate}T00:00:00`))
+}
+
+export function formatFullDate(isoDate, locale) {
+  return capitalizeFirst(fullDateFormatter(locale).format(new Date(`${isoDate}T00:00:00`)))
+}
+
+export function formatDateRange(startDate, endDate, locale) {
+  return `${formatDate(startDate, locale)} – ${formatDate(endDate, locale)}`
 }
 
 export function formatTime(isoTime) {

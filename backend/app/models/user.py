@@ -26,6 +26,12 @@ AVATAR_COLORS: tuple[str, ...] = (
     "#f43f5e",  # rose
 )
 
+# Same reasoning as AVATAR_COLORS: one fixed list the frontend renders from
+# (via `Query.language_options`) and `update_language` validates against,
+# instead of the frontend hardcoding its own copy that could drift out of
+# sync with what translations actually exist.
+LANGUAGE_OPTIONS: tuple[str, ...] = ("en", "es")
+
 
 class User(Base):
     __tablename__ = "users"
@@ -36,6 +42,11 @@ class User(Base):
     first_name: Mapped[str]
     last_name: Mapped[str]
     avatar_color: Mapped[str]
+    # ISO 639-1 code. Just a free string rather than a DB enum (like
+    # `Permission` elsewhere) since the supported set is expected to grow
+    # over time - `Query.language_options` is the source of truth the
+    # frontend validates/renders against, same idea as `avatar_color_options`.
+    language: Mapped[str] = mapped_column(default="en", server_default="en")
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     trips: Mapped[list["Trip"]] = relationship(back_populates="user")
