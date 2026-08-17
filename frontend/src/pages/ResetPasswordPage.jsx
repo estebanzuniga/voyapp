@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation } from '@apollo/client/react'
 import { RESET_PASSWORD_MUTATION } from '../graphql/mutations'
 import { AuthVisualPanel } from '../components/AuthVisualPanel'
+import { PasswordInput } from '../components/PasswordInput'
 
 export function ResetPasswordPage() {
   const navigate = useNavigate()
@@ -59,16 +60,15 @@ export function ResetPasswordPage() {
                   <label htmlFor="newPassword" className="text-sm font-semibold text-ink">
                     New password
                   </label>
-                  <input
+                  <PasswordInput
                     id="newPassword"
-                    type="password"
                     required
                     minLength={8}
                     value={newPassword}
                     onChange={(event) => setNewPassword(event.target.value)}
                     placeholder="••••••••"
                     autoComplete="new-password"
-                    className="rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
+                    className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-3 pr-10 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
                   />
                 </div>
 
@@ -76,16 +76,15 @@ export function ResetPasswordPage() {
                   <label htmlFor="confirmPassword" className="text-sm font-semibold text-ink">
                     Confirm password
                   </label>
-                  <input
+                  <PasswordInput
                     id="confirmPassword"
-                    type="password"
                     required
                     minLength={8}
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
                     placeholder="••••••••"
                     autoComplete="new-password"
-                    className="rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
+                    className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-3 pr-10 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
                   />
                 </div>
 

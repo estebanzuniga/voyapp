@@ -4,6 +4,7 @@ import { useMutation } from '@apollo/client/react'
 import { useAuth } from '../hooks/useAuth'
 import { LOGIN_MUTATION, SIGNUP_MUTATION } from '../graphql/mutations'
 import { AuthVisualPanel } from '../components/AuthVisualPanel'
+import { PasswordInput } from '../components/PasswordInput'
 
 const COPY = {
   login: {
@@ -125,16 +126,15 @@ export function AuthPage({ mode }) {
                   </Link>
                 ) : null}
               </div>
-              <input
+              <PasswordInput
                 id="password"
-                type="password"
                 required
                 minLength={8}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="••••••••"
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                className="rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
+                className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-3 pr-10 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
               />
             </div>
 

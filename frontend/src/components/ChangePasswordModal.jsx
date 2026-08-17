@@ -3,6 +3,7 @@ import { useMutation } from '@apollo/client/react'
 import { CHANGE_PASSWORD_MUTATION } from '../graphql/mutations'
 import { Modal } from './Modal'
 import { CheckIcon, XIcon } from './Icons'
+import { PasswordInput } from './PasswordInput'
 
 export function ChangePasswordModal({ onClose }) {
   const [currentPassword, setCurrentPassword] = useState('')
@@ -57,14 +58,13 @@ export function ChangePasswordModal({ onClose }) {
               <label htmlFor="currentPassword" className="text-sm font-semibold text-ink">
                 Current password
               </label>
-              <input
+              <PasswordInput
                 id="currentPassword"
-                type="password"
                 required
                 value={currentPassword}
                 onChange={(event) => setCurrentPassword(event.target.value)}
                 autoComplete="current-password"
-                className="rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-ink focus:outline-2 focus:outline-accent"
+                className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-3 pr-10 text-ink focus:outline-2 focus:outline-accent"
               />
             </div>
 
@@ -72,15 +72,14 @@ export function ChangePasswordModal({ onClose }) {
               <label htmlFor="newPassword" className="text-sm font-semibold text-ink">
                 New password
               </label>
-              <input
+              <PasswordInput
                 id="newPassword"
-                type="password"
                 required
                 minLength={8}
                 value={newPassword}
                 onChange={(event) => setNewPassword(event.target.value)}
                 autoComplete="new-password"
-                className="rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-ink focus:outline-2 focus:outline-accent"
+                className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-3 pr-10 text-ink focus:outline-2 focus:outline-accent"
               />
             </div>
 
@@ -88,15 +87,14 @@ export function ChangePasswordModal({ onClose }) {
               <label htmlFor="confirmPassword" className="text-sm font-semibold text-ink">
                 Confirm new password
               </label>
-              <input
+              <PasswordInput
                 id="confirmPassword"
-                type="password"
                 required
                 minLength={8}
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
                 autoComplete="new-password"
-                className="rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-ink focus:outline-2 focus:outline-accent"
+                className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-3 pr-10 text-ink focus:outline-2 focus:outline-accent"
               />
             </div>
 
