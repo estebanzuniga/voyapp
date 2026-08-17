@@ -1,4 +1,21 @@
+from datetime import datetime, timedelta, timezone
+
+from sqlalchemy import select
+
+from app.models.password_reset_token import PasswordResetToken as PasswordResetTokenModel
 from app.schema import schema
+
+REQUEST_PASSWORD_RESET = """
+mutation($email: String!) {
+  requestPasswordReset(email: $email)
+}
+"""
+
+RESET_PASSWORD = """
+mutation($token: String!, $newPassword: String!) {
+  resetPassword(token: $token, newPassword: $newPassword)
+}
+"""
 
 SIGNUP = """
 mutation($email: String!, $password: String!, $firstName: String!, $lastName: String!) {
@@ -272,3 +289,147 @@ async def test_avatar_color_options_returns_palette(context):
 
     assert result.errors is None
     assert "#8b5cf6" in result.data["avatarColorOptions"]
+
+
+async def test_request_password_reset_creates_token_for_known_email(session, context, user):
+    result = await schema.execute(
+        REQUEST_PASSWORD_RESET,
+        variable_values={"email": user.email},
+        context_value=context,
+    )
+
+    assert result.errors is None
+    assert result.data["requestPasswordReset"] is True
+
+    tokens = await session.execute(
+        select(PasswordResetTokenModel).where(PasswordResetTokenModel.user_id == user.id)
+    )
+    reset_token = tokens.scalar_one()
+    assert reset_token.used_at is None
+    assert not reset_token.is_expired
+
+
+async def test_request_password_reset_returns_true_for_unknown_email(context):
+    # Same response whether or not the email is registered - the mutation
+    # shouldn't leak which emails have accounts.
+    result = await schema.execute(
+        REQUEST_PASSWORD_RESET,
+        variable_values={"email": "nobody@example.com"},
+        context_value=context,
+    )
+
+    assert result.errors is None
+    assert result.data["requestPasswordReset"] is True
+
+
+async def test_reset_password_updates_password_and_consumes_token(session, context, user):
+    await schema.execute(
+        REQUEST_PASSWORD_RESET,
+        variable_values={"email": user.email},
+        context_value=context,
+    )
+    tokens = await session.execute(
+        select(PasswordResetTokenModel).where(PasswordResetTokenModel.user_id == user.id)
+    )
+    reset_token = tokens.scalar_one()
+
+    result = await schema.execute(
+        RESET_PASSWORD,
+        variable_values={"token": reset_token.token, "newPassword": "brandnewpassword"},
+        context_value=context,
+    )
+
+    assert result.errors is None
+    assert result.data["resetPassword"] is True
+
+    login_result = await schema.execute(
+        """
+        mutation($email: String!, $password: String!) {
+          login(email: $email, password: $password) { token }
+        }
+        """,
+        variable_values={"email": user.email, "password": "brandnewpassword"},
+        context_value=context,
+    )
+    assert login_result.errors is None
+    assert login_result.data["login"]["token"]
+
+    await session.refresh(reset_token)
+    assert reset_token.used_at is not None
+
+
+async def test_reset_password_rejects_reused_token(session, context, user):
+    await schema.execute(
+        REQUEST_PASSWORD_RESET,
+        variable_values={"email": user.email},
+        context_value=context,
+    )
+    tokens = await session.execute(
+        select(PasswordResetTokenModel).where(PasswordResetTokenModel.user_id == user.id)
+    )
+    reset_token = tokens.scalar_one()
+
+    first = await schema.execute(
+        RESET_PASSWORD,
+        variable_values={"token": reset_token.token, "newPassword": "brandnewpassword"},
+        context_value=context,
+    )
+    assert first.errors is None
+
+    second = await schema.execute(
+        RESET_PASSWORD,
+        variable_values={"token": reset_token.token, "newPassword": "anotherpassword"},
+        context_value=context,
+    )
+    assert second.errors is not None
+    assert "invalid or has expired" in second.errors[0].message
+
+
+async def test_reset_password_rejects_expired_token(session, context, user):
+    expired_token = PasswordResetTokenModel(
+        user_id=user.id,
+        expires_at=datetime.now(timezone.utc) - timedelta(hours=1),
+    )
+    session.add(expired_token)
+    await session.commit()
+
+    result = await schema.execute(
+        RESET_PASSWORD,
+        variable_values={"token": expired_token.token, "newPassword": "brandnewpassword"},
+        context_value=context,
+    )
+
+    assert result.errors is not None
+    assert "invalid or has expired" in result.errors[0].message
+
+
+async def test_reset_password_rejects_unknown_token(context):
+    result = await schema.execute(
+        RESET_PASSWORD,
+        variable_values={"token": "not-a-real-token", "newPassword": "brandnewpassword"},
+        context_value=context,
+    )
+
+    assert result.errors is not None
+    assert "invalid or has expired" in result.errors[0].message
+
+
+async def test_reset_password_rejects_short_new_password(session, context, user):
+    await schema.execute(
+        REQUEST_PASSWORD_RESET,
+        variable_values={"email": user.email},
+        context_value=context,
+    )
+    tokens = await session.execute(
+        select(PasswordResetTokenModel).where(PasswordResetTokenModel.user_id == user.id)
+    )
+    reset_token = tokens.scalar_one()
+
+    result = await schema.execute(
+        RESET_PASSWORD,
+        variable_values={"token": reset_token.token, "newPassword": "short"},
+        context_value=context,
+    )
+
+    assert result.errors is not None
+    assert "New password must be at least 8 characters" in result.errors[0].message

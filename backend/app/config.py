@@ -14,5 +14,10 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = ["http://localhost:5173"]
 
+    client_url: str = "http://localhost:5173"
+
+    brevo_api_key: str | None = None
+    email_from: str = "noreply@voyapp.app"
+
 
 settings = Settings()

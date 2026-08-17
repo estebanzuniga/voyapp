@@ -115,9 +115,16 @@ export function AuthPage({ mode }) {
             </div>
 
             <div className="flex flex-col gap-1">
-              <label htmlFor="password" className="text-sm font-semibold text-ink">
-                Password
-              </label>
+              <div className="flex items-baseline justify-between">
+                <label htmlFor="password" className="text-sm font-semibold text-ink">
+                  Password
+                </label>
+                {mode === 'login' ? (
+                  <Link to="/forgot-password" className="text-sm font-semibold text-accent hover:underline">
+                    Forgot password?
+                  </Link>
+                ) : null}
+              </div>
               <input
                 id="password"
                 type="password"

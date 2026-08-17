@@ -1,10 +1,12 @@
 import random
-from datetime import date, time
+from datetime import date, datetime, time, timezone
 
 import strawberry
 from sqlalchemy import func, select
 
 from app.auth.security import create_access_token, hash_password, verify_password
+from app.config import settings
+from app.email import send_password_reset_email
 from app.graphql.access import require_trip_access, require_trip_owner
 from app.graphql.types.auth import AuthPayload
 from app.graphql.types.day import Day
@@ -14,6 +16,7 @@ from app.graphql.types.stop import LocationInput, Stop
 from app.graphql.types.trip import Trip
 from app.graphql.types.user import User
 from app.models.day import Day as DayModel
+from app.models.password_reset_token import PasswordResetToken as PasswordResetTokenModel
 from app.models.stop import Stop as StopModel
 from app.models.trip import Trip as TripModel
 from app.models.trip_collaborator import MAX_COLLABORATORS_PER_TRIP
@@ -409,6 +412,48 @@ class Mutation:
 
         session = info.context.session
         user.password_hash = hash_password(new_password)
+        await session.commit()
+        return True
+
+    @strawberry.mutation
+    async def request_password_reset(self, info: strawberry.Info, email: str) -> bool:
+        # Always returns True, whether or not the email is registered - a
+        # different response for "not found" would let anyone probe which
+        # emails have accounts. Same pattern as the reference app's
+        # `/forgot-password` REST endpoint.
+        session = info.context.session
+        result = await session.execute(select(UserModel).where(UserModel.email == email))
+        user = result.scalar_one_or_none()
+
+        if user is not None:
+            reset_token = PasswordResetTokenModel(user_id=user.id)
+            session.add(reset_token)
+            await session.commit()
+
+            reset_url = f"{settings.client_url}/reset-password?token={reset_token.token}"
+            await send_password_reset_email(user.email, reset_url)
+
+        return True
+
+    @strawberry.mutation
+    async def reset_password(self, info: strawberry.Info, token: str, new_password: str) -> bool:
+        if len(new_password) < 8:
+            raise Exception("New password must be at least 8 characters")
+
+        session = info.context.session
+        result = await session.execute(
+            select(PasswordResetTokenModel).where(PasswordResetTokenModel.token == token)
+        )
+        reset_token = result.scalar_one_or_none()
+
+        # Same rejection message for "doesn't exist", "already used" and
+        # "expired" - no reason to help an attacker distinguish those.
+        if reset_token is None or reset_token.used_at is not None or reset_token.is_expired:
+            raise Exception("This reset link is invalid or has expired")
+
+        user = await session.get(UserModel, reset_token.user_id)
+        user.password_hash = hash_password(new_password)
+        reset_token.used_at = datetime.now(timezone.utc)
         await session.commit()
         return True
 

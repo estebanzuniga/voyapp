@@ -4,5 +4,6 @@ from app.models.day import Day
 from app.models.stop import Stop
 from app.models.trip_share_link import TripShareLink
 from app.models.trip_collaborator import TripCollaborator
+from app.models.password_reset_token import PasswordResetToken
 
-__all__ = ["User", "Trip", "Day", "Stop", "TripShareLink", "TripCollaborator"]
+__all__ = ["User", "Trip", "Day", "Stop", "TripShareLink", "TripCollaborator", "PasswordResetToken"]
