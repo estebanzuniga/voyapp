@@ -129,15 +129,16 @@ function SortableStopRow({ stop, prevStop, tripId, canEdit }) {
         </div>
         {canEdit ? (
           <div className="flex items-center gap-2">
-            { prevStop && (
-              <button
-                type="button"
-                onClick={() => window.open(`${googleMapsUrl}&origin=${prevStop.location.lat},${prevStop.location.lng}&destination=${stop.location.lat},${stop.location.lng}`, '_blank')}
+            {prevStop && (
+              <a
+                href={`${googleMapsUrl}&origin=${prevStop.location.lat},${prevStop.location.lng}&destination=${stop.location.lat},${stop.location.lng}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label={t('dayCard.howToGetToAria', { name: stop.name })}
                 className="cursor-pointer rounded-lg text-muted hover:bg-surface hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
               >
                 <MapIcon size={16} />
-              </button>
+              </a>
             )}
             <button
               type="button"
