@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useTranslation } from '../hooks/useTranslation'
 import { MY_TRIPS_QUERY } from '../graphql/queries'
 import { TripCard } from '../components/TripCard'
-import { NewTripForm } from '../components/NewTripForm'
+import { NewTripModal } from '../components/NewTripModal'
 import { Skeleton } from '../components/Skeleton'
 import { getInitials } from '../lib/avatar'
 import { PlusIcon } from '../components/Icons'
@@ -39,21 +39,17 @@ export function DashboardPage() {
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-4">
             <h1 className="font-display text-2xl text-ink">{t('dashboard.yourTrips')}</h1>
-            {isCreating ? null : (
-              <button
-                type="button"
-                onClick={() => setIsCreating(true)}
-                className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent px-4 py-2 font-semibold text-accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-              >
-                <PlusIcon size={18} />
-                {t('dashboard.newTrip')}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setIsCreating(true)}
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent px-4 py-2 font-semibold text-accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              <PlusIcon size={18} />
+              {t('dashboard.newTrip')}
+            </button>
           </div>
 
-          {isCreating ? (
-            <NewTripForm onCreated={() => setIsCreating(false)} onCancel={() => setIsCreating(false)} />
-          ) : null}
+          {isCreating ? <NewTripModal onClose={() => setIsCreating(false)} /> : null}
 
           {loading ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

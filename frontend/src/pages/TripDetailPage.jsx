@@ -16,8 +16,7 @@ import { useTranslation } from '../hooks/useTranslation'
 import { formatDate, formatDateRange, enumerateDates } from '../lib/dates'
 import { DayCard, StopDragPreview } from '../components/DayCard'
 import { Skeleton } from '../components/Skeleton'
-import { ShareModal } from '../components/ShareModal'
-import { ArrowLeftIcon, ChevronDownIcon, EyeIcon, PlusIcon, ShareIcon } from '../components/Icons'
+import { ArrowLeftIcon, ChevronDownIcon, EyeIcon, PlusIcon } from '../components/Icons'
 
 function findContainerId(stopsByDay, stopId) {
   return Object.keys(stopsByDay).find((dayId) =>
@@ -93,7 +92,6 @@ export function TripDetailPage() {
   const [addDayError, setAddDayError] = useState(null)
   const [dragError, setDragError] = useState(null)
   const [activeStop, setActiveStop] = useState(null)
-  const [isShareOpen, setIsShareOpen] = useState(false)
   // Set at drag start, read (and cleared) at drag end - not state, since
   // updating them shouldn't itself trigger a re-render.
   const dragOriginDayIdRef = useRef(null)
@@ -295,32 +293,18 @@ export function TripDetailPage() {
 
         {trip ? (
           <>
-            <header className="flex flex-wrap items-start justify-between gap-3">
-              <div className="flex flex-col gap-1">
-                <h1 className="font-display text-2xl text-ink text-balance">{trip.title}</h1>
-                <p className="text-muted">{formatDateRange(trip.startDate, trip.endDate, locale)}</p>
-                {!trip.isOwner ? (
-                  <span className="flex w-fit items-center gap-1.5 rounded-full bg-surface-2 px-2.5 py-1 text-xs font-semibold text-muted">
-                    <EyeIcon size={14} />
-                    {t('tripDetail.sharedWith', {
-                      permission: canEdit ? t('tripDetail.canEdit') : t('tripDetail.viewOnly'),
-                    })}
-                  </span>
-                ) : null}
-              </div>
-              {trip.isOwner ? (
-                <button
-                  type="button"
-                  onClick={() => setIsShareOpen(true)}
-                  className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink hover:border-accent focus-visible:outline-2 focus-visible:outline-accent"
-                >
-                  <ShareIcon size={16} />
-                  {t('tripDetail.share')}
-                </button>
+            <header className="flex flex-col gap-1">
+              <h1 className="font-display text-2xl text-ink text-balance">{trip.title}</h1>
+              <p className="text-muted">{formatDateRange(trip.startDate, trip.endDate, locale)}</p>
+              {!trip.isOwner ? (
+                <span className="flex w-fit items-center gap-1.5 rounded-full bg-surface-2 px-2.5 py-1 text-xs font-semibold text-muted">
+                  <EyeIcon size={14} />
+                  {t('tripDetail.sharedWith', {
+                    permission: canEdit ? t('tripDetail.canEdit') : t('tripDetail.viewOnly'),
+                  })}
+                </span>
               ) : null}
             </header>
-
-            {isShareOpen ? <ShareModal tripId={id} onClose={() => setIsShareOpen(false)} /> : null}
 
             {dragError ? <p className="text-sm text-red-600">{dragError}</p> : null}
             {addDayError ? <p className="text-sm text-red-600">{addDayError}</p> : null}

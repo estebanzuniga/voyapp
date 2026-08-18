@@ -94,6 +94,9 @@ export const translations = {
 
     // --- trip card --------------------------------------------------------
     'tripCard.sharedWithYou': 'Shared with you',
+    'tripCard.editAria': 'Edit {title}',
+    'tripCard.shareAria': 'Share {title}',
+    'tripCard.deleteAria': 'Delete {title}',
 
     // --- invite accept ------------------------------------------------
     'inviteAccept.invalidOrExpired':
@@ -124,9 +127,25 @@ export const translations = {
     'tripDetail.canEdit': 'can edit',
     'tripDetail.viewOnly': 'view only',
     'tripDetail.share': 'Share',
+    'tripDetail.editTrip': 'Edit trip',
+    'tripDetail.deleteTrip': 'Delete trip',
+    'tripDetail.deleteTripTitle': 'Delete trip',
+    'tripDetail.deleteTripMessage':
+      'Are you sure you want to delete "{title}"? All of its days and stops will be removed too. This can\'t be undone.',
     'tripDetail.noDaysYet': 'No days added yet.',
     'tripDetail.addDay': 'Add {date}',
     'tripDetail.daysPending': '{count} days pending',
+
+    // --- edit trip ------------------------------------------------------
+    'editTrip.title': 'Edit trip',
+    // Mapped from `updateTrip`'s GraphQL error `extensions.code`, not from
+    // the raw (always-English) error message - see EditTripForm.jsx.
+    'editTrip.error.titleRequired': 'Trip title is required',
+    'editTrip.error.invalidDateRange': 'Start date must be before end date',
+    'editTrip.error.shrinkBlockedOne':
+      'The day {dates} already has stops planned. Remove its stops first, or keep dates that include it.',
+    'editTrip.error.shrinkBlockedMany':
+      'The days {dates} already have stops planned. Remove their stops first, or keep dates that include them.',
 
     // --- day card -----------------------------------------------------
     'dayCard.viewDayMap': 'View day map',
@@ -289,6 +308,9 @@ export const translations = {
 
     // --- trip card --------------------------------------------------------
     'tripCard.sharedWithYou': 'Compartido contigo',
+    'tripCard.editAria': 'Editar {title}',
+    'tripCard.shareAria': 'Compartir {title}',
+    'tripCard.deleteAria': 'Eliminar {title}',
 
     // --- invite accept ------------------------------------------------
     'inviteAccept.invalidOrExpired':
@@ -319,14 +341,29 @@ export const translations = {
     'tripDetail.canEdit': 'puede editar',
     'tripDetail.viewOnly': 'solo ver',
     'tripDetail.share': 'Compartir',
+    'tripDetail.editTrip': 'Editar viaje',
+    'tripDetail.deleteTrip': 'Eliminar viaje',
+    'tripDetail.deleteTripTitle': 'Eliminar viaje',
+    'tripDetail.deleteTripMessage':
+      '¿Seguro que quieres eliminar "{title}"? También se eliminarán todos sus días y paradas. Esta acción no se puede deshacer.',
     'tripDetail.noDaysYet': 'Aún no se han agregado días.',
     'tripDetail.addDay': 'Agregar {date}',
     'tripDetail.daysPending': '{count} días pendientes',
+
+    // --- edit trip ------------------------------------------------------
+    'editTrip.title': 'Editar viaje',
+    'editTrip.error.titleRequired': 'El título del viaje es obligatorio',
+    'editTrip.error.invalidDateRange': 'La fecha de inicio debe ser anterior a la fecha de fin',
+    'editTrip.error.shrinkBlockedOne':
+      'El día {dates} ya tiene paradas planeadas. Elimina sus paradas primero, o mantén fechas que lo incluyan.',
+    'editTrip.error.shrinkBlockedMany':
+      'Los días {dates} ya tienen paradas planeadas. Elimina sus paradas primero, o mantén fechas que los incluyan.',
 
     // --- day card -----------------------------------------------------
     'dayCard.viewDayMap': 'Ver mapa del día',
     'dayCard.deleteDay': 'Eliminar día',
     'dayCard.reorderAria': 'Reordenar parada',
+    'dayCard.howToGetToAria': 'Cómo llegar a {name}',
     'dayCard.editAria': 'Editar {name}',
     'dayCard.duplicateAria': 'Duplicar {name}',
     'dayCard.removeAria': 'Eliminar {name}',

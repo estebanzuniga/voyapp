@@ -89,6 +89,23 @@ export const CREATE_TRIP_MUTATION = gql`
   }
 `
 
+export const UPDATE_TRIP_MUTATION = gql`
+  mutation UpdateTrip($id: ID!, $title: String!, $startDate: Date!, $endDate: Date!) {
+    updateTrip(id: $id, title: $title, startDate: $startDate, endDate: $endDate) {
+      id
+      title
+      startDate
+      endDate
+    }
+  }
+`
+
+export const DELETE_TRIP_MUTATION = gql`
+  mutation DeleteTrip($id: ID!) {
+    deleteTrip(id: $id)
+  }
+`
+
 export const ADD_DAY_MUTATION = gql`
   mutation AddDay($tripId: ID!, $date: Date!) {
     addDay(tripId: $tripId, date: $date) {

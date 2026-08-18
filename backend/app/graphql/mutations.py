@@ -2,7 +2,9 @@ import random
 from datetime import date, datetime, time, timezone
 
 import strawberry
-from sqlalchemy import func, select
+from graphql import GraphQLError
+from sqlalchemy import delete, func, or_, select
+from sqlalchemy.orm import selectinload
 
 from app.auth.security import create_access_token, hash_password, verify_password
 from app.config import settings
@@ -96,6 +98,105 @@ class Mutation:
         session.add(trip)
         await session.commit()
         return Trip.from_model(trip)
+
+    @strawberry.mutation
+    async def update_trip(
+        self,
+        info: strawberry.Info,
+        id: strawberry.ID,
+        title: str,
+        start_date: date,
+        end_date: date,
+    ) -> Trip:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        title = title.strip()
+        if not title:
+            # Plain-English `message` is a fallback for any GraphQL client
+            # that doesn't look at `extensions` - the frontend's own error
+            # UI keys off `extensions.code` instead so it can show this in
+            # the signed-in user's chosen language rather than always
+            # English (see TRIP_SHRINK_BLOCKED below for the same pattern).
+            raise GraphQLError("Trip title is required", extensions={"code": "TRIP_TITLE_REQUIRED"})
+        if start_date > end_date:
+            raise GraphQLError(
+                "Start date must be before end date", extensions={"code": "TRIP_INVALID_DATE_RANGE"}
+            )
+
+        session = info.context.session
+        # Editor-level, same as add_day/delete_day - reshaping the date
+        # range is really just a bulk version of adding/removing days, not
+        # an ownership-only action like managing sharing.
+        trip = await require_trip_access(session, int(id), user, editor=True)
+
+        # Shrinking the range can push existing days outside it. That's
+        # fine for a day nobody's touched yet (no stops - "not started"),
+        # but silently deleting a day someone already planned stops for
+        # would be a surprising way to lose data, so block the whole
+        # update instead and let the frontend explain why.
+        result = await session.execute(
+            select(DayModel)
+            .options(selectinload(DayModel.stops))
+            .where(
+                DayModel.trip_id == trip.id,
+                or_(DayModel.date < start_date, DayModel.date > end_date),
+            )
+        )
+        excluded_days = result.scalars().all()
+        started_days = [day for day in excluded_days if day.stops]
+        if started_days:
+            blocking_dates = sorted(day.date.isoformat() for day in started_days)
+            noun = "day" if len(started_days) == 1 else "days"
+            raise GraphQLError(
+                f"Can't shrink the trip to these dates - {noun} {', '.join(blocking_dates)} already "
+                "have stops planned. Remove their stops first, or keep dates that include them.",
+                # `dates` (raw ISO strings, not locale-formatted - that's the
+                # frontend's job with the viewer's own `locale`) is what the
+                # translated UI message is actually built from.
+                extensions={"code": "TRIP_SHRINK_BLOCKED", "dates": blocking_dates},
+            )
+
+        for day in excluded_days:
+            await session.delete(day)
+
+        trip.title = title
+        trip.start_date = start_date
+        trip.end_date = end_date
+        await session.commit()
+        return Trip.from_model(trip)
+
+    @strawberry.mutation
+    async def delete_trip(self, info: strawberry.Info, id: strawberry.ID) -> bool:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        session = info.context.session
+        trip = await session.get(TripModel, int(id))
+        if trip is None:
+            return False
+
+        # Owner-only, same reasoning as require_trip_owner's other call
+        # sites: deleting the whole trip out from under collaborators is a
+        # bigger deal than an editor being able to add/remove days.
+        if trip.user_id != user.id:
+            raise Exception("Trip not found")
+
+        # No DB-level ON DELETE CASCADE and no ORM cascade configured on
+        # these relationships (deliberately - deleteDay/deleteStop delete
+        # one row at a time and never needed it), so a plain
+        # session.delete(trip) would just hit a FK violation. Clear out
+        # every dependent table explicitly, deepest first.
+        day_ids = select(DayModel.id).where(DayModel.trip_id == trip.id)
+        await session.execute(delete(StopModel).where(StopModel.day_id.in_(day_ids)))
+        await session.execute(delete(DayModel).where(DayModel.trip_id == trip.id))
+        await session.execute(delete(TripShareLinkModel).where(TripShareLinkModel.trip_id == trip.id))
+        await session.execute(delete(TripCollaboratorModel).where(TripCollaboratorModel.trip_id == trip.id))
+        await session.delete(trip)
+        await session.commit()
+        return True
 
     @strawberry.mutation
     async def add_day(self, info: strawberry.Info, trip_id: strawberry.ID, date: date) -> Day:

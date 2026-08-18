@@ -1,52 +1,73 @@
 import { useState } from 'react'
 import { useMutation } from '@apollo/client/react'
+import { UPDATE_TRIP_MUTATION } from '../graphql/mutations'
+import { TRIP_QUERY } from '../graphql/queries'
 import { useTranslation } from '../hooks/useTranslation'
-import { CREATE_TRIP_MUTATION } from '../graphql/mutations'
-import { MY_TRIPS_QUERY } from '../graphql/queries'
-import { PlusIcon, XIcon } from './Icons'
+import { formatDate } from '../lib/dates'
+import { CheckIcon, XIcon } from './Icons'
 
-export function NewTripForm({ onCreated, onCancel }) {
-  const { t } = useTranslation()
-  const [title, setTitle] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-  const [runCreateTrip, { loading, error }] = useMutation(CREATE_TRIP_MUTATION, {
-    refetchQueries: [{ query: MY_TRIPS_QUERY }],
+// `updateTrip` raises a GraphQLError with a machine-readable
+// `extensions.code` (and, for the "shrink" case, the raw ISO `dates` that
+// blocked it) precisely so this can show a message in the viewer's own
+// language instead of the resolver's hardcoded English `error.message`.
+// Anything without a code we recognize (a network error, an unrelated
+// server error) still falls back to that raw message - better than nothing.
+function describeUpdateTripError(error, t, locale) {
+  const graphQLError = error?.errors?.[0]
+  const code = graphQLError?.extensions?.code
+
+  if (code === 'TRIP_TITLE_REQUIRED') return t('editTrip.error.titleRequired')
+  if (code === 'TRIP_INVALID_DATE_RANGE') return t('editTrip.error.invalidDateRange')
+
+  if (code === 'TRIP_SHRINK_BLOCKED') {
+    const isoDates = graphQLError.extensions.dates ?? []
+    const dates = isoDates.map((isoDate) => formatDate(isoDate, locale)).join(', ')
+    const key = isoDates.length === 1 ? 'editTrip.error.shrinkBlockedOne' : 'editTrip.error.shrinkBlockedMany'
+    return t(key, { dates })
+  }
+
+  return error?.message
+}
+
+export function EditTripForm({ trip, onDone, onCancel }) {
+  const { t, locale } = useTranslation()
+  const [title, setTitle] = useState(trip.title)
+  const [startDate, setStartDate] = useState(trip.startDate)
+  const [endDate, setEndDate] = useState(trip.endDate)
+  const [runUpdateTrip, { loading, error }] = useMutation(UPDATE_TRIP_MUTATION, {
+    refetchQueries: [{ query: TRIP_QUERY, variables: { id: trip.id } }],
     awaitRefetchQueries: true,
   })
 
-  const currentYear = new Date().getFullYear()
-
   async function handleSubmit(event) {
     event.preventDefault()
-    await runCreateTrip({ variables: { title, startDate, endDate } })
-    onCreated()
+    await runUpdateTrip({ variables: { id: trip.id, title, startDate, endDate } })
+    onDone()
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <label htmlFor="title" className="text-sm font-semibold text-ink">
+        <label htmlFor="editTripTitle" className="text-sm font-semibold text-ink">
           {t('newTrip.title.label')}
         </label>
         <input
-          id="title"
+          id="editTripTitle"
           type="text"
           required
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder={t('newTrip.title.placeholder', { year: currentYear })}
           className="rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
         />
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row">
         <div className="flex flex-1 flex-col gap-1">
-          <label htmlFor="startDate" className="text-sm font-semibold text-ink">
+          <label htmlFor="editTripStartDate" className="text-sm font-semibold text-ink">
             {t('newTrip.startDate.label')}
           </label>
           <input
-            id="startDate"
+            id="editTripStartDate"
             type="date"
             required
             value={startDate}
@@ -56,11 +77,11 @@ export function NewTripForm({ onCreated, onCancel }) {
         </div>
 
         <div className="flex flex-1 flex-col gap-1">
-          <label htmlFor="endDate" className="text-sm font-semibold text-ink">
+          <label htmlFor="editTripEndDate" className="text-sm font-semibold text-ink">
             {t('newTrip.endDate.label')}
           </label>
           <input
-            id="endDate"
+            id="editTripEndDate"
             type="date"
             required
             min={startDate || undefined}
@@ -71,7 +92,7 @@ export function NewTripForm({ onCreated, onCancel }) {
         </div>
       </div>
 
-      {error ? <p className="text-sm text-red-600">{error.message}</p> : null}
+      {error ? <p className="text-sm text-red-600">{describeUpdateTripError(error, t, locale)}</p> : null}
 
       <div className="flex gap-3">
         <button
@@ -79,8 +100,8 @@ export function NewTripForm({ onCreated, onCancel }) {
           disabled={loading}
           className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent px-4 py-2.5 font-semibold text-accent-ink disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
-          <PlusIcon size={18} />
-          {loading ? t('newTrip.creating') : t('newTrip.create')}
+          <CheckIcon size={18} />
+          {loading ? t('common.saving') : t('stopForm.saveChanges')}
         </button>
         <button
           type="button"
