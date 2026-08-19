@@ -47,6 +47,29 @@ export function formatTime(isoTime) {
   return isoTime.slice(0, 5)
 }
 
+// Client-local calendar date (not UTC) - "today" is inherently about the
+// viewer's own local day, not a UTC day that might already be tomorrow (or
+// still yesterday) for them. `Day.date`/`Trip.startDate`/`endDate` have no
+// server-side timezone, so this stays consistent with how `enumerateDates`
+// already does its date math client-side.
+function todayIsoDate() {
+  const now = new Date()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${now.getFullYear()}-${month}-${day}`
+}
+
+export function isToday(isoDate) {
+  return isoDate === todayIsoDate()
+}
+
+// ISO "YYYY-MM-DD" strings compare correctly with plain <=/>= (lexicographic
+// order matches calendar order), so no Date parsing is needed here.
+export function isTripInProgress(startDate, endDate) {
+  const today = todayIsoDate()
+  return startDate <= today && today <= endDate
+}
+
 export function enumerateDates(startDate, endDate) {
   const dates = []
   const cursor = new Date(`${startDate}T00:00:00Z`)

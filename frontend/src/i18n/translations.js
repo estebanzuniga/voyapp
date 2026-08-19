@@ -97,6 +97,7 @@ export const translations = {
     'tripCard.editAria': 'Edit {title}',
     'tripCard.shareAria': 'Share {title}',
     'tripCard.deleteAria': 'Delete {title}',
+    'tripCard.inProgress': 'In progress',
 
     // --- invite accept ------------------------------------------------
     'inviteAccept.invalidOrExpired':
@@ -135,6 +136,7 @@ export const translations = {
     'tripDetail.noDaysYet': 'No days added yet.',
     'tripDetail.addDay': 'Add {date}',
     'tripDetail.daysPending': '{count} days pending',
+    'tripDetail.jumpToToday': 'Jump to today',
 
     // --- edit trip ------------------------------------------------------
     'editTrip.title': 'Edit trip',
@@ -169,6 +171,7 @@ export const translations = {
       "Are you sure you want to delete {date}? All of its stops will be removed too. This can't be undone.",
     'dayCard.dragHere': 'Drag a stop here',
     'dayCard.noStopsYet': 'No stops yet',
+    'dayCard.todayBadge': 'Today',
 
     // --- stop forms (add/edit) -----------------------------------------
     'stopForm.name.label': 'Stop name',
@@ -311,6 +314,7 @@ export const translations = {
     'tripCard.editAria': 'Editar {title}',
     'tripCard.shareAria': 'Compartir {title}',
     'tripCard.deleteAria': 'Eliminar {title}',
+    'tripCard.inProgress': 'En curso',
 
     // --- invite accept ------------------------------------------------
     'inviteAccept.invalidOrExpired':
@@ -349,6 +353,7 @@ export const translations = {
     'tripDetail.noDaysYet': 'Aún no se han agregado días.',
     'tripDetail.addDay': 'Agregar {date}',
     'tripDetail.daysPending': '{count} días pendientes',
+    'tripDetail.jumpToToday': 'Ir a hoy',
 
     // --- edit trip ------------------------------------------------------
     'editTrip.title': 'Editar viaje',
@@ -381,6 +386,7 @@ export const translations = {
       '¿Seguro que quieres eliminar el {date}? También se eliminarán todas sus paradas. Esta acción no se puede deshacer.',
     'dayCard.dragHere': 'Arrastra una parada aquí',
     'dayCard.noStopsYet': 'Aún no hay paradas',
+    'dayCard.todayBadge': 'Hoy',
 
     // --- stop forms (add/edit) -----------------------------------------
     'stopForm.name.label': 'Nombre de la parada',

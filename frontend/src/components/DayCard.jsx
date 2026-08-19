@@ -227,7 +227,7 @@ export function StopDragPreview({ stop }) {
   )
 }
 
-export function DayCard({ day, stops, tripId, canEdit }) {
+export function DayCard({ day, stops, tripId, canEdit, isToday }) {
   const { t, locale } = useTranslation()
   const [isAddingStop, setIsAddingStop] = useState(false)
   const [isConfirmingDeleteDay, setIsConfirmingDeleteDay] = useState(false)
@@ -250,9 +250,19 @@ export function DayCard({ day, stops, tripId, canEdit }) {
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-5 shadow-sm">
+    <div
+      id={`day-${day.id}`}
+      className={`flex flex-col gap-3 rounded-xl border bg-surface p-5 shadow-sm ${isToday ? 'border-accent' : 'border-border'}`}
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-display text-lg text-ink">{formatFullDate(day.date, locale)}</h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="font-display text-lg text-ink">{formatFullDate(day.date, locale)}</h3>
+          {isToday ? (
+            <span className="flex w-fit items-center gap-1 rounded-full bg-accent/10 px-2.5 py-1 text-xs font-semibold text-accent">
+              {t('dayCard.todayBadge')}
+            </span>
+          ) : null}
+        </div>
         <div className="flex items-center gap-4">
           {stops.length > 0 ? (
             <button

@@ -4,7 +4,7 @@ import { useMutation } from '@apollo/client/react'
 import { DELETE_TRIP_MUTATION } from '../graphql/mutations'
 import { MY_TRIPS_QUERY } from '../graphql/queries'
 import { useTranslation } from '../hooks/useTranslation'
-import { formatDateRange } from '../lib/dates'
+import { formatDateRange, isTripInProgress } from '../lib/dates'
 import { ConfirmDialog } from './ConfirmDialog'
 import { EditTripModal } from './EditTripModal'
 import { ShareModal } from './ShareModal'
@@ -38,7 +38,14 @@ export function TripCard({ trip }) {
       {/* Card menu buttons sit outside this Link (not nested inside it) so
           tapping one doesn't also trigger the card's own navigation. */}
       <Link to={`/trips/${trip.id}`} className="flex flex-col gap-1">
-        <h3 className="font-display text-lg text-ink text-balance">{trip.title}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-display text-lg text-ink text-balance">{trip.title}</h3>
+          {isTripInProgress(trip.startDate, trip.endDate) ? (
+            <span className="mt-0.5 flex w-fit shrink-0 items-center gap-1.5 rounded-full bg-accent px-2.5 py-1 text-xs font-semibold text-accent-ink">
+              {t('tripCard.inProgress')}
+            </span>
+          ) : null}
+        </div>
         <p className="text-sm text-muted">{formatDateRange(trip.startDate, trip.endDate, locale)}</p>
         {!trip.isOwner ? (
           <span className="mt-1 flex w-fit items-center gap-1.5 rounded-full bg-surface-2 px-2.5 py-1 text-xs font-semibold text-muted">

@@ -13,10 +13,10 @@ import { arrayMove } from '@dnd-kit/sortable'
 import { TRIP_QUERY } from '../graphql/queries'
 import { ADD_DAY_MUTATION, MOVE_STOP_MUTATION, REORDER_STOPS_MUTATION } from '../graphql/mutations'
 import { useTranslation } from '../hooks/useTranslation'
-import { formatDate, formatDateRange, enumerateDates } from '../lib/dates'
+import { formatDate, formatDateRange, enumerateDates, isToday } from '../lib/dates'
 import { DayCard, StopDragPreview } from '../components/DayCard'
 import { Skeleton } from '../components/Skeleton'
-import { ArrowLeftIcon, ChevronDownIcon, EyeIcon, PlusIcon } from '../components/Icons'
+import { ArrowLeftIcon, CalendarIcon, ChevronDownIcon, EyeIcon, PlusIcon } from '../components/Icons'
 
 function findContainerId(stopsByDay, stopId) {
   return Object.keys(stopsByDay).find((dayId) =>
@@ -98,6 +98,14 @@ export function TripDetailPage() {
   const dragSnapshotRef = useRef(null)
 
   const canEdit = trip?.myPermission === 'EDITOR'
+  // Only set when today's date actually has a day in this trip's itinerary -
+  // the "jump to today" button has nothing to scroll to otherwise.
+  const todayDay = trip?.days.find((day) => isToday(day.date)) ?? null
+
+  function handleJumpToToday() {
+    if (!todayDay) return
+    document.getElementById(`day-${todayDay.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   useEffect(() => {
     if (trip) {
@@ -294,7 +302,19 @@ export function TripDetailPage() {
         {trip ? (
           <>
             <header className="flex flex-col gap-1">
-              <h1 className="font-display text-2xl text-ink text-balance">{trip.title}</h1>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h1 className="font-display text-2xl text-ink text-balance">{trip.title}</h1>
+                {todayDay ? (
+                  <button
+                    type="button"
+                    onClick={handleJumpToToday}
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-accent px-3 py-1.5 text-sm font-semibold text-accent hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-accent"
+                  >
+                    <CalendarIcon size={14} />
+                    {t('tripDetail.jumpToToday')}
+                  </button>
+                ) : null}
+              </div>
               <p className="text-muted">{formatDateRange(trip.startDate, trip.endDate, locale)}</p>
               {!trip.isOwner ? (
                 <span className="flex w-fit items-center gap-1.5 rounded-full bg-surface-2 px-2.5 py-1 text-xs font-semibold text-muted">
@@ -328,6 +348,7 @@ export function TripDetailPage() {
                         stops={stopsByDay[item.day.id] ?? item.day.stops}
                         tripId={id}
                         canEdit={canEdit}
+                        isToday={isToday(item.day.date)}
                       />
                     ) : canEdit ? (
                       // Keyed by the full date range, not just the first date: when
