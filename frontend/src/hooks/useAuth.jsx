@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useQuery } from '@apollo/client/react'
 import { apolloClient } from '../apollo/client'
 import { ME_QUERY } from '../graphql/queries'
@@ -28,10 +29,13 @@ export function AuthProvider({ children }) {
   }, [meData])
 
   useEffect(() => {
-    // The stored token is no longer valid (expired, or the secret rotated) -
-    // drop it rather than leave the app thinking it's logged in while every
-    // real query 401s.
-    if (meError) {
+    // Only a real GraphQL error means the token itself is bad (expired, or
+    // the secret rotated) - the `me` resolver's only failure mode is
+    // `raise Exception("Not authenticated")`, which Apollo surfaces as a
+    // CombinedGraphQLErrors. A network error (e.g. no internet) never even
+    // reached the server, so it can't mean that - logging out on it would
+    // wrongly kick out an already-logged-in user just for going offline.
+    if (meError && CombinedGraphQLErrors.is(meError)) {
       localStorage.removeItem(TOKEN_KEY)
       setToken(null)
     }
