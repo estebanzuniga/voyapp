@@ -294,3 +294,24 @@ export function EyeOffIcon(props) {
   )
 }
 
+export function LocateIcon(props) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="7" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" />
+      <line x1="12" y1="2" x2="12" y2="5" />
+      <line x1="12" y1="19" x2="12" y2="22" />
+      <line x1="2" y1="12" x2="5" y2="12" />
+      <line x1="19" y1="12" x2="22" y2="12" />
+    </Icon>
+  )
+}
+
+export function NavigationIcon(props) {
+  return (
+    <Icon {...props}>
+      <polygon points="3 11 22 2 13 21 11 13 3 11" />
+    </Icon>
+  )
+}
+

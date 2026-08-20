@@ -188,6 +188,11 @@ export const translations = {
     // --- day map modal --------------------------------------------------
     'dayMap.exitFullScreen': 'Exit full screen',
     'dayMap.viewFullScreen': 'View full screen',
+    'dayMap.locateMeAria': 'Locate me',
+    'dayMap.myLocation': 'My location',
+    'dayMap.locateError.denied': 'Location access was denied. Enable it in your browser settings to use this.',
+    'dayMap.locateError.unavailable': "Couldn't get your location. Try again.",
+    'dayMap.directionsToNext': 'Directions to {name}',
 
     // --- share modal --------------------------------------------------
     'shareModal.title': 'Share {title}',
@@ -403,6 +408,11 @@ export const translations = {
     // --- day map modal --------------------------------------------------
     'dayMap.exitFullScreen': 'Salir de pantalla completa',
     'dayMap.viewFullScreen': 'Ver en pantalla completa',
+    'dayMap.locateMeAria': 'Ubicarme',
+    'dayMap.myLocation': 'Mi ubicación',
+    'dayMap.locateError.denied': 'Se denegó el acceso a la ubicación. Actívalo en la configuración de tu navegador para usar esto.',
+    'dayMap.locateError.unavailable': 'No se pudo obtener tu ubicación. Inténtalo de nuevo.',
+    'dayMap.directionsToNext': 'Cómo llegar a {name}',
 
     // --- share modal --------------------------------------------------
     'shareModal.title': 'Compartir {title}',

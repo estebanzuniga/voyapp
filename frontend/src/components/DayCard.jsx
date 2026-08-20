@@ -5,8 +5,10 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { DELETE_DAY_MUTATION, DELETE_STOP_MUTATION, DUPLICATE_STOP_MUTATION } from '../graphql/mutations'
 import { TRIP_QUERY } from '../graphql/queries'
+import { useCurrentLocation } from '../hooks/useCurrentLocation'
 import { useTranslation } from '../hooks/useTranslation'
 import { formatFullDate, formatTime } from '../lib/dates'
+import { GOOGLE_MAPS_DIRECTIONS_URL } from '../lib/geo'
 import { AddStopModal } from './AddStopModal'
 import { ConfirmDialog } from './ConfirmDialog'
 import { DayMapModal } from './DayMapModal'
@@ -24,8 +26,6 @@ import {
   TrashIcon,
 } from './Icons'
 
-const googleMapsUrl = 'https://www.google.com/maps/dir/?api=1&travelmode=walking'
-
 function StopName({ stop, t }) {
   return (
     <span className="inline-flex items-center gap-1 font-semibold text-ink">
@@ -36,7 +36,7 @@ function StopName({ stop, t }) {
   )
 }
 
-function SortableStopRow({ stop, prevStop, tripId, canEdit }) {
+function SortableStopRow({ stop, prevStop, tripId, canEdit, currentPosition }) {
   const { t } = useTranslation()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: stop.id,
@@ -82,6 +82,13 @@ function SortableStopRow({ stop, prevStop, tripId, canEdit }) {
     transition,
     opacity: isDragging ? 0.6 : 1,
   }
+
+  // Prefer the viewer's live location as the directions origin when it's
+  // silently available (see useCurrentLocation - never prompts on its own);
+  // otherwise fall back to the previous itinerary stop, same as before. This
+  // also means the very first stop of the day - which has no previous stop -
+  // now gets a directions link too, as long as a live location is known.
+  const directionsOrigin = currentPosition ?? (prevStop ? prevStop.location : null)
 
   return (
     <li
@@ -129,9 +136,9 @@ function SortableStopRow({ stop, prevStop, tripId, canEdit }) {
         </div>
         {canEdit ? (
           <div className="flex items-center gap-2">
-            {prevStop && (
+            {directionsOrigin && (
               <a
-                href={`${googleMapsUrl}&origin=${prevStop.location.lat},${prevStop.location.lng}&destination=${stop.location.lat},${stop.location.lng}`}
+                href={`${GOOGLE_MAPS_DIRECTIONS_URL}&origin=${directionsOrigin.lat},${directionsOrigin.lng}&destination=${stop.location.lat},${stop.location.lng}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={t('dayCard.howToGetToAria', { name: stop.name })}
@@ -229,6 +236,7 @@ export function StopDragPreview({ stop }) {
 
 export function DayCard({ day, stops, tripId, canEdit, isToday }) {
   const { t, locale } = useTranslation()
+  const currentPosition = useCurrentLocation()
   const [isAddingStop, setIsAddingStop] = useState(false)
   const [isConfirmingDeleteDay, setIsConfirmingDeleteDay] = useState(false)
   const [deleteDayError, setDeleteDayError] = useState(null)
@@ -324,6 +332,7 @@ export function DayCard({ day, stops, tripId, canEdit, isToday }) {
                 prevStop={index > 0 ? stops[index - 1] : null}
                 tripId={tripId}
                 canEdit={canEdit}
+                currentPosition={currentPosition}
               />
             ))
           )}
