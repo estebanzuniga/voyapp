@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import func
+from sqlalchemy import Boolean, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -47,6 +47,16 @@ class User(Base):
     # over time - `Query.language_options` is the source of truth the
     # frontend validates/renders against, same idea as `avatar_color_options`.
     language: Mapped[str] = mapped_column(default="en", server_default="en")
+    # Origin for the day list's per-stop "how to get to" link
+    # (DayCard.jsx's SortableStopRow). True (the default) preserves the
+    # existing behavior: prefer the viewer's live location when it's
+    # silently available (see useCurrentLocation.js), falling back to the
+    # previous itinerary stop otherwise. False pins the origin to the
+    # previous stop always, for anyone who'd rather plan directions between
+    # itinerary stops than from wherever they happen to be standing.
+    directions_use_current_location: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true"
+    )
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     trips: Mapped[list["Trip"]] = relationship(back_populates="user")

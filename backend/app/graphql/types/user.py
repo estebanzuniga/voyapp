@@ -11,6 +11,7 @@ class User:
     last_name: str
     avatar_color: str
     language: str
+    directions_use_current_location: bool
 
     @classmethod
     def from_model(cls, user: UserModel) -> "User":
@@ -21,4 +22,5 @@ class User:
             last_name=user.last_name,
             avatar_color=user.avatar_color,
             language=user.language,
+            directions_use_current_location=user.directions_use_current_location,
         )

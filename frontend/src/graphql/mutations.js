@@ -78,6 +78,15 @@ export const UPDATE_LANGUAGE_MUTATION = gql`
   }
 `
 
+export const UPDATE_DIRECTIONS_USE_CURRENT_LOCATION_MUTATION = gql`
+  mutation UpdateDirectionsUseCurrentLocation($useCurrentLocation: Boolean!) {
+    updateDirectionsUseCurrentLocation(useCurrentLocation: $useCurrentLocation) {
+      id
+      directionsUseCurrentLocation
+    }
+  }
+`
+
 export const CREATE_TRIP_MUTATION = gql`
   mutation CreateTrip($title: String!, $startDate: Date!, $endDate: Date!) {
     createTrip(title: $title, startDate: $startDate, endDate: $endDate) {

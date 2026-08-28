@@ -5,6 +5,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { DELETE_DAY_MUTATION, DELETE_STOP_MUTATION, DUPLICATE_STOP_MUTATION } from '../graphql/mutations'
 import { TRIP_QUERY } from '../graphql/queries'
+import { useAuth } from '../hooks/useAuth'
 import { useCurrentLocation } from '../hooks/useCurrentLocation'
 import { useTranslation } from '../hooks/useTranslation'
 import { formatFullDate, formatTime } from '../lib/dates'
@@ -84,10 +85,12 @@ function SortableStopRow({ stop, prevStop, tripId, canEdit, currentPosition }) {
   }
 
   // Prefer the viewer's live location as the directions origin when it's
-  // silently available (see useCurrentLocation - never prompts on its own);
-  // otherwise fall back to the previous itinerary stop, same as before. This
-  // also means the very first stop of the day - which has no previous stop -
-  // now gets a directions link too, as long as a live location is known.
+  // silently available (see useCurrentLocation - never prompts on its own)
+  // and the profile setting allows it (DayCard already nulls out
+  // `currentPosition` when the user has turned that off); otherwise fall
+  // back to the previous itinerary stop, same as before. This also means
+  // the very first stop of the day - which has no previous stop - now gets
+  // a directions link too, as long as a live location is known and in use.
   const directionsOrigin = currentPosition ?? (prevStop ? prevStop.location : null)
 
   return (
@@ -236,7 +239,13 @@ export function StopDragPreview({ stop }) {
 
 export function DayCard({ day, stops, tripId, canEdit, isToday }) {
   const { t, locale } = useTranslation()
-  const currentPosition = useCurrentLocation()
+  const { user } = useAuth()
+  const liveCurrentPosition = useCurrentLocation()
+  // Profile setting (defaults to true): some people would rather every
+  // directions link plan between itinerary stops than from wherever they
+  // happen to be standing right now. Read the hook unconditionally either
+  // way (Rules of Hooks) and just ignore its result when the setting is off.
+  const currentPosition = user?.directionsUseCurrentLocation === false ? null : liveCurrentPosition
   const [isAddingStop, setIsAddingStop] = useState(false)
   const [isConfirmingDeleteDay, setIsConfirmingDeleteDay] = useState(false)
   const [deleteDayError, setDeleteDayError] = useState(null)

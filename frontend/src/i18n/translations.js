@@ -119,6 +119,11 @@ export const translations = {
     'profile.avatarColor.title': 'Avatar color',
     'profile.avatarColor.useAria': 'Use {color} as avatar color',
     'profile.language.title': 'Language',
+    'profile.directionsOrigin.title': '"How to get to" starting point',
+    'profile.directionsOrigin.description':
+      "Choose where directions to a stop start from: your current location, or always the previous stop in the day's itinerary.",
+    'profile.directionsOrigin.currentLocation': 'My current location',
+    'profile.directionsOrigin.previousStop': 'Previous stop',
     'profile.logout': 'Log out',
 
     // --- trip detail --------------------------------------------------
@@ -341,6 +346,11 @@ export const translations = {
     'profile.avatarColor.title': 'Color de avatar',
     'profile.avatarColor.useAria': 'Usar {color} como color de avatar',
     'profile.language.title': 'Idioma',
+    'profile.directionsOrigin.title': 'Punto de partida de "cómo llegar"',
+    'profile.directionsOrigin.description':
+      'Elige desde dónde parten las indicaciones hacia una parada: tu ubicación actual, o siempre la parada anterior del itinerario del día.',
+    'profile.directionsOrigin.currentLocation': 'Mi ubicación actual',
+    'profile.directionsOrigin.previousStop': 'Parada anterior',
     'profile.logout': 'Cerrar sesión',
 
     // --- trip detail --------------------------------------------------

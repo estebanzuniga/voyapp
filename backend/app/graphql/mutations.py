@@ -586,6 +586,19 @@ class Mutation:
         await session.commit()
         return User.from_model(user)
 
+    @strawberry.mutation
+    async def update_directions_use_current_location(
+        self, info: strawberry.Info, use_current_location: bool
+    ) -> User:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        session = info.context.session
+        user.directions_use_current_location = use_current_location
+        await session.commit()
+        return User.from_model(user)
+
     # --- Sharing -----------------------------------------------------------
     # These mutations manage the trip owner's share links (any number per
     # permission level - each "Generate link" click makes an independent,

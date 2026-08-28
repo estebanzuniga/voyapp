@@ -359,6 +359,54 @@ async def test_language_options_returns_supported_languages(context):
     assert set(result.data["languageOptions"]) == {"en", "es"}
 
 
+async def test_new_user_defaults_to_using_current_location_for_directions(auth_context):
+    result = await schema.execute(
+        "query { me { directionsUseCurrentLocation } }", context_value=auth_context
+    )
+
+    assert result.errors is None
+    assert result.data["me"]["directionsUseCurrentLocation"] is True
+
+
+async def test_update_directions_use_current_location_round_trips(auth_context):
+    mutation = """
+    mutation($useCurrentLocation: Boolean!) {
+      updateDirectionsUseCurrentLocation(useCurrentLocation: $useCurrentLocation) {
+        directionsUseCurrentLocation
+      }
+    }
+    """
+
+    result = await schema.execute(
+        mutation, variable_values={"useCurrentLocation": False}, context_value=auth_context
+    )
+    assert result.errors is None
+    assert result.data["updateDirectionsUseCurrentLocation"]["directionsUseCurrentLocation"] is False
+
+    result = await schema.execute(
+        mutation, variable_values={"useCurrentLocation": True}, context_value=auth_context
+    )
+    assert result.errors is None
+    assert result.data["updateDirectionsUseCurrentLocation"]["directionsUseCurrentLocation"] is True
+
+
+async def test_update_directions_use_current_location_requires_auth(context):
+    result = await schema.execute(
+        """
+        mutation($useCurrentLocation: Boolean!) {
+          updateDirectionsUseCurrentLocation(useCurrentLocation: $useCurrentLocation) {
+            directionsUseCurrentLocation
+          }
+        }
+        """,
+        variable_values={"useCurrentLocation": False},
+        context_value=context,
+    )
+
+    assert result.errors is not None
+    assert "Not authenticated" in result.errors[0].message
+
+
 async def test_request_password_reset_creates_token_for_known_email(session, context, user):
     result = await schema.execute(
         REQUEST_PASSWORD_RESET,

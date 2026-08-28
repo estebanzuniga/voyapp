@@ -6,6 +6,7 @@ import { useTranslation } from '../hooks/useTranslation'
 import { AVATAR_COLOR_OPTIONS_QUERY, LANGUAGE_OPTIONS_QUERY } from '../graphql/queries'
 import {
   UPDATE_AVATAR_COLOR_MUTATION,
+  UPDATE_DIRECTIONS_USE_CURRENT_LOCATION_MUTATION,
   UPDATE_LANGUAGE_MUTATION,
   UPDATE_NAME_MUTATION,
 } from '../graphql/mutations'
@@ -30,6 +31,8 @@ export function ProfilePage() {
   const [runUpdateLanguage, { loading: savingLanguage, error: languageError }] = useMutation(
     UPDATE_LANGUAGE_MUTATION,
   )
+  const [runUpdateDirectionsOrigin, { loading: savingDirectionsOrigin, error: directionsOriginError }] =
+    useMutation(UPDATE_DIRECTIONS_USE_CURRENT_LOCATION_MUTATION)
   const [isEditingName, setIsEditingName] = useState(false)
   const [firstNameDraft, setFirstNameDraft] = useState('')
   const [lastNameDraft, setLastNameDraft] = useState('')
@@ -53,6 +56,16 @@ export function ProfilePage() {
     if (language === user?.language) return
     const { data: result } = await runUpdateLanguage({ variables: { language } })
     updateUser({ language: result.updateLanguage.language })
+  }
+
+  async function handlePickDirectionsOrigin(useCurrentLocation) {
+    if (useCurrentLocation === (user?.directionsUseCurrentLocation ?? true)) return
+    const { data: result } = await runUpdateDirectionsOrigin({
+      variables: { useCurrentLocation },
+    })
+    updateUser({
+      directionsUseCurrentLocation: result.updateDirectionsUseCurrentLocation.directionsUseCurrentLocation,
+    })
   }
 
   function startEditingName() {
@@ -205,6 +218,38 @@ export function ProfilePage() {
                 >
                   {isSelected ? <CheckIcon size={14} /> : null}
                   {LANGUAGE_LABELS[language] ?? language}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-5 shadow-sm sm:p-6">
+          <h2 className="font-semibold text-ink">{t('profile.directionsOrigin.title')}</h2>
+          <p className="text-sm text-muted">{t('profile.directionsOrigin.description')}</p>
+          {directionsOriginError ? (
+            <p className="text-sm text-red-600">{directionsOriginError.message}</p>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            {[true, false].map((useCurrentLocation) => {
+              const isSelected = useCurrentLocation === (user?.directionsUseCurrentLocation ?? true)
+              return (
+                <button
+                  key={String(useCurrentLocation)}
+                  type="button"
+                  disabled={savingDirectionsOrigin}
+                  onClick={() => handlePickDirectionsOrigin(useCurrentLocation)}
+                  aria-pressed={isSelected}
+                  className={`flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-semibold disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                    isSelected
+                      ? 'border-accent bg-accent text-accent-ink'
+                      : 'border-border text-ink hover:border-accent'
+                  }`}
+                >
+                  {isSelected ? <CheckIcon size={14} /> : null}
+                  {useCurrentLocation
+                    ? t('profile.directionsOrigin.currentLocation')
+                    : t('profile.directionsOrigin.previousStop')}
                 </button>
               )
             })}
