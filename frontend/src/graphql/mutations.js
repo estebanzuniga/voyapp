@@ -11,6 +11,7 @@ export const SIGNUP_MUTATION = gql`
         lastName
         avatarColor
         language
+        directionsUseCurrentLocation
       }
     }
   }
@@ -27,6 +28,7 @@ export const LOGIN_MUTATION = gql`
         lastName
         avatarColor
         language
+        directionsUseCurrentLocation
       }
     }
   }
