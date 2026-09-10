@@ -1,16 +1,14 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, func
+from sqlalchemy import Boolean, Index, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
-# Fixed palette rather than a free-form hex/color-picker input - keeps every
-# avatar visually consistent (no one picking a color that's unreadable
-# against the app's surfaces) and gives the frontend a finite list of
-# swatches to render, sourced from here via `Query.avatar_color_options` so
-# the backend stays the single source of truth. Tailwind's 500-weight
-# scale, picked for even contrast against both light and dark surfaces.
+
+def normalize_email(email: str) -> str:
+    return email.strip().lower()
+
 AVATAR_COLORS: tuple[str, ...] = (
     "#ef4444",  # red
     "#f97316",  # orange
@@ -26,10 +24,6 @@ AVATAR_COLORS: tuple[str, ...] = (
     "#f43f5e",  # rose
 )
 
-# Same reasoning as AVATAR_COLORS: one fixed list the frontend renders from
-# (via `Query.language_options`) and `update_language` validates against,
-# instead of the frontend hardcoding its own copy that could drift out of
-# sync with what translations actually exist.
 LANGUAGE_OPTIONS: tuple[str, ...] = ("en", "es")
 
 
@@ -42,21 +36,12 @@ class User(Base):
     first_name: Mapped[str]
     last_name: Mapped[str]
     avatar_color: Mapped[str]
-    # ISO 639-1 code. Just a free string rather than a DB enum (like
-    # `Permission` elsewhere) since the supported set is expected to grow
-    # over time - `Query.language_options` is the source of truth the
-    # frontend validates/renders against, same idea as `avatar_color_options`.
     language: Mapped[str] = mapped_column(default="en", server_default="en")
-    # Origin for the day list's per-stop "how to get to" link
-    # (DayCard.jsx's SortableStopRow). True (the default) preserves the
-    # existing behavior: prefer the viewer's live location when it's
-    # silently available (see useCurrentLocation.js), falling back to the
-    # previous itinerary stop otherwise. False pins the origin to the
-    # previous stop always, for anyone who'd rather plan directions between
-    # itinerary stops than from wherever they happen to be standing.
     directions_use_current_location: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default="true"
     )
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     trips: Mapped[list["Trip"]] = relationship(back_populates="user")
+
+Index("ix_users_email_lower", func.lower(User.email), unique=True)

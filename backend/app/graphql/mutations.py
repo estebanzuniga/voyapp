@@ -24,7 +24,7 @@ from app.models.trip import Trip as TripModel
 from app.models.trip_collaborator import MAX_COLLABORATORS_PER_TRIP
 from app.models.trip_collaborator import TripCollaborator as TripCollaboratorModel
 from app.models.trip_share_link import TripShareLink as TripShareLinkModel
-from app.models.user import AVATAR_COLORS, LANGUAGE_OPTIONS
+from app.models.user import AVATAR_COLORS, LANGUAGE_OPTIONS, normalize_email
 from app.models.user import User as UserModel
 
 
@@ -56,8 +56,12 @@ class Mutation:
         if len(password) < 8:
             raise Exception("Password must be at least 8 characters")
 
+        email = normalize_email(email)
+
         session = info.context.session
-        existing = await session.execute(select(UserModel).where(UserModel.email == email))
+        existing = await session.execute(
+            select(UserModel).where(func.lower(UserModel.email) == email)
+        )
         if existing.scalar_one_or_none() is not None:
             raise Exception("A user with that email already exists")
 
@@ -80,7 +84,9 @@ class Mutation:
     @strawberry.mutation
     async def login(self, info: strawberry.Info, email: str, password: str) -> AuthPayload:
         session = info.context.session
-        result = await session.execute(select(UserModel).where(UserModel.email == email))
+        result = await session.execute(
+            select(UserModel).where(func.lower(UserModel.email) == normalize_email(email))
+        )
         user = result.scalar_one_or_none()
         if user is None or not verify_password(password, user.password_hash):
             raise Exception("Invalid email or password")
@@ -526,7 +532,9 @@ class Mutation:
         # emails have accounts. Same pattern as the reference app's
         # `/forgot-password` REST endpoint.
         session = info.context.session
-        result = await session.execute(select(UserModel).where(UserModel.email == email))
+        result = await session.execute(
+            select(UserModel).where(func.lower(UserModel.email) == normalize_email(email))
+        )
         user = result.scalar_one_or_none()
 
         if user is not None:

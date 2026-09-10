@@ -80,6 +80,38 @@ async def test_signup_rejects_blank_name(session, context):
     assert "First name and last name are required" in result.errors[0].message
 
 
+async def test_signup_normalizes_email_to_lowercase(session, context):
+    result = await schema.execute(
+        SIGNUP,
+        variable_values={
+            "email": "  New.User@Example.com  ",
+            "password": "password123",
+            "firstName": "Ada",
+            "lastName": "Lovelace",
+        },
+        context_value=context,
+    )
+
+    assert result.errors is None
+    assert result.data["signup"]["user"]["email"] == "new.user@example.com"
+
+
+async def test_signup_rejects_duplicate_email_with_different_case(session, context, user):
+    result = await schema.execute(
+        SIGNUP,
+        variable_values={
+            "email": user.email.upper(),
+            "password": "password123",
+            "firstName": "Ada",
+            "lastName": "Lovelace",
+        },
+        context_value=context,
+    )
+
+    assert result.errors is not None
+    assert "already exists" in result.errors[0].message
+
+
 async def test_signup_rejects_short_password(session, context):
     result = await schema.execute(
         SIGNUP,
@@ -104,6 +136,21 @@ async def test_login_succeeds_with_correct_password(session, context, user):
         }
         """,
         variable_values={"email": user.email, "password": "password123"},
+        context_value=context,
+    )
+
+    assert result.errors is None
+    assert result.data["login"]["token"]
+
+
+async def test_login_succeeds_with_different_email_case(session, context, user):
+    result = await schema.execute(
+        """
+        mutation($email: String!, $password: String!) {
+          login(email: $email, password: $password) { token }
+        }
+        """,
+        variable_values={"email": f"  {user.email.upper()}  ", "password": "password123"},
         context_value=context,
     )
 
@@ -439,6 +486,32 @@ async def test_request_password_reset_creates_token_for_known_email(session, con
     reset_token = tokens.scalar_one()
     assert reset_token.used_at is None
     assert not reset_token.is_expired
+
+
+async def test_request_password_reset_finds_user_with_different_email_case(
+    session, context, user, monkeypatch
+):
+    # Stub the actual send so this test only exercises the lookup - not
+    # Brevo's real API (see test_request_password_reset_creates_token_for_known_email,
+    # which does hit it and fails here whenever the configured key is stale).
+    async def fake_send(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("app.graphql.mutations.send_password_reset_email", fake_send)
+
+    result = await schema.execute(
+        REQUEST_PASSWORD_RESET,
+        variable_values={"email": f"  {user.email.upper()}  "},
+        context_value=context,
+    )
+
+    assert result.errors is None
+    assert result.data["requestPasswordReset"] is True
+
+    tokens = await session.execute(
+        select(PasswordResetTokenModel).where(PasswordResetTokenModel.user_id == user.id)
+    )
+    assert tokens.scalar_one_or_none() is not None
 
 
 async def test_request_password_reset_returns_true_for_unknown_email(context):
