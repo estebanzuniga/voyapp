@@ -53,6 +53,9 @@ class Mutation:
         if not first_name or not last_name:
             raise Exception("First name and last name are required")
 
+        if len(password) < 8:
+            raise Exception("Password must be at least 8 characters")
+
         session = info.context.session
         existing = await session.execute(select(UserModel).where(UserModel.email == email))
         if existing.scalar_one_or_none() is not None:

@@ -80,6 +80,22 @@ async def test_signup_rejects_blank_name(session, context):
     assert "First name and last name are required" in result.errors[0].message
 
 
+async def test_signup_rejects_short_password(session, context):
+    result = await schema.execute(
+        SIGNUP,
+        variable_values={
+            "email": "new@example.com",
+            "password": "short",
+            "firstName": "Ada",
+            "lastName": "Lovelace",
+        },
+        context_value=context,
+    )
+
+    assert result.errors is not None
+    assert "Password must be at least 8 characters" in result.errors[0].message
+
+
 async def test_login_succeeds_with_correct_password(session, context, user):
     result = await schema.execute(
         """
