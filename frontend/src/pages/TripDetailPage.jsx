@@ -270,7 +270,7 @@ export function TripDetailPage() {
       <div className="mx-auto flex max-w-4xl flex-col gap-4">
         <Link
           to="/trips"
-          className="flex items-center gap-1.5 rounded-lg text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+          className="flex w-fit items-center gap-1.5 rounded-lg text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
         >
           <ArrowLeftIcon size={16} />
           {t('tripDetail.backToTrips')}
