@@ -1,7 +1,13 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 
-export function Modal({ onClose, className = 'max-w-sm', fullBleed = false, children }) {
+export function Modal({
+  onClose,
+  className = 'max-w-sm',
+  fullBleed = false,
+  closeOnOverlayClick = true,
+  children,
+}) {
   useEffect(() => {
     function handleKeyDown(event) {
       if (event.key === 'Escape') onClose()
@@ -13,7 +19,7 @@ export function Modal({ onClose, className = 'max-w-sm', fullBleed = false, chil
   return createPortal(
     <div
       role="presentation"
-      onClick={onClose}
+      onClick={closeOnOverlayClick ? onClose : undefined}
       className={`fixed inset-0 z-2000 flex items-center justify-center overflow-y-auto overscroll-contain bg-black/50 ${fullBleed ? '' : 'p-4'}`}
     >
       <div

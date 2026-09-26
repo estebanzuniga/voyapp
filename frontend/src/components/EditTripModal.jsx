@@ -7,7 +7,7 @@ export function EditTripModal({ trip, onClose }) {
   const { t } = useTranslation()
 
   return (
-    <Modal onClose={onClose} className="max-w-lg">
+    <Modal onClose={onClose} className="max-w-lg" closeOnOverlayClick={false}>
       <button
         type="button"
         onClick={onClose}
