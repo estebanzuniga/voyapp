@@ -9,6 +9,7 @@ import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { TripDetailPage } from './pages/TripDetailPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { PullToRefresh } from './components/PullToRefresh'
+import { ScrollToTopButton } from './components/ScrollToTopButton'
 
 const PwaInstallPrompt = lazy(() =>
   import('./components/PwaInstallPrompt').then((module) => ({ default: module.PwaInstallPrompt })),
@@ -52,6 +53,7 @@ function App() {
       <Suspense fallback={null}>
         <PwaInstallPrompt />
       </Suspense>
+      <ScrollToTopButton />
     </PullToRefresh>
   )
 }

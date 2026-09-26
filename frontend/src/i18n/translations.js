@@ -25,6 +25,7 @@ export const translations = {
     'common.adding': 'Adding…',
     'common.tagline': 'Every itinerary starts with a spark of somewhere else.',
     'common.passwordMismatch': "New password and confirmation don't match",
+    'common.scrollToTopAria': 'Scroll to top',
 
     // --- auth ----------------------------------------------------------
     'auth.login.heading': 'Welcome back',
@@ -251,6 +252,7 @@ export const translations = {
     'common.adding': 'Agregando…',
     'common.tagline': 'Cada itinerario comienza con la chispa de otro lugar.',
     'common.passwordMismatch': 'La nueva contraseña y la confirmación no coinciden',
+    'common.scrollToTopAria': 'Ir arriba',
 
     // --- auth ----------------------------------------------------------
     'auth.login.heading': 'Bienvenido de nuevo',
