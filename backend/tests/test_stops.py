@@ -141,7 +141,7 @@ async def test_reorder_stops_rejects_mismatched_ids(auth_context):
     )
 
     assert result.errors is not None
-    assert "stopIds must match the day's current stops exactly" in result.errors[0].message
+    assert "stopIds must match the current stops exactly" in result.errors[0].message
 
 
 async def test_add_stop_accepts_notes_and_start_time(auth_context):

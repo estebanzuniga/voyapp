@@ -3,9 +3,11 @@ from datetime import date
 import strawberry
 from sqlalchemy import select
 
+from app.graphql.types.city import City
 from app.graphql.types.day import Day
 from app.graphql.types.permission import PermissionLevel
 from app.graphql.types.share import Collaborator, ShareLink
+from app.models.city import City as CityModel
 from app.models.day import Day as DayModel
 from app.models.enums import Permission
 from app.models.trip import Trip as TripModel
@@ -41,14 +43,17 @@ class Trip:
         result = await session.execute(
             select(DayModel)
             .where(DayModel.trip_id == int(self.id))
-            # Sorted by the day's actual calendar date. A day's "position" in
-            # the list is always its date - there's no drag-to-reorder UI for
-            # days the way there is for stops, and there's no sensible reason
-            # a day would need a position independent of its date - so
-            # there's no separate `order_index` column to maintain here.
             .order_by(DayModel.date)
         )
         return [Day.from_model(day) for day in result.scalars().all()]
+
+    @strawberry.field
+    async def cities(self, info: strawberry.Info) -> list[City]:
+        session = info.context.session
+        result = await session.execute(
+            select(CityModel).where(CityModel.trip_id == int(self.id)).order_by(CityModel.id)
+        )
+        return [City.from_model(city) for city in result.scalars().all()]
 
     @strawberry.field
     def is_owner(self, info: strawberry.Info) -> bool:

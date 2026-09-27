@@ -11,12 +11,14 @@ from app.config import settings
 from app.email import send_password_reset_email
 from app.graphql.access import require_trip_access, require_trip_owner
 from app.graphql.types.auth import AuthPayload
+from app.graphql.types.city import City
 from app.graphql.types.day import Day
 from app.graphql.types.permission import PermissionLevel
 from app.graphql.types.share import Collaborator, ShareLink
 from app.graphql.types.stop import LocationInput, Stop
 from app.graphql.types.trip import Trip
 from app.graphql.types.user import User
+from app.models.city import City as CityModel
 from app.models.day import Day as DayModel
 from app.models.password_reset_token import PasswordResetToken as PasswordResetTokenModel
 from app.models.stop import Stop as StopModel
@@ -35,6 +37,52 @@ async def _get_owned_share_link(session, trip_id: int, link_id: int) -> TripShar
             TripShareLinkModel.trip_id == trip_id,
         )
     )
+
+
+async def _resolve_stop_parent(
+    session, day_id: int | None, city_id: int | None
+) -> tuple[DayModel | None, CityModel | None]:
+    """Fetch and validate a stop's intended parent for add/reorder/move -
+    exactly one of a day or a city, mirroring the CHECK constraint on the
+    stops table itself (a stop is either a scheduled part of one day, or an
+    undated recommendation in one city's list, never both/neither)."""
+    if (day_id is None) == (city_id is None):
+        raise Exception("A stop must belong to exactly one of a day or a city")
+
+    if day_id is not None:
+        day = await session.get(DayModel, day_id)
+        if day is None:
+            raise Exception("Day not found")
+        return day, None
+
+    city = await session.get(CityModel, city_id)
+    if city is None:
+        raise Exception("City not found")
+    return None, city
+
+
+async def _stop_parent_trip_id(session, stop: StopModel) -> int:
+    """The trip id owning whichever parent (day or city) `stop` currently
+    belongs to - for mutations that only have the stop itself to start from
+    (update/duplicate/delete), not a fresh day_id/city_id argument."""
+    if stop.day_id is not None:
+        day = await session.get(DayModel, stop.day_id)
+        if day is None:
+            raise Exception("Stop not found")
+        return day.trip_id
+    if stop.city_id is not None:
+        city = await session.get(CityModel, stop.city_id)
+        if city is None:
+            raise Exception("Stop not found")
+        return city.trip_id
+    raise Exception("Stop not found")
+
+
+def _stop_parent_filter(day_id: int | None, city_id: int | None):
+    """The `WHERE` clause matching every stop sharing the same parent (the
+    "sibling list" order_index is scoped within) as a stop with this
+    day_id/city_id - exactly one of which is always set."""
+    return StopModel.day_id == day_id if day_id is not None else StopModel.city_id == city_id
 
 
 @strawberry.type
@@ -199,8 +247,14 @@ class Mutation:
         # session.delete(trip) would just hit a FK violation. Clear out
         # every dependent table explicitly, deepest first.
         day_ids = select(DayModel.id).where(DayModel.trip_id == trip.id)
+        city_ids = select(CityModel.id).where(CityModel.trip_id == trip.id)
         await session.execute(delete(StopModel).where(StopModel.day_id.in_(day_ids)))
+        # A stop is never linked to both, so this and the delete above are
+        # disjoint - together they cover every stop that could reference
+        # this trip's days/cities before those rows themselves go away.
+        await session.execute(delete(StopModel).where(StopModel.city_id.in_(city_ids)))
         await session.execute(delete(DayModel).where(DayModel.trip_id == trip.id))
+        await session.execute(delete(CityModel).where(CityModel.trip_id == trip.id))
         await session.execute(delete(TripShareLinkModel).where(TripShareLinkModel.trip_id == trip.id))
         await session.execute(delete(TripCollaboratorModel).where(TripCollaboratorModel.trip_id == trip.id))
         await session.delete(trip)
@@ -246,18 +300,94 @@ class Mutation:
         await session.commit()
         return True
 
+    # --- Cities --------------------------------------------------------
+    # A City is a trip-scoped grouping (see models/city.py) with two jobs:
+    # `Day.city_id` groups consecutive days for the day-list "collapse by
+    # city" view, and `City.stops` holds undated recommendations for the
+    # "Stops per city" section - those use the same add/update/move/
+    # duplicate/delete/reorder stop mutations below as day-stops, just
+    # parented to a city (`cityId`) instead of a day (`dayId`).
+
     @strawberry.mutation
-    async def add_stop(
-        self,
-        info: strawberry.Info,
-        day_id: strawberry.ID,
-        name: str,
-        location: LocationInput,
-        notes: str | None = None,
-        start_time: time | None = None,
-        is_important: bool = False,
-        is_optional: bool = False,
-    ) -> Stop:
+    async def create_city(self, info: strawberry.Info, trip_id: strawberry.ID, name: str) -> City:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        name = name.strip()
+        if not name:
+            raise Exception("City name is required")
+
+        session = info.context.session
+        trip = await require_trip_access(session, int(trip_id), user, editor=True)
+
+        city = CityModel(trip_id=trip.id, name=name)
+        session.add(city)
+        await session.commit()
+        return City.from_model(city)
+
+    @strawberry.mutation
+    async def rename_city(self, info: strawberry.Info, id: strawberry.ID, name: str) -> City:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        name = name.strip()
+        if not name:
+            raise Exception("City name is required")
+
+        session = info.context.session
+        city = await session.get(CityModel, int(id))
+        if city is None:
+            raise Exception("City not found")
+
+        await require_trip_access(
+            session, city.trip_id, user, editor=True, not_found_message="City not found"
+        )
+
+        city.name = name
+        await session.commit()
+        return City.from_model(city)
+
+    @strawberry.mutation
+    async def delete_city(self, info: strawberry.Info, id: strawberry.ID) -> bool:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        session = info.context.session
+        city = await session.get(CityModel, int(id))
+        if city is None:
+            return False
+
+        await require_trip_access(
+            session, city.trip_id, user, editor=True, not_found_message="City not found"
+        )
+
+        # Same "don't silently destroy content" reasoning as updateTrip's
+        # shrink-blocking (TRIP_SHRINK_BLOCKED below): deleting a city that
+        # still groups days or holds recommendations would either orphan a
+        # dangling reference or silently wipe that content. Ungroup the
+        # days / remove the stops first, then delete.
+        day_count = await session.scalar(
+            select(func.count()).select_from(DayModel).where(DayModel.city_id == city.id)
+        )
+        stop_count = await session.scalar(
+            select(func.count()).select_from(StopModel).where(StopModel.city_id == city.id)
+        )
+        if day_count > 0 or stop_count > 0:
+            raise Exception(
+                "This city still has days or stops assigned to it - move or remove them first"
+            )
+
+        await session.delete(city)
+        await session.commit()
+        return True
+
+    @strawberry.mutation
+    async def set_day_city(
+        self, info: strawberry.Info, day_id: strawberry.ID, city_id: strawberry.ID | None
+    ) -> Day:
         user = info.context.current_user
         if user is None:
             raise Exception("Not authenticated")
@@ -271,13 +401,64 @@ class Mutation:
             session, day.trip_id, user, editor=True, not_found_message="Day not found"
         )
 
+        if city_id is not None:
+            city = await session.get(CityModel, int(city_id))
+            # Not just "does this city exist" - it has to belong to the same
+            # trip as the day, or this would silently link two unrelated
+            # trips' data together.
+            if city is None or city.trip_id != day.trip_id:
+                raise Exception("City not found")
+            day.city_id = city.id
+        else:
+            day.city_id = None
+
+        await session.commit()
+        return Day.from_model(day)
+
+    @strawberry.mutation
+    async def add_stop(
+        self,
+        info: strawberry.Info,
+        name: str,
+        location: LocationInput,
+        day_id: strawberry.ID | None = None,
+        city_id: strawberry.ID | None = None,
+        notes: str | None = None,
+        start_time: time | None = None,
+        is_important: bool = False,
+        is_optional: bool = False,
+    ) -> Stop:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        if city_id is not None and start_time is not None:
+            raise Exception("A city recommendation can't have a start time")
+
+        session = info.context.session
+        day, city = await _resolve_stop_parent(
+            session,
+            int(day_id) if day_id is not None else None,
+            int(city_id) if city_id is not None else None,
+        )
+        trip_id = day.trip_id if day is not None else city.trip_id
+        await require_trip_access(
+            session,
+            trip_id,
+            user,
+            editor=True,
+            not_found_message="Day not found" if day is not None else "City not found",
+        )
+
+        parent_filter = _stop_parent_filter(
+            day.id if day is not None else None, city.id if city is not None else None
+        )
         next_index = await session.scalar(
-            select(func.coalesce(func.max(StopModel.order_index), -1)).where(
-                StopModel.day_id == day.id
-            )
+            select(func.coalesce(func.max(StopModel.order_index), -1)).where(parent_filter)
         )
         stop = StopModel(
-            day_id=day.id,
+            day_id=day.id if day is not None else None,
+            city_id=city.id if city is not None else None,
             name=name,
             lat=location.lat,
             lng=location.lng,
@@ -293,26 +474,39 @@ class Mutation:
 
     @strawberry.mutation
     async def reorder_stops(
-        self, info: strawberry.Info, day_id: strawberry.ID, stop_ids: list[strawberry.ID]
+        self,
+        info: strawberry.Info,
+        stop_ids: list[strawberry.ID],
+        day_id: strawberry.ID | None = None,
+        city_id: strawberry.ID | None = None,
     ) -> list[Stop]:
         user = info.context.current_user
         if user is None:
             raise Exception("Not authenticated")
 
         session = info.context.session
-        day = await session.get(DayModel, int(day_id))
-        if day is None:
-            raise Exception("Day not found")
-
+        day, city = await _resolve_stop_parent(
+            session,
+            int(day_id) if day_id is not None else None,
+            int(city_id) if city_id is not None else None,
+        )
+        trip_id = day.trip_id if day is not None else city.trip_id
         await require_trip_access(
-            session, day.trip_id, user, editor=True, not_found_message="Day not found"
+            session,
+            trip_id,
+            user,
+            editor=True,
+            not_found_message="Day not found" if day is not None else "City not found",
         )
 
-        result = await session.execute(select(StopModel).where(StopModel.day_id == day.id))
+        parent_filter = _stop_parent_filter(
+            day.id if day is not None else None, city.id if city is not None else None
+        )
+        result = await session.execute(select(StopModel).where(parent_filter))
         stops_by_id = {stop.id: stop for stop in result.scalars().all()}
 
         if set(stops_by_id) != {int(stop_id) for stop_id in stop_ids}:
-            raise Exception("stopIds must match the day's current stops exactly")
+            raise Exception("stopIds must match the current stops exactly")
 
         for index, stop_id in enumerate(stop_ids):
             stops_by_id[int(stop_id)].order_index = index
@@ -325,8 +519,9 @@ class Mutation:
         self,
         info: strawberry.Info,
         stop_id: strawberry.ID,
-        to_day_id: strawberry.ID,
         to_index: int,
+        to_day_id: strawberry.ID | None = None,
+        to_city_id: strawberry.ID | None = None,
     ) -> Stop:
         user = info.context.current_user
         if user is None:
@@ -337,39 +532,62 @@ class Mutation:
         if stop is None:
             raise Exception("Stop not found")
 
-        source_day = await session.get(DayModel, stop.day_id)
-        if source_day is None:
-            raise Exception("Stop not found")
+        source_trip_id = await _stop_parent_trip_id(session, stop)
         await require_trip_access(
-            session, source_day.trip_id, user, editor=True, not_found_message="Stop not found"
+            session, source_trip_id, user, editor=True, not_found_message="Stop not found"
         )
 
-        target_day = await session.get(DayModel, int(to_day_id))
-        if target_day is None:
-            raise Exception("Day not found")
+        target_day, target_city = await _resolve_stop_parent(
+            session,
+            int(to_day_id) if to_day_id is not None else None,
+            int(to_city_id) if to_city_id is not None else None,
+        )
+        target_trip_id = target_day.trip_id if target_day is not None else target_city.trip_id
         await require_trip_access(
-            session, target_day.trip_id, user, editor=True, not_found_message="Day not found"
+            session,
+            target_trip_id,
+            user,
+            editor=True,
+            not_found_message="Day not found" if target_day is not None else "City not found",
         )
 
-        if target_day.id != source_day.id:
+        source_day_id = stop.day_id
+        source_city_id = stop.city_id
+        moving_to_same_parent = (
+            target_day is not None and target_day.id == source_day_id
+        ) or (target_city is not None and target_city.id == source_city_id)
+
+        if not moving_to_same_parent:
             remaining_result = await session.execute(
                 select(StopModel)
-                .where(StopModel.day_id == source_day.id, StopModel.id != stop.id)
+                .where(_stop_parent_filter(source_day_id, source_city_id), StopModel.id != stop.id)
                 .order_by(StopModel.order_index)
             )
             for index, remaining_stop in enumerate(remaining_result.scalars().all()):
                 remaining_stop.order_index = index
 
+        target_parent_filter = _stop_parent_filter(
+            target_day.id if target_day is not None else None,
+            target_city.id if target_city is not None else None,
+        )
         target_stops_result = await session.execute(
             select(StopModel)
-            .where(StopModel.day_id == target_day.id, StopModel.id != stop.id)
+            .where(target_parent_filter, StopModel.id != stop.id)
             .order_by(StopModel.order_index)
         )
         target_stops = list(target_stops_result.scalars().all())
         to_index = max(0, min(to_index, len(target_stops)))
         target_stops.insert(to_index, stop)
 
-        stop.day_id = target_day.id
+        stop.day_id = target_day.id if target_day is not None else None
+        stop.city_id = target_city.id if target_city is not None else None
+        # A start time stops meaning anything once a stop becomes an undated
+        # city recommendation - clear it rather than block the move, since
+        # (unlike, say, deleting a whole day's worth of stops) losing just
+        # this one field is inconsequential and easy to re-add if the stop
+        # later gets scheduled again.
+        if target_city is not None:
+            stop.start_time = None
         for index, target_stop in enumerate(target_stops):
             target_stop.order_index = index
 
@@ -397,12 +615,13 @@ class Mutation:
         if stop is None:
             raise Exception("Stop not found")
 
-        day = await session.get(DayModel, stop.day_id)
-        if day is None:
-            raise Exception("Stop not found")
+        trip_id = await _stop_parent_trip_id(session, stop)
         await require_trip_access(
-            session, day.trip_id, user, editor=True, not_found_message="Stop not found"
+            session, trip_id, user, editor=True, not_found_message="Stop not found"
         )
+
+        if stop.city_id is not None and start_time is not None:
+            raise Exception("A city recommendation can't have a start time")
 
         stop.name = name
         stop.lat = location.lat
@@ -429,27 +648,25 @@ class Mutation:
         if stop is None:
             raise Exception("Stop not found")
 
-        day = await session.get(DayModel, stop.day_id)
-        if day is None:
-            raise Exception("Stop not found")
+        trip_id = await _stop_parent_trip_id(session, stop)
         await require_trip_access(
-            session, day.trip_id, user, editor=True, not_found_message="Stop not found"
+            session, trip_id, user, editor=True, not_found_message="Stop not found"
         )
 
         # Insert the copy right after the original, renumbering everything
         # from there on (same "no gaps" approach as reorder_stops) rather
-        # than tacking the copy onto the end of the day.
+        # than tacking the copy onto the end of the list.
         new_index = stop.order_index + 1
+        parent_filter = _stop_parent_filter(stop.day_id, stop.city_id)
         later_stops = await session.execute(
-            select(StopModel).where(
-                StopModel.day_id == day.id, StopModel.order_index >= new_index
-            )
+            select(StopModel).where(parent_filter, StopModel.order_index >= new_index)
         )
         for later_stop in later_stops.scalars().all():
             later_stop.order_index += 1
 
         duplicate = StopModel(
             day_id=stop.day_id,
+            city_id=stop.city_id,
             name=stop.name,
             lat=stop.lat,
             lng=stop.lng,
@@ -474,11 +691,9 @@ class Mutation:
         if stop is None:
             return False
 
-        day = await session.get(DayModel, stop.day_id)
-        if day is None:
-            raise Exception("Stop not found")
+        trip_id = await _stop_parent_trip_id(session, stop)
         await require_trip_access(
-            session, day.trip_id, user, editor=True, not_found_message="Stop not found"
+            session, trip_id, user, editor=True, not_found_message="Stop not found"
         )
 
         await session.delete(stop)
