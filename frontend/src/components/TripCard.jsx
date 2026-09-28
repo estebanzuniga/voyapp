@@ -33,11 +33,14 @@ export function TripCard({ trip }) {
     }
   }
 
+  const hasActions = canEdit || trip.isOwner
+
   return (
-    <div className="flex flex-col gap-1 rounded-xl border border-border bg-surface p-5 shadow-sm transition hover:border-accent">
-      {/* Card menu buttons sit outside this Link (not nested inside it) so
-          tapping one doesn't also trigger the card's own navigation. */}
-      <Link to={`/trips/${trip.id}`} className="flex flex-col gap-1">
+    <div className="flex flex-col rounded-xl border border-border bg-surface shadow-sm transition hover:border-accent">
+      <Link
+        to={`/trips/${trip.id}`}
+        className={`flex flex-col gap-1 p-5 ${hasActions ? 'pb-3' : ''}`}
+      >
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-display text-lg text-ink text-balance">{trip.title}</h3>
           {isTripInProgress(trip.startDate, trip.endDate) ? (
@@ -55,8 +58,8 @@ export function TripCard({ trip }) {
         ) : null}
       </Link>
 
-      {canEdit || trip.isOwner ? (
-        <div className="mt-2 flex items-center gap-1 border-t border-border pt-2">
+      {hasActions ? (
+        <div className="flex items-center gap-1 border-t border-border px-5 pb-5 pt-2">
           {canEdit ? (
             <button
               type="button"
