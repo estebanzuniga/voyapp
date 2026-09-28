@@ -154,7 +154,7 @@ export function ManageCitiesModal({ tripId, cities, onClose }) {
         {t('citiesModal.title')}
       </h2>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex max-h-72 flex-col gap-2 overflow-y-auto">
         {cities.length === 0 ? (
           <p className="text-sm text-muted">{t('citiesModal.empty')}</p>
         ) : (
