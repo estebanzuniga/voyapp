@@ -91,7 +91,7 @@ export function MapPicker({ lat, lng, onSelect }) {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t('mapPicker.searchPlaceholder')}
-          className="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3 text-sm text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
+          className="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
         />
         {results.length > 0 ? (
           <ul className="absolute z-1000 mt-1 max-h-30 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg">

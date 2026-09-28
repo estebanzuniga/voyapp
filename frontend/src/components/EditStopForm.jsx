@@ -50,7 +50,7 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
           required
           value={name}
           onChange={(event) => setName(event.target.value)}
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
         />
       </div>
 
@@ -67,7 +67,7 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
           type="time"
           value={startTime}
           onChange={(event) => setStartTime(event.target.value)}
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-2 focus:outline-accent"
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-ink focus:outline-2 focus:outline-accent"
         />
       </div>
 
@@ -77,7 +77,7 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           rows={2}
-          className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
+          className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
         />
       </div>
 

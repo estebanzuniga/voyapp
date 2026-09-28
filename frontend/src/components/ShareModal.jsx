@@ -75,7 +75,7 @@ function ShareLinkCard({ tripId, link, remainingMs }) {
           readOnly
           value={url}
           onFocus={(event) => event.target.select()}
-          className="w-0 flex-1 truncate rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink"
+          className="w-0 flex-1 truncate rounded-lg border border-border bg-surface-2 px-3 py-2 text-ink"
         />
         <button
           type="button"
@@ -234,7 +234,7 @@ function CollaboratorRow({ tripId, collaborator }) {
                 variables: { tripId, userId: collaborator.userId, permission: event.target.value },
               })
             }
-            className="rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-sm text-ink focus:outline-2 focus:outline-accent"
+            className="rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-ink focus:outline-2 focus:outline-accent"
           >
             <option value="VIEWER">{t('shareModal.canView')}</option>
             <option value="EDITOR">{t('shareModal.canEdit')}</option>
