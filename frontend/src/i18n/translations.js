@@ -144,6 +144,7 @@ export const translations = {
     'tripDetail.daysPending': '{count} days pending',
     'tripDetail.jumpToToday': 'Jump to today',
     'tripDetail.manageCities': 'Manage cities',
+    'tripDetail.cityGroupLabel': '{city} · {range}',
 
     // --- cities modal ---------------------------------------------------
     'citiesModal.title': 'Cities',
@@ -389,6 +390,7 @@ export const translations = {
     'tripDetail.daysPending': '{count} días pendientes',
     'tripDetail.jumpToToday': 'Ir a hoy',
     'tripDetail.manageCities': 'Administrar ciudades',
+    'tripDetail.cityGroupLabel': '{city} · {range}',
 
     // --- cities modal ---------------------------------------------------
     'citiesModal.title': 'Ciudades',

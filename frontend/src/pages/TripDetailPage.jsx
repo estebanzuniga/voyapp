@@ -32,6 +32,17 @@ function findContainerId(stopsByDay, stopId) {
   )
 }
 
+// The anchor id (first day) of whichever city-group contains `dayId`, or
+// null if it's not inside one (day has no city assigned).
+function findGroupAnchorId(groupedTimeline, dayId) {
+  for (const item of groupedTimeline) {
+    if (item.type === 'cityGroup' && item.days.some((day) => day.id === dayId)) {
+      return item.days[0].id
+    }
+  }
+  return null
+}
+
 // A run of one missing date renders as a single "Add <date>" button - no
 // point collapsing one thing. Two or more missing dates in a row collapse
 // behind a "N days pending" toggle, so a big gap doesn't dump a wall of
@@ -89,6 +100,88 @@ function AddDayGap({ dates, addingDate, onAddDay, locale }) {
   )
 }
 
+function collapsedGroupsStorageKey(tripId) {
+  return `voyapp_collapsed_city_groups:${tripId}`
+}
+
+function loadCollapsedGroupIds(tripId) {
+  try {
+    const raw = localStorage.getItem(collapsedGroupsStorageKey(tripId))
+    return raw ? new Set(JSON.parse(raw)) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
+function saveCollapsedGroupIds(tripId, ids) {
+  try {
+    localStorage.setItem(collapsedGroupsStorageKey(tripId), JSON.stringify([...ids]))
+  } catch {
+    // Safari private mode / storage full / disabled - collapsing still
+    // works for the rest of this session via React state, it just won't
+    // be remembered next visit.
+  }
+}
+
+// A city-group's collapse state is keyed by its first day's id rather than
+// its cityId, so two separate visits to the same city later in the trip
+// (not adjacent - see the grouping pass below) collapse independently. If
+// editing the trip changes which day starts a group (e.g. assigning an
+// earlier day to the same city), the old key just goes stale in
+// localStorage - harmless, the group reverts to expanded under its new key.
+function CityGroupSection({
+  cityName,
+  days,
+  tripId,
+  cities,
+  canEdit,
+  stopsByDay,
+  isExpanded,
+  onToggle,
+  locale,
+}) {
+  const { t } = useTranslation()
+  // A single-day group shows just that one date - formatDateRange's
+  // "date – date" would just repeat itself for the same day.
+  const range =
+    days.length === 1
+      ? formatDate(days[0].date, locale)
+      : formatDateRange(days[0].date, days[days.length - 1].date, locale)
+
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-dashed border-border p-3">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isExpanded}
+        className="flex cursor-pointer items-center gap-1.5 self-start rounded-lg text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+      >
+        <BuildingIcon size={14} />
+        {t('tripDetail.cityGroupLabel', { city: cityName, range })}
+        <ChevronDownIcon
+          size={14}
+          className={isExpanded ? 'rotate-180 transition-transform' : 'transition-transform'}
+        />
+      </button>
+      {isExpanded ? (
+        <div className="flex flex-col gap-4">
+          {days.map((day) => (
+            <DayCard
+              key={day.id}
+              day={day}
+              stops={stopsByDay[day.id] ?? day.stops}
+              tripId={tripId}
+              cities={cities}
+              canEdit={canEdit}
+              isToday={isToday(day.date)}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export function TripDetailPage() {
   const { id } = useParams()
   const { data, loading, error } = useQuery(TRIP_QUERY, { variables: { id } })
@@ -101,20 +194,54 @@ export function TripDetailPage() {
   const [dragError, setDragError] = useState(null)
   const [activeStop, setActiveStop] = useState(null)
   const [isManagingCities, setIsManagingCities] = useState(false)
+  const [collapsedGroupIds, setCollapsedGroupIds] = useState(() => loadCollapsedGroupIds(id))
   // Set at drag start, read (and cleared) at drag end - not state, since
   // updating them shouldn't itself trigger a re-render.
   const dragOriginDayIdRef = useRef(null)
   const dragSnapshotRef = useRef(null)
+  // Set by handleJumpToToday when today's day is inside a group that was
+  // just expanded - the scrollIntoView has to wait for that expansion to
+  // actually render (its DayCard doesn't exist in the DOM until then), so
+  // this flags "scroll once the pending re-render lands" instead.
+  const pendingScrollDayIdRef = useRef(null)
 
   const canEdit = trip?.myPermission === 'EDITOR'
   // Only set when today's date actually has a day in this trip's itinerary -
   // the "jump to today" button has nothing to scroll to otherwise.
   const todayDay = trip?.days.find((day) => isToday(day.date)) ?? null
 
+  function toggleGroup(anchorId) {
+    setCollapsedGroupIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(anchorId)) next.delete(anchorId)
+      else next.add(anchorId)
+      saveCollapsedGroupIds(id, next)
+      return next
+    })
+  }
+
   function handleJumpToToday() {
     if (!todayDay) return
+
+    const anchorId = findGroupAnchorId(groupedTimeline, todayDay.id)
+    if (anchorId && collapsedGroupIds.has(anchorId)) {
+      pendingScrollDayIdRef.current = todayDay.id
+      toggleGroup(anchorId)
+      return
+    }
+
     document.getElementById(`day-${todayDay.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
+
+  useEffect(() => {
+    if (!pendingScrollDayIdRef.current) return
+    const dayId = pendingScrollDayIdRef.current
+    pendingScrollDayIdRef.current = null
+    // One frame so the newly-expanded group's DayCard has actually painted.
+    requestAnimationFrame(() => {
+      document.getElementById(`day-${dayId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [collapsedGroupIds])
 
   useEffect(() => {
     if (trip) {
@@ -274,6 +401,28 @@ export function TripDetailPage() {
     }
   }
 
+  // Second pass: fold consecutive same-city 'day' entries into one
+  // collapsible 'cityGroup' - a gap, or a change in city (including
+  // dropping to no city), ends the run. This runs strictly after the pass
+  // above (which already interleaves gaps in date order) rather than being
+  // merged into it, since "is this the same city as the *previous timeline
+  // entry*" only makes sense once gaps are already in place - a city
+  // reappearing after a gap should start a new group, not silently rejoin
+  // the old one.
+  const groupedTimeline = []
+  for (const item of timeline) {
+    if (item.type === 'day' && item.day.cityId) {
+      const last = groupedTimeline[groupedTimeline.length - 1]
+      if (last?.type === 'cityGroup' && last.cityId === item.day.cityId) {
+        last.days.push(item.day)
+        continue
+      }
+      groupedTimeline.push({ type: 'cityGroup', cityId: item.day.cityId, days: [item.day] })
+      continue
+    }
+    groupedTimeline.push(item)
+  }
+
   return (
     <div className="min-h-dvh bg-bg px-4 pb-8 pt-4 sm:px-8 sm:pt-6 lg:px-12">
       <div className="mx-auto flex max-w-4xl flex-col gap-4">
@@ -360,7 +509,7 @@ export function TripDetailPage() {
 
             {trip.days.length === 0 ? <p className="text-muted">{t('tripDetail.noDaysYet')}</p> : null}
 
-            {timeline.length > 0 ? (
+            {groupedTimeline.length > 0 ? (
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCorners}
@@ -369,18 +518,42 @@ export function TripDetailPage() {
                 onDragEnd={handleDragEnd}
               >
                 <div className="flex flex-col gap-4">
-                  {timeline.map((item) =>
-                    item.type === 'day' ? (
-                      <DayCard
-                        key={item.day.id}
-                        day={item.day}
-                        stops={stopsByDay[item.day.id] ?? item.day.stops}
-                        tripId={id}
-                        cities={trip.cities}
-                        canEdit={canEdit}
-                        isToday={isToday(item.day.date)}
-                      />
-                    ) : canEdit ? (
+                  {groupedTimeline.map((item) => {
+                    if (item.type === 'day') {
+                      return (
+                        <DayCard
+                          key={item.day.id}
+                          day={item.day}
+                          stops={stopsByDay[item.day.id] ?? item.day.stops}
+                          tripId={id}
+                          cities={trip.cities}
+                          canEdit={canEdit}
+                          isToday={isToday(item.day.date)}
+                        />
+                      )
+                    }
+
+                    if (item.type === 'cityGroup') {
+                      const anchorId = item.days[0].id
+                      const cityName =
+                        trip.cities.find((city) => city.id === item.cityId)?.name ?? ''
+                      return (
+                        <CityGroupSection
+                          key={`city:${anchorId}`}
+                          cityName={cityName}
+                          days={item.days}
+                          tripId={id}
+                          cities={trip.cities}
+                          canEdit={canEdit}
+                          stopsByDay={stopsByDay}
+                          locale={locale}
+                          isExpanded={!collapsedGroupIds.has(anchorId)}
+                          onToggle={() => toggleGroup(anchorId)}
+                        />
+                      )
+                    }
+
+                    return canEdit ? (
                       // Keyed by the full date range, not just the first date: when
                       // adding a day splits this gap in two, each half needs a fresh
                       // key (and therefore a fresh, collapsed isExpanded state) rather
@@ -393,8 +566,8 @@ export function TripDetailPage() {
                         onAddDay={handleAddDay}
                         locale={locale}
                       />
-                    ) : null,
-                  )}
+                    ) : null
+                  })}
                 </div>
                 <DragOverlay>{activeStop ? <StopDragPreview stop={activeStop} /> : null}</DragOverlay>
               </DndContext>
