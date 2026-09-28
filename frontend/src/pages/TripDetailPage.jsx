@@ -15,8 +15,16 @@ import { ADD_DAY_MUTATION, MOVE_STOP_MUTATION, REORDER_STOPS_MUTATION } from '..
 import { useTranslation } from '../hooks/useTranslation'
 import { formatDate, formatDateRange, enumerateDates, isToday } from '../lib/dates'
 import { DayCard, StopDragPreview } from '../components/DayCard'
+import { ManageCitiesModal } from '../components/ManageCitiesModal'
 import { Skeleton } from '../components/Skeleton'
-import { ArrowLeftIcon, CalendarIcon, ChevronDownIcon, EyeIcon, PlusIcon } from '../components/Icons'
+import {
+  ArrowLeftIcon,
+  BuildingIcon,
+  CalendarIcon,
+  ChevronDownIcon,
+  EyeIcon,
+  PlusIcon,
+} from '../components/Icons'
 
 function findContainerId(stopsByDay, stopId) {
   return Object.keys(stopsByDay).find((dayId) =>
@@ -92,6 +100,7 @@ export function TripDetailPage() {
   const [addDayError, setAddDayError] = useState(null)
   const [dragError, setDragError] = useState(null)
   const [activeStop, setActiveStop] = useState(null)
+  const [isManagingCities, setIsManagingCities] = useState(false)
   // Set at drag start, read (and cleared) at drag end - not state, since
   // updating them shouldn't itself trigger a re-render.
   const dragOriginDayIdRef = useRef(null)
@@ -304,16 +313,28 @@ export function TripDetailPage() {
             <header className="flex flex-col gap-1">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h1 className="font-display text-2xl text-ink text-balance">{trip.title}</h1>
-                {todayDay ? (
-                  <button
-                    type="button"
-                    onClick={handleJumpToToday}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-accent px-3 py-1.5 text-sm font-semibold text-accent hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-accent"
-                  >
-                    <CalendarIcon size={14} />
-                    {t('tripDetail.jumpToToday')}
-                  </button>
-                ) : null}
+                <div className="flex flex-wrap items-center gap-2">
+                  {canEdit ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsManagingCities(true)}
+                      className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-ink hover:border-accent focus-visible:outline-2 focus-visible:outline-accent"
+                    >
+                      <BuildingIcon size={14} />
+                      {t('tripDetail.manageCities')}
+                    </button>
+                  ) : null}
+                  {todayDay ? (
+                    <button
+                      type="button"
+                      onClick={handleJumpToToday}
+                      className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-accent px-3 py-1.5 text-sm font-semibold text-accent hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-accent"
+                    >
+                      <CalendarIcon size={14} />
+                      {t('tripDetail.jumpToToday')}
+                    </button>
+                  ) : null}
+                </div>
               </div>
               <p className="text-muted">{formatDateRange(trip.startDate, trip.endDate, locale)}</p>
               {!trip.isOwner ? (
@@ -325,6 +346,14 @@ export function TripDetailPage() {
                 </span>
               ) : null}
             </header>
+
+            {isManagingCities ? (
+              <ManageCitiesModal
+                tripId={id}
+                cities={trip.cities}
+                onClose={() => setIsManagingCities(false)}
+              />
+            ) : null}
 
             {dragError ? <p className="text-sm text-red-600">{dragError}</p> : null}
             {addDayError ? <p className="text-sm text-red-600">{addDayError}</p> : null}
@@ -347,6 +376,7 @@ export function TripDetailPage() {
                         day={item.day}
                         stops={stopsByDay[item.day.id] ?? item.day.stops}
                         tripId={id}
+                        cities={trip.cities}
                         canEdit={canEdit}
                         isToday={isToday(item.day.date)}
                       />

@@ -3,7 +3,12 @@ import { useMutation } from '@apollo/client/react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { DELETE_DAY_MUTATION, DELETE_STOP_MUTATION, DUPLICATE_STOP_MUTATION } from '../graphql/mutations'
+import {
+  DELETE_DAY_MUTATION,
+  DELETE_STOP_MUTATION,
+  DUPLICATE_STOP_MUTATION,
+  SET_DAY_CITY_MUTATION,
+} from '../graphql/mutations'
 import { TRIP_QUERY } from '../graphql/queries'
 import { useAuth } from '../hooks/useAuth'
 import { useCurrentLocation } from '../hooks/useCurrentLocation'
@@ -237,7 +242,7 @@ export function StopDragPreview({ stop }) {
   )
 }
 
-export function DayCard({ day, stops, tripId, canEdit, isToday }) {
+export function DayCard({ day, stops, tripId, cities, canEdit, isToday }) {
   const { t, locale } = useTranslation()
   const { user } = useAuth()
   const liveCurrentPosition = useCurrentLocation()
@@ -254,6 +259,11 @@ export function DayCard({ day, stops, tripId, canEdit, isToday }) {
     refetchQueries: [{ query: TRIP_QUERY, variables: { id: tripId } }],
     awaitRefetchQueries: true,
   })
+  const [runSetDayCity] = useMutation(SET_DAY_CITY_MUTATION, {
+    refetchQueries: [{ query: TRIP_QUERY, variables: { id: tripId } }],
+    awaitRefetchQueries: true,
+  })
+  const [cityUpdateError, setCityUpdateError] = useState(null)
   const { setNodeRef } = useDroppable({ id: `day:${day.id}` })
 
   async function handleConfirmDeleteDay() {
@@ -266,6 +276,18 @@ export function DayCard({ day, stops, tripId, canEdit, isToday }) {
     }
   }
 
+  async function handleCityChange(event) {
+    const cityId = event.target.value || null
+    setCityUpdateError(null)
+    try {
+      await runSetDayCity({ variables: { dayId: day.id, cityId } })
+    } catch (err) {
+      setCityUpdateError(err.message)
+    }
+  }
+
+  const assignedCity = cities?.find((city) => city.id === day.cityId) ?? null
+
   return (
     <div
       id={`day-${day.id}`}
@@ -277,6 +299,25 @@ export function DayCard({ day, stops, tripId, canEdit, isToday }) {
           {isToday ? (
             <span className="flex w-fit items-center gap-1 rounded-full bg-accent/10 px-2.5 py-1 text-xs font-semibold text-accent">
               {t('dayCard.todayBadge')}
+            </span>
+          ) : null}
+          {canEdit && cities?.length > 0 ? (
+            <select
+              value={day.cityId ?? ''}
+              onChange={handleCityChange}
+              aria-label={t('dayCard.assignCityAria')}
+              className="rounded-lg border border-border bg-surface-2 px-2 py-1 text-xs text-ink focus:outline-2 focus:outline-accent"
+            >
+              <option value="">{t('dayCard.noCity')}</option>
+              {cities.map((city) => (
+                <option key={city.id} value={city.id}>
+                  {city.name}
+                </option>
+              ))}
+            </select>
+          ) : assignedCity ? (
+            <span className="flex w-fit items-center gap-1 rounded-full bg-surface-2 px-2.5 py-1 text-xs font-semibold text-muted">
+              {assignedCity.name}
             </span>
           ) : null}
         </div>
@@ -307,6 +348,8 @@ export function DayCard({ day, stops, tripId, canEdit, isToday }) {
           ) : null}
         </div>
       </div>
+
+      {cityUpdateError ? <p className="text-sm text-red-600">{cityUpdateError}</p> : null}
 
       {isConfirmingDeleteDay ? (
         <ConfirmDialog

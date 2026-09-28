@@ -131,6 +131,39 @@ export const DELETE_DAY_MUTATION = gql`
   }
 `
 
+export const CREATE_CITY_MUTATION = gql`
+  mutation CreateCity($tripId: ID!, $name: String!) {
+    createCity(tripId: $tripId, name: $name) {
+      id
+      name
+    }
+  }
+`
+
+export const RENAME_CITY_MUTATION = gql`
+  mutation RenameCity($id: ID!, $name: String!) {
+    renameCity(id: $id, name: $name) {
+      id
+      name
+    }
+  }
+`
+
+export const DELETE_CITY_MUTATION = gql`
+  mutation DeleteCity($id: ID!) {
+    deleteCity(id: $id)
+  }
+`
+
+export const SET_DAY_CITY_MUTATION = gql`
+  mutation SetDayCity($dayId: ID!, $cityId: ID) {
+    setDayCity(dayId: $dayId, cityId: $cityId) {
+      id
+      cityId
+    }
+  }
+`
+
 export const ADD_STOP_MUTATION = gql`
   mutation AddStop(
     $dayId: ID!

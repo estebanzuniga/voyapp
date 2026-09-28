@@ -323,3 +323,18 @@ export function ArrowUpIcon(props) {
   )
 }
 
+export function BuildingIcon(props) {
+  return (
+    <Icon {...props}>
+      <rect x="4" y="3" width="10" height="18" rx="1" />
+      <path d="M14 21V8l6 3v10" />
+      <line x1="7.5" y1="7" x2="7.5" y2="7.01" />
+      <line x1="10.5" y1="7" x2="10.5" y2="7.01" />
+      <line x1="7.5" y1="11" x2="7.5" y2="11.01" />
+      <line x1="10.5" y1="11" x2="10.5" y2="11.01" />
+      <line x1="7.5" y1="15" x2="7.5" y2="15.01" />
+      <line x1="10.5" y1="15" x2="10.5" y2="15.01" />
+    </Icon>
+  )
+}
+

@@ -143,6 +143,23 @@ export const translations = {
     'tripDetail.addDay': 'Add {date}',
     'tripDetail.daysPending': '{count} days pending',
     'tripDetail.jumpToToday': 'Jump to today',
+    'tripDetail.manageCities': 'Manage cities',
+
+    // --- cities modal ---------------------------------------------------
+    'citiesModal.title': 'Cities',
+    'citiesModal.empty': 'No cities yet. Add one below, then assign it to a day.',
+    'citiesModal.namePlaceholder': 'City name',
+    'citiesModal.add': 'Add city',
+    'citiesModal.adding': 'Adding…',
+    'citiesModal.renameAria': 'Rename {name}',
+    'citiesModal.deleteAria': 'Delete {name}',
+    'citiesModal.deleteTitle': 'Delete city',
+    'citiesModal.deleteMessage':
+      'Are you sure you want to delete "{name}"? This only works while no days or stops are assigned to it.',
+
+    // --- day card: city assignment ---------------------------------------
+    'dayCard.assignCityAria': 'Assign a city to this day',
+    'dayCard.noCity': 'No city',
 
     // --- edit trip ------------------------------------------------------
     'editTrip.title': 'Edit trip',
@@ -371,6 +388,23 @@ export const translations = {
     'tripDetail.addDay': 'Agregar {date}',
     'tripDetail.daysPending': '{count} días pendientes',
     'tripDetail.jumpToToday': 'Ir a hoy',
+    'tripDetail.manageCities': 'Administrar ciudades',
+
+    // --- cities modal ---------------------------------------------------
+    'citiesModal.title': 'Ciudades',
+    'citiesModal.empty': 'Aún no hay ciudades. Agrega una abajo y luego asígnala a un día.',
+    'citiesModal.namePlaceholder': 'Nombre de la ciudad',
+    'citiesModal.add': 'Agregar ciudad',
+    'citiesModal.adding': 'Agregando…',
+    'citiesModal.renameAria': 'Renombrar {name}',
+    'citiesModal.deleteAria': 'Eliminar {name}',
+    'citiesModal.deleteTitle': 'Eliminar ciudad',
+    'citiesModal.deleteMessage':
+      '¿Seguro que quieres eliminar "{name}"? Esto solo funciona si no tiene días ni paradas asignadas.',
+
+    // --- day card: city assignment ---------------------------------------
+    'dayCard.assignCityAria': 'Asignar una ciudad a este día',
+    'dayCard.noCity': 'Sin ciudad',
 
     // --- edit trip ------------------------------------------------------
     'editTrip.title': 'Editar viaje',

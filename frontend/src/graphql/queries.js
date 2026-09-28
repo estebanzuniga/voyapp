@@ -48,9 +48,14 @@ export const TRIP_QUERY = gql`
       endDate
       isOwner
       myPermission
+      cities {
+        id
+        name
+      }
       days {
         id
         date
+        cityId
         stops {
           id
           name
