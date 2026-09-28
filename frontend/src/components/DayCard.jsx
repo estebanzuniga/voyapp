@@ -306,7 +306,7 @@ export function DayCard({ day, stops, tripId, cities, canEdit, isToday }) {
               value={day.cityId ?? ''}
               onChange={handleCityChange}
               aria-label={t('dayCard.assignCityAria')}
-              className="rounded-lg border border-border bg-surface-2 px-2 py-1 text-xs text-ink focus:outline-2 focus:outline-accent"
+              className="rounded-lg border border-border bg-surface-2 px-2 py-1 text-ink focus:outline-2 focus:outline-accent"
             >
               <option value="">{t('dayCard.noCity')}</option>
               {cities.map((city) => (

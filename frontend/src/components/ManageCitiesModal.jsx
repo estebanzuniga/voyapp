@@ -60,7 +60,7 @@ function CityRow({ city, tripId }) {
           autoFocus
           value={nameDraft}
           onChange={(event) => setNameDraft(event.target.value)}
-          className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-2 py-1 text-sm text-ink focus:outline-2 focus:outline-accent"
+          className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-2 py-1 text-ink focus:outline-2 focus:outline-accent"
         />
         {renameError ? <p className="text-sm text-red-600">{renameError.message}</p> : null}
         <button
@@ -139,7 +139,7 @@ export function ManageCitiesModal({ tripId, cities, onClose }) {
   }
 
   return (
-    <Modal onClose={onClose} className="max-w-md">
+    <Modal onClose={onClose} className="max-w-md" closeOnOverlayClick={false}>
       <button
         type="button"
         onClick={onClose}
@@ -169,7 +169,7 @@ export function ManageCitiesModal({ tripId, cities, onClose }) {
           value={name}
           onChange={(event) => setName(event.target.value)}
           placeholder={t('citiesModal.namePlaceholder')}
-          className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
+          className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
         />
         <button
           type="submit"
