@@ -328,6 +328,8 @@ export function BuildingIcon(props) {
     <Icon {...props}>
       <rect x="4" y="3" width="10" height="18" rx="1" />
       <path d="M14 21V8l6 3v10" />
+      <line x1="17" y1="14" x2="17" y2="14.01" />
+      <line x1="17" y1="18" x2="17" y2="18.01" />
       <line x1="7.5" y1="7" x2="7.5" y2="7.01" />
       <line x1="10.5" y1="7" x2="10.5" y2="7.01" />
       <line x1="7.5" y1="11" x2="7.5" y2="11.01" />
