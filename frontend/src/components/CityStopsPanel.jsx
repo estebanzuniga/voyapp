@@ -33,6 +33,32 @@ import {
   XIcon,
 } from './Icons'
 
+function categoryFilterStorageKey(tripId, cityId) {
+  return `voyapp_city_stop_filter:${tripId}:${cityId}`
+}
+
+function loadSelectedCategoryKey(tripId, cityId) {
+  try {
+    return localStorage.getItem(categoryFilterStorageKey(tripId, cityId))
+  } catch {
+    return null
+  }
+}
+
+function saveSelectedCategoryKey(tripId, cityId, key) {
+  try {
+    if (key === null) {
+      localStorage.removeItem(categoryFilterStorageKey(tripId, cityId))
+    } else {
+      localStorage.setItem(categoryFilterStorageKey(tripId, cityId), key)
+    }
+  } catch {
+    // Safari private mode / storage full / disabled - filtering still works
+    // for the rest of this session via React state, it just won't be
+    // remembered next visit.
+  }
+}
+
 function ScheduleStopDialog({ days, locale, onSchedule, onCancel, loading, error }) {
   const { t } = useTranslation()
 
@@ -287,7 +313,9 @@ function CityStopsCard({ city, days, stopCategories, tripId, canEdit }) {
   const [isMapOpen, setIsMapOpen] = useState(false)
   const [orderedStops, setOrderedStops] = useState(city.stops)
   const [dragError, setDragError] = useState(null)
-  const [selectedCategoryKey, setSelectedCategoryKey] = useState(null)
+  const [selectedCategoryKey, setSelectedCategoryKey] = useState(() =>
+    loadSelectedCategoryKey(tripId, city.id),
+  )
   // A recommendation only makes sense to schedule onto a day already
   // grouped under this same city - scheduling it onto some other city's day
   // would silently detach it from the place it's actually a recommendation for.
@@ -308,6 +336,11 @@ function CityStopsCard({ city, days, stopCategories, tripId, canEdit }) {
     selectedCategoryKey === null
       ? orderedStops
       : orderedStops.filter((stop) => categoryKeyForStop(stop) === selectedCategoryKey)
+
+  function handleSelectCategory(key) {
+    setSelectedCategoryKey(key)
+    saveSelectedCategoryKey(tripId, city.id, key)
+  }
 
   async function handleDragEnd(event) {
     const { active, over } = event
@@ -361,7 +394,7 @@ function CityStopsCard({ city, days, stopCategories, tripId, canEdit }) {
           stops={visibleStops}
           stopCategories={stopCategories}
           selectedCategoryKey={selectedCategoryKey}
-          onSelectCategory={setSelectedCategoryKey}
+          onSelectCategory={handleSelectCategory}
           onClose={() => setIsMapOpen(false)}
         />
       ) : null}
@@ -370,7 +403,7 @@ function CityStopsCard({ city, days, stopCategories, tripId, canEdit }) {
         <CategoryFilterChips
           stopCategories={stopCategories}
           selectedCategoryKey={selectedCategoryKey}
-          onSelect={setSelectedCategoryKey}
+          onSelect={handleSelectCategory}
         />
       ) : null}
 

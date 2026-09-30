@@ -366,7 +366,7 @@ export function TripSettingsModal({ tripId, cities, stopCategories, onClose }) {
   const [activeTab, setActiveTab] = useState('cities')
 
   return (
-    <Modal onClose={onClose} className="flex h-[32rem] max-w-md flex-col" closeOnOverlayClick={false}>
+    <Modal onClose={onClose} className="flex h-128 max-w-md flex-col" closeOnOverlayClick={false}>
       <button
         type="button"
         onClick={onClose}
