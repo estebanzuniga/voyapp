@@ -7,13 +7,14 @@ import { useTranslation } from '../hooks/useTranslation'
 import { LocateIcon } from './Icons'
 
 const SINGLE_STOP_ZOOM = 14
+const FALLBACK_EMOJI = '📍'
 
-function createDotIcon() {
+function createCategoryIcon(emoji) {
   return L.divIcon({
     className: '',
-    html: '<div class="h-3.5 w-3.5 rounded-full border-2 border-surface bg-accent shadow-md"></div>',
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
+    html: `<div class="flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-white text-base leading-none shadow-md">${emoji}</div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
   })
 }
 
@@ -72,8 +73,12 @@ function LocateControl() {
   )
 }
 
-export function CityMap({ stops }) {
+export function CityMap({ stops, stopCategories = [] }) {
   const positions = useMemo(() => stops.map((stop) => [stop.location.lat, stop.location.lng]), [stops])
+  const categoryById = useMemo(
+    () => new Map(stopCategories.map((category) => [category.id, category])),
+    [stopCategories],
+  )
 
   if (positions.length === 0) return null
 
@@ -93,16 +98,23 @@ export function CityMap({ stops }) {
       <InvalidateSizeOnResize />
       <LocateControl />
 
-      {stops.map((stop) => (
-        <Marker key={stop.id} position={[stop.location.lat, stop.location.lng]} icon={createDotIcon()}>
-          <Popup>
-            <div className="flex flex-col gap-1">
-              <p className="font-semibold text-ink">{stop.name}</p>
-              {stop.notes ? <p className="text-sm text-muted">{stop.notes}</p> : null}
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+      {stops.map((stop) => {
+        const emoji = categoryById.get(stop.categoryId)?.emoji ?? FALLBACK_EMOJI
+        return (
+          <Marker
+            key={stop.id}
+            position={[stop.location.lat, stop.location.lng]}
+            icon={createCategoryIcon(emoji)}
+          >
+            <Popup>
+              <div className="flex flex-col gap-1">
+                <p className="font-semibold text-ink">{stop.name}</p>
+                {stop.notes ? <p className="text-sm text-muted">{stop.notes}</p> : null}
+              </div>
+            </Popup>
+          </Marker>
+        )
+      })}
     </MapContainer>
   )
 }

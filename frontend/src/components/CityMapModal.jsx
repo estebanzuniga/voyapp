@@ -5,7 +5,7 @@ import { MaximizeIcon, MinimizeIcon, XIcon } from './Icons'
 
 const CityMap = lazy(() => import('./CityMap').then((module) => ({ default: module.CityMap })))
 
-export function CityMapModal({ cityName, stops, onClose }) {
+export function CityMapModal({ cityName, stops, stopCategories = [], onClose }) {
   const { t } = useTranslation()
   const [isFullscreen, setIsFullscreen] = useState(false)
 
@@ -65,7 +65,7 @@ export function CityMapModal({ cityName, stops, onClose }) {
           <Suspense
             fallback={<div className="flex h-full items-center justify-center text-sm text-muted">{t('common.loadingMap')}</div>}
           >
-            <CityMap stops={stops} />
+            <CityMap stops={stops} stopCategories={stopCategories} />
           </Suspense>
         </div>
       </div>

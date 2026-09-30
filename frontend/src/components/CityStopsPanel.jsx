@@ -299,7 +299,12 @@ function CityStopsCard({ city, days, stopCategories, tripId, canEdit }) {
       </div>
 
       {isMapOpen ? (
-        <CityMapModal cityName={city.name} stops={orderedStops} onClose={() => setIsMapOpen(false)} />
+        <CityMapModal
+          cityName={city.name}
+          stops={orderedStops}
+          stopCategories={stopCategories}
+          onClose={() => setIsMapOpen(false)}
+        />
       ) : null}
 
       {dragError ? <p className="text-sm text-red-600">{dragError}</p> : null}
