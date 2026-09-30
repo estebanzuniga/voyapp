@@ -4,10 +4,10 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useLocateMe } from '../hooks/useLocateMe'
 import { useTranslation } from '../hooks/useTranslation'
+import { UNCATEGORIZED_EMOJI } from '../lib/stopCategories'
 import { LocateIcon } from './Icons'
 
 const SINGLE_STOP_ZOOM = 14
-const FALLBACK_EMOJI = '📍'
 
 function createCategoryIcon(emoji) {
   return L.divIcon({
@@ -99,7 +99,7 @@ export function CityMap({ stops, stopCategories = [] }) {
       <LocateControl />
 
       {stops.map((stop) => {
-        const emoji = categoryById.get(stop.categoryId)?.emoji ?? FALLBACK_EMOJI
+        const emoji = categoryById.get(stop.categoryId)?.emoji ?? UNCATEGORIZED_EMOJI
         return (
           <Marker
             key={stop.id}

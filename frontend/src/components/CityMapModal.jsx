@@ -1,11 +1,19 @@
 import { Suspense, lazy, useState } from 'react'
 import { useTranslation } from '../hooks/useTranslation'
+import { CategoryFilterChips } from './CategoryFilterChips'
 import { Modal } from './Modal'
 import { MaximizeIcon, MinimizeIcon, XIcon } from './Icons'
 
 const CityMap = lazy(() => import('./CityMap').then((module) => ({ default: module.CityMap })))
 
-export function CityMapModal({ cityName, stops, stopCategories = [], onClose }) {
+export function CityMapModal({
+  cityName,
+  stops,
+  stopCategories = [],
+  selectedCategoryKey = null,
+  onSelectCategory,
+  onClose,
+}) {
   const { t } = useTranslation()
   const [isFullscreen, setIsFullscreen] = useState(false)
 
@@ -54,6 +62,14 @@ export function CityMapModal({ cityName, stops, stopCategories = [], onClose }) 
         ) : (
           <h2 className="font-display pr-20 text-lg text-ink">{cityName}</h2>
         )}
+
+        {stopCategories.length > 0 ? (
+          <CategoryFilterChips
+            stopCategories={stopCategories}
+            selectedCategoryKey={selectedCategoryKey}
+            onSelect={onSelectCategory}
+          />
+        ) : null}
 
         <div
           className={

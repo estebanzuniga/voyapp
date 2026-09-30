@@ -12,7 +12,9 @@ import {
 import { TRIP_QUERY } from '../graphql/queries'
 import { useTranslation } from '../hooks/useTranslation'
 import { formatFullDate } from '../lib/dates'
+import { categoryKeyForStop } from '../lib/stopCategories'
 import { AddStopModal } from './AddStopModal'
+import { CategoryFilterChips } from './CategoryFilterChips'
 import { CityMapModal } from './CityMapModal'
 import { ConfirmDialog } from './ConfirmDialog'
 import { EditStopModal } from './EditStopModal'
@@ -285,6 +287,7 @@ function CityStopsCard({ city, days, stopCategories, tripId, canEdit }) {
   const [isMapOpen, setIsMapOpen] = useState(false)
   const [orderedStops, setOrderedStops] = useState(city.stops)
   const [dragError, setDragError] = useState(null)
+  const [selectedCategoryKey, setSelectedCategoryKey] = useState(null)
   // A recommendation only makes sense to schedule onto a day already
   // grouped under this same city - scheduling it onto some other city's day
   // would silently detach it from the place it's actually a recommendation for.
@@ -301,22 +304,31 @@ function CityStopsCard({ city, days, stopCategories, tripId, canEdit }) {
     setOrderedStops(city.stops)
   }, [city.stops])
 
+  const visibleStops =
+    selectedCategoryKey === null
+      ? orderedStops
+      : orderedStops.filter((stop) => categoryKeyForStop(stop) === selectedCategoryKey)
+
   async function handleDragEnd(event) {
     const { active, over } = event
     if (!over || active.id === over.id) return
 
-    const oldIndex = orderedStops.findIndex((stop) => stop.id === active.id)
-    const newIndex = orderedStops.findIndex((stop) => stop.id === over.id)
+    const oldIndex = visibleStops.findIndex((stop) => stop.id === active.id)
+    const newIndex = visibleStops.findIndex((stop) => stop.id === over.id)
     if (oldIndex === -1 || newIndex === -1) return
 
+    const reorderedVisible = arrayMove(visibleStops, oldIndex, newIndex)
+    const visibleIds = new Set(reorderedVisible.map((stop) => stop.id))
+    const queue = [...reorderedVisible]
+    const merged = orderedStops.map((stop) => (visibleIds.has(stop.id) ? queue.shift() : stop))
+
     const previous = orderedStops
-    const reordered = arrayMove(orderedStops, oldIndex, newIndex)
-    setOrderedStops(reordered)
+    setOrderedStops(merged)
     setDragError(null)
 
     try {
       await runReorderStops({
-        variables: { cityId: city.id, stopIds: reordered.map((stop) => stop.id) },
+        variables: { cityId: city.id, stopIds: merged.map((stop) => stop.id) },
       })
     } catch (err) {
       setOrderedStops(previous)
@@ -346,23 +358,37 @@ function CityStopsCard({ city, days, stopCategories, tripId, canEdit }) {
       {isMapOpen ? (
         <CityMapModal
           cityName={city.name}
-          stops={orderedStops}
+          stops={visibleStops}
           stopCategories={stopCategories}
+          selectedCategoryKey={selectedCategoryKey}
+          onSelectCategory={setSelectedCategoryKey}
           onClose={() => setIsMapOpen(false)}
+        />
+      ) : null}
+
+      {stopCategories.length > 0 ? (
+        <CategoryFilterChips
+          stopCategories={stopCategories}
+          selectedCategoryKey={selectedCategoryKey}
+          onSelect={setSelectedCategoryKey}
         />
       ) : null}
 
       {dragError ? <p className="text-sm text-red-600">{dragError}</p> : null}
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={orderedStops.map((stop) => stop.id)} strategy={verticalListSortingStrategy}>
+        <SortableContext items={visibleStops.map((stop) => stop.id)} strategy={verticalListSortingStrategy}>
           <ul className="flex min-h-14 flex-col gap-2">
             {orderedStops.length === 0 ? (
               <li className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-muted">
                 {t('cityStops.noRecommendationsYet')}
               </li>
+            ) : visibleStops.length === 0 ? (
+              <li className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-muted">
+                {t('cityStops.noMatchingStops')}
+              </li>
             ) : (
-              orderedStops.map((stop) => (
+              visibleStops.map((stop) => (
                 <CityRecommendationRow
                   key={stop.id}
                   stop={stop}
