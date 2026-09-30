@@ -35,7 +35,7 @@ import {
 // of moveStop's clamping, not a reusable concept).
 const APPEND_TO_END_INDEX = 999999999
 
-function CityRecommendationRow({ stop, tripId, days, canEdit }) {
+function CityRecommendationRow({ stop, tripId, days, stopCategories, canEdit }) {
   const { t, locale } = useTranslation()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: stop.id,
@@ -222,13 +222,19 @@ function CityRecommendationRow({ stop, tripId, days, canEdit }) {
       ) : null}
 
       {isEditing ? (
-        <EditStopModal stop={stop} tripId={tripId} isCityStop onClose={() => setIsEditing(false)} />
+        <EditStopModal
+          stop={stop}
+          tripId={tripId}
+          categories={stopCategories}
+          isCityStop
+          onClose={() => setIsEditing(false)}
+        />
       ) : null}
     </li>
   )
 }
 
-function CityStopsCard({ city, days, tripId, canEdit }) {
+function CityStopsCard({ city, days, stopCategories, tripId, canEdit }) {
   const { t } = useTranslation()
   const [isAddingStop, setIsAddingStop] = useState(false)
   const [isMapOpen, setIsMapOpen] = useState(false)
@@ -312,6 +318,7 @@ function CityStopsCard({ city, days, tripId, canEdit }) {
                   stop={stop}
                   tripId={tripId}
                   days={cityDays}
+                  stopCategories={stopCategories}
                   canEdit={canEdit}
                 />
               ))
@@ -336,6 +343,7 @@ function CityStopsCard({ city, days, tripId, canEdit }) {
           cityId={city.id}
           cityName={city.name}
           cityStops={orderedStops}
+          categories={stopCategories}
           tripId={tripId}
           onClose={() => setIsAddingStop(false)}
         />
@@ -354,7 +362,14 @@ export function CityStopsPanel({ trip, tripId, canEdit }) {
   return (
     <div className="flex flex-col gap-4">
       {trip.cities.map((city) => (
-        <CityStopsCard key={city.id} city={city} days={trip.days} tripId={tripId} canEdit={canEdit} />
+        <CityStopsCard
+          key={city.id}
+          city={city}
+          days={trip.days}
+          stopCategories={trip.stopCategories}
+          tripId={tripId}
+          canEdit={canEdit}
+        />
       ))}
     </div>
   )

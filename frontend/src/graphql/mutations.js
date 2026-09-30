@@ -194,6 +194,7 @@ export const ADD_STOP_MUTATION = gql`
   mutation AddStop(
     $dayId: ID
     $cityId: ID
+    $categoryId: ID
     $name: String!
     $location: LocationInput!
     $notes: String
@@ -204,6 +205,7 @@ export const ADD_STOP_MUTATION = gql`
     addStop(
       dayId: $dayId
       cityId: $cityId
+      categoryId: $categoryId
       name: $name
       location: $location
       notes: $notes
@@ -212,6 +214,7 @@ export const ADD_STOP_MUTATION = gql`
       isOptional: $isOptional
     ) {
       id
+      categoryId
     }
   }
 `
@@ -221,6 +224,7 @@ export const UPDATE_STOP_MUTATION = gql`
     $id: ID!
     $name: String!
     $location: LocationInput!
+    $categoryId: ID
     $notes: String
     $startTime: Time
     $isImportant: Boolean!
@@ -230,6 +234,7 @@ export const UPDATE_STOP_MUTATION = gql`
       id: $id
       name: $name
       location: $location
+      categoryId: $categoryId
       notes: $notes
       startTime: $startTime
       isImportant: $isImportant
@@ -241,6 +246,7 @@ export const UPDATE_STOP_MUTATION = gql`
       startTime
       isImportant
       isOptional
+      categoryId
       location {
         lat
         lng

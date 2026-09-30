@@ -16,7 +16,15 @@ function averageLocation(stops) {
   return [lat, lng]
 }
 
-export function AddStopForm({ dayId = null, cityId = null, cityName = null, cityStops = [], tripId, onDone }) {
+export function AddStopForm({
+  dayId = null,
+  cityId = null,
+  cityName = null,
+  cityStops = [],
+  categories = [],
+  tripId,
+  onDone,
+}) {
   const { t } = useTranslation()
   const isCityStop = cityId != null
   const [name, setName] = useState('')
@@ -24,6 +32,7 @@ export function AddStopForm({ dayId = null, cityId = null, cityName = null, city
   const [lng, setLng] = useState(null)
   const [notes, setNotes] = useState('')
   const [startTime, setStartTime] = useState('')
+  const [categoryId, setCategoryId] = useState('')
   const [isImportant, setIsImportant] = useState(false)
   const [isOptional, setIsOptional] = useState(false)
   const [initialCenter, setInitialCenter] = useState(null)
@@ -68,6 +77,7 @@ export function AddStopForm({ dayId = null, cityId = null, cityName = null, city
       variables: {
         dayId,
         cityId,
+        categoryId: categoryId || null,
         name,
         location: { lat, lng },
         notes: notes.trim() || null,
@@ -126,6 +136,24 @@ export function AddStopForm({ dayId = null, cityId = null, cityName = null, city
           className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
         />
       </div>
+
+      {categories.length > 0 ? (
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-ink">{t('stopForm.category.label')}</label>
+          <select
+            value={categoryId}
+            onChange={(event) => setCategoryId(event.target.value)}
+            className="rounded-lg border border-border bg-surface px-3 py-2 text-ink focus:outline-2 focus:outline-accent"
+          >
+            <option value="">{t('stopForm.category.none')}</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.emoji} {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
 
       <div className="flex gap-4">
         <span className="text-xs font-semibold text-ink">{t('stopForm.thisFieldIs')}</span>

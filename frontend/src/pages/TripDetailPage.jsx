@@ -136,6 +136,7 @@ function CityGroupSection({
   days,
   tripId,
   cities,
+  stopCategories,
   canEdit,
   stopsByDay,
   isExpanded,
@@ -174,6 +175,7 @@ function CityGroupSection({
               stops={stopsByDay[day.id] ?? day.stops}
               tripId={tripId}
               cities={cities}
+              stopCategories={stopCategories}
               canEdit={canEdit}
               isToday={isToday(day.date)}
             />
@@ -556,6 +558,7 @@ export function TripDetailPage() {
                           stops={stopsByDay[item.day.id] ?? item.day.stops}
                           tripId={id}
                           cities={trip.cities}
+                          stopCategories={trip.stopCategories}
                           canEdit={canEdit}
                           isToday={isToday(item.day.date)}
                         />
@@ -573,6 +576,7 @@ export function TripDetailPage() {
                           days={item.days}
                           tripId={id}
                           cities={trip.cities}
+                          stopCategories={trip.stopCategories}
                           canEdit={canEdit}
                           stopsByDay={stopsByDay}
                           locale={locale}

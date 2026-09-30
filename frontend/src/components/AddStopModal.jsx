@@ -3,7 +3,15 @@ import { AddStopForm } from './AddStopForm'
 import { Modal } from './Modal'
 import { XIcon } from './Icons'
 
-export function AddStopModal({ dayId = null, cityId = null, cityName = null, cityStops = [], tripId, onClose }) {
+export function AddStopModal({
+  dayId = null,
+  cityId = null,
+  cityName = null,
+  cityStops = [],
+  categories = [],
+  tripId,
+  onClose,
+}) {
   const { t } = useTranslation()
 
   return (
@@ -24,6 +32,7 @@ export function AddStopModal({ dayId = null, cityId = null, cityName = null, cit
         cityId={cityId}
         cityName={cityName}
         cityStops={cityStops}
+        categories={categories}
         tripId={tripId}
         onDone={onClose}
       />

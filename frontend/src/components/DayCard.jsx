@@ -42,7 +42,7 @@ export function StopName({ stop, t }) {
   )
 }
 
-function SortableStopRow({ stop, prevStop, tripId, canEdit, currentPosition }) {
+function SortableStopRow({ stop, prevStop, tripId, stopCategories, canEdit, currentPosition }) {
   const { t } = useTranslation()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: stop.id,
@@ -218,7 +218,12 @@ function SortableStopRow({ stop, prevStop, tripId, canEdit, currentPosition }) {
       ) : null}
 
       {isEditing ? (
-        <EditStopModal stop={stop} tripId={tripId} onClose={() => setIsEditing(false)} />
+        <EditStopModal
+          stop={stop}
+          tripId={tripId}
+          categories={stopCategories}
+          onClose={() => setIsEditing(false)}
+        />
       ) : null}
     </li>
   )
@@ -242,7 +247,7 @@ export function StopDragPreview({ stop }) {
   )
 }
 
-export function DayCard({ day, stops, tripId, cities, canEdit, isToday }) {
+export function DayCard({ day, stops, tripId, cities, stopCategories, canEdit, isToday }) {
   const { t, locale } = useTranslation()
   const { user } = useAuth()
   const liveCurrentPosition = useCurrentLocation()
@@ -383,6 +388,7 @@ export function DayCard({ day, stops, tripId, cities, canEdit, isToday }) {
                 stop={stop}
                 prevStop={index > 0 ? stops[index - 1] : null}
                 tripId={tripId}
+                stopCategories={stopCategories}
                 canEdit={canEdit}
                 currentPosition={currentPosition}
               />
@@ -403,7 +409,12 @@ export function DayCard({ day, stops, tripId, cities, canEdit, isToday }) {
       ) : null}
 
       {isAddingStop ? (
-        <AddStopModal dayId={day.id} tripId={tripId} onClose={() => setIsAddingStop(false)} />
+        <AddStopModal
+          dayId={day.id}
+          tripId={tripId}
+          categories={stopCategories}
+          onClose={() => setIsAddingStop(false)}
+        />
       ) : null}
     </div>
   )

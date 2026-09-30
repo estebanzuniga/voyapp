@@ -7,7 +7,7 @@ import { CheckIcon, XIcon } from './Icons'
 
 const MapPicker = lazy(() => import('./MapPicker').then((module) => ({ default: module.MapPicker })))
 
-export function EditStopForm({ stop, tripId, isCityStop = false, onDone, onCancel }) {
+export function EditStopForm({ stop, tripId, categories = [], isCityStop = false, onDone, onCancel }) {
   const { t } = useTranslation()
   const [name, setName] = useState(stop.name)
   const [lat, setLat] = useState(stop.location.lat)
@@ -17,6 +17,7 @@ export function EditStopForm({ stop, tripId, isCityStop = false, onDone, onCance
   // understands "HH:MM" - trim the seconds off going in, the backend adds
   // them back on save (parsing "HH:MM" as a time defaults seconds to :00).
   const [startTime, setStartTime] = useState(stop.startTime?.slice(0, 5) ?? '')
+  const [categoryId, setCategoryId] = useState(stop.categoryId ?? '')
   const [isImportant, setIsImportant] = useState(stop.isImportant)
   const [isOptional, setIsOptional] = useState(stop.isOptional)
   const [runUpdateStop, { loading, error }] = useMutation(UPDATE_STOP_MUTATION, {
@@ -32,6 +33,7 @@ export function EditStopForm({ stop, tripId, isCityStop = false, onDone, onCance
         id: stop.id,
         name,
         location: { lat, lng },
+        categoryId: categoryId || null,
         notes: notes.trim() || null,
         startTime: isCityStop ? null : startTime || null,
         isImportant,
@@ -82,6 +84,24 @@ export function EditStopForm({ stop, tripId, isCityStop = false, onDone, onCance
           className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-ink placeholder:text-muted/75 focus:outline-2 focus:outline-accent"
         />
       </div>
+
+      {categories.length > 0 ? (
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-ink">{t('stopForm.category.label')}</label>
+          <select
+            value={categoryId}
+            onChange={(event) => setCategoryId(event.target.value)}
+            className="rounded-lg border border-border bg-surface px-3 py-2 text-ink focus:outline-2 focus:outline-accent"
+          >
+            <option value="">{t('stopForm.category.none')}</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.emoji} {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
 
       <div className="flex gap-4">
         <span className="text-xs font-semibold text-ink">{t('stopForm.thisFieldIs')}</span>

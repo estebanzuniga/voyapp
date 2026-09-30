@@ -59,6 +59,7 @@ export const TRIP_QUERY = gql`
           orderIndex
           isImportant
           isOptional
+          categoryId
           location {
             lat
             lng
@@ -82,6 +83,7 @@ export const TRIP_QUERY = gql`
           orderIndex
           isImportant
           isOptional
+          categoryId
           location {
             lat
             lng
