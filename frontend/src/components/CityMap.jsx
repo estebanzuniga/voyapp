@@ -1,16 +1,16 @@
 import { useEffect, useMemo } from 'react'
-import { MapContainer, Marker, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet'
+import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 const SINGLE_STOP_ZOOM = 14
 
-function createNumberedIcon(number) {
+function createDotIcon() {
   return L.divIcon({
     className: '',
-    html: `<div class="flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-accent text-xs font-bold text-accent-ink shadow-md">${number}</div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
+    html: '<div class="h-3.5 w-3.5 rounded-full border-2 border-surface bg-accent shadow-md"></div>',
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
   })
 }
 
@@ -57,16 +57,11 @@ export function CityMap({ stops }) {
       <FitToStops positions={positions} />
       <InvalidateSizeOnResize />
 
-      {stops.map((stop, index) => (
-        <Marker key={stop.id} position={[stop.location.lat, stop.location.lng]} icon={createNumberedIcon(index + 1)}>
-          <Tooltip direction="top" offset={[0, -16]} permanent>
-            {stop.name}
-          </Tooltip>
+      {stops.map((stop) => (
+        <Marker key={stop.id} position={[stop.location.lat, stop.location.lng]} icon={createDotIcon()}>
           <Popup>
             <div className="flex flex-col gap-1">
-              <p className="font-semibold text-ink">
-                {index + 1}. {stop.name}
-              </p>
+              <p className="font-semibold text-ink">{stop.name}</p>
               {stop.notes ? <p className="text-sm text-muted">{stop.notes}</p> : null}
             </div>
           </Popup>

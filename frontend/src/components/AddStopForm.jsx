@@ -58,6 +58,7 @@ export function AddStopForm({ dayId = null, cityId = null, cityName = null, city
     return () => {
       cancelled = true
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCityStop])
 
   async function handleSubmit(event) {
