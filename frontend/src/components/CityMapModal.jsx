@@ -31,7 +31,12 @@ export function CityMapModal({ cityName, stops, onClose }) {
   )
 
   return (
-    <Modal onClose={onClose} className={isFullscreen ? 'pt-0' : 'max-w-2xl'} fullBleed={isFullscreen}>
+    <Modal
+      onClose={onClose}
+      className={isFullscreen ? 'pt-0' : 'max-w-2xl'}
+      fullBleed={isFullscreen}
+      closeOnOverlayClick={false}
+    >
       {!isFullscreen && <div className="absolute right-1 top-1 flex items-center gap-1">{controls}</div>}
 
       <div

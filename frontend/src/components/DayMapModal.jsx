@@ -31,7 +31,12 @@ export function DayMapModal({ dayLabel, stops, onClose }) {
   )
 
   return (
-    <Modal onClose={onClose} className={isFullscreen ? 'pt-0' : 'max-w-2xl'} fullBleed={isFullscreen}>
+    <Modal
+      onClose={onClose}
+      className={isFullscreen ? 'pt-0' : 'max-w-2xl'}
+      fullBleed={isFullscreen}
+      closeOnOverlayClick={false}
+    >
       {/* Non-fullscreen: buttons float over the top-right corner of the small dialog, same as before. */}
       {!isFullscreen && <div className="absolute right-1 top-1 flex items-center gap-1">{controls}</div>}
 
