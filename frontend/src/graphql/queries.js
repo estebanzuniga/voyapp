@@ -65,6 +65,11 @@ export const TRIP_QUERY = gql`
           }
         }
       }
+      stopCategories {
+        id
+        name
+        emoji
+      }
       days {
         id
         date

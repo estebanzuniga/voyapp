@@ -164,6 +164,32 @@ export const SET_DAY_CITY_MUTATION = gql`
   }
 `
 
+export const CREATE_STOP_CATEGORY_MUTATION = gql`
+  mutation CreateStopCategory($tripId: ID!, $name: String!, $emoji: String!) {
+    createStopCategory(tripId: $tripId, name: $name, emoji: $emoji) {
+      id
+      name
+      emoji
+    }
+  }
+`
+
+export const UPDATE_STOP_CATEGORY_MUTATION = gql`
+  mutation UpdateStopCategory($id: ID!, $name: String!, $emoji: String!) {
+    updateStopCategory(id: $id, name: $name, emoji: $emoji) {
+      id
+      name
+      emoji
+    }
+  }
+`
+
+export const DELETE_STOP_CATEGORY_MUTATION = gql`
+  mutation DeleteStopCategory($id: ID!) {
+    deleteStopCategory(id: $id)
+  }
+`
+
 export const ADD_STOP_MUTATION = gql`
   mutation AddStop(
     $dayId: ID

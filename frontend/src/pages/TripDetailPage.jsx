@@ -16,8 +16,8 @@ import { useTranslation } from '../hooks/useTranslation'
 import { formatDate, formatDateRange, enumerateDates, isToday } from '../lib/dates'
 import { CityStopsPanel } from '../components/CityStopsPanel'
 import { DayCard, StopDragPreview } from '../components/DayCard'
-import { ManageCitiesModal } from '../components/ManageCitiesModal'
 import { Skeleton } from '../components/Skeleton'
+import { TripSettingsModal } from '../components/TripSettingsModal'
 import {
   ArrowLeftIcon,
   BuildingIcon,
@@ -25,6 +25,7 @@ import {
   ChevronDownIcon,
   EyeIcon,
   PlusIcon,
+  SettingsIcon,
 } from '../components/Icons'
 
 function findContainerId(stopsByDay, stopId) {
@@ -194,7 +195,7 @@ export function TripDetailPage() {
   const [addDayError, setAddDayError] = useState(null)
   const [dragError, setDragError] = useState(null)
   const [activeStop, setActiveStop] = useState(null)
-  const [isManagingCities, setIsManagingCities] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('itinerary')
   const [collapsedGroupIds, setCollapsedGroupIds] = useState(() => loadCollapsedGroupIds(id))
   // Set at drag start, read (and cleared) at drag end - not state, since
@@ -468,11 +469,11 @@ export function TripDetailPage() {
                   {canEdit ? (
                     <button
                       type="button"
-                      onClick={() => setIsManagingCities(true)}
-                      className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-ink hover:border-accent focus-visible:outline-2 focus-visible:outline-accent"
+                      onClick={() => setIsSettingsOpen(true)}
+                      aria-label={t('tripDetail.settingsAria')}
+                      className="cursor-pointer rounded-lg border border-border p-2 text-ink hover:border-accent focus-visible:outline-2 focus-visible:outline-accent"
                     >
-                      <BuildingIcon size={14} />
-                      {t('tripDetail.manageCities')}
+                      <SettingsIcon size={16} />
                     </button>
                   ) : null}
                   {todayDay ? (
@@ -498,11 +499,12 @@ export function TripDetailPage() {
               ) : null}
             </header>
 
-            {isManagingCities ? (
-              <ManageCitiesModal
+            {isSettingsOpen ? (
+              <TripSettingsModal
                 tripId={id}
                 cities={trip.cities}
-                onClose={() => setIsManagingCities(false)}
+                stopCategories={trip.stopCategories}
+                onClose={() => setIsSettingsOpen(false)}
               />
             ) : null}
 

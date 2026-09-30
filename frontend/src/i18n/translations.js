@@ -143,13 +143,17 @@ export const translations = {
     'tripDetail.addDay': 'Add {date}',
     'tripDetail.daysPending': '{count} days pending',
     'tripDetail.jumpToToday': 'Jump to today',
-    'tripDetail.manageCities': 'Manage cities',
+    'tripDetail.settingsAria': 'Trip settings',
     'tripDetail.cityGroupLabel': '{city} · {range}',
     'tripDetail.tabItinerary': 'Itinerary',
     'tripDetail.tabCityStops': 'Stops per city',
 
-    // --- cities modal ---------------------------------------------------
-    'citiesModal.title': 'Cities',
+    // --- trip settings modal ---------------------------------------------
+    'settingsModal.title': 'Trip settings',
+    'settingsModal.tabCities': 'Cities',
+    'settingsModal.tabCategories': 'Categories',
+
+    // --- cities tab -------------------------------------------------------
     'citiesModal.empty': 'No cities yet. Add one below, then assign it to a day.',
     'citiesModal.namePlaceholder': 'City name',
     'citiesModal.add': 'Add city',
@@ -159,6 +163,18 @@ export const translations = {
     'citiesModal.deleteTitle': 'Delete city',
     'citiesModal.deleteMessage':
       'Are you sure you want to delete "{name}"? This only works while no days or stops are assigned to it.',
+
+    // --- categories tab ---------------------------------------------------
+    'categoriesModal.empty': 'No categories yet. Add one below, then assign it to a stop.',
+    'categoriesModal.namePlaceholder': 'Category name',
+    'categoriesModal.emojiPlaceholder': 'Emoji',
+    'categoriesModal.add': 'Add category',
+    'categoriesModal.adding': 'Adding…',
+    'categoriesModal.renameAria': 'Edit {name}',
+    'categoriesModal.deleteAria': 'Delete {name}',
+    'categoriesModal.deleteTitle': 'Delete category',
+    'categoriesModal.deleteMessage':
+      'Are you sure you want to delete "{name}"? This only works while no stops are assigned to it.',
 
     // --- day card: city assignment ---------------------------------------
     'dayCard.assignCityAria': 'Assign a city to this day',
@@ -398,13 +414,17 @@ export const translations = {
     'tripDetail.addDay': 'Agregar {date}',
     'tripDetail.daysPending': '{count} días pendientes',
     'tripDetail.jumpToToday': 'Ir a hoy',
-    'tripDetail.manageCities': 'Administrar ciudades',
+    'tripDetail.settingsAria': 'Configuración del viaje',
     'tripDetail.cityGroupLabel': '{city} · {range}',
     'tripDetail.tabItinerary': 'Itinerario',
     'tripDetail.tabCityStops': 'Paradas por ciudad',
 
-    // --- cities modal ---------------------------------------------------
-    'citiesModal.title': 'Ciudades',
+    // --- modal de configuración del viaje ---------------------------------
+    'settingsModal.title': 'Configuración del viaje',
+    'settingsModal.tabCities': 'Ciudades',
+    'settingsModal.tabCategories': 'Categorías',
+
+    // --- pestaña de ciudades -----------------------------------------------
     'citiesModal.empty': 'Aún no hay ciudades. Agrega una abajo y luego asígnala a un día.',
     'citiesModal.namePlaceholder': 'Nombre de la ciudad',
     'citiesModal.add': 'Agregar ciudad',
@@ -414,6 +434,18 @@ export const translations = {
     'citiesModal.deleteTitle': 'Eliminar ciudad',
     'citiesModal.deleteMessage':
       '¿Seguro que quieres eliminar "{name}"? Esto solo funciona si no tiene días ni paradas asignadas.',
+
+    // --- pestaña de categorías ----------------------------------------------
+    'categoriesModal.empty': 'Aún no hay categorías. Agrega una abajo y luego asígnala a una parada.',
+    'categoriesModal.namePlaceholder': 'Nombre de la categoría',
+    'categoriesModal.emojiPlaceholder': 'Emoji',
+    'categoriesModal.add': 'Agregar categoría',
+    'categoriesModal.adding': 'Agregando…',
+    'categoriesModal.renameAria': 'Editar {name}',
+    'categoriesModal.deleteAria': 'Eliminar {name}',
+    'categoriesModal.deleteTitle': 'Eliminar categoría',
+    'categoriesModal.deleteMessage':
+      '¿Seguro que quieres eliminar "{name}"? Esto solo funciona si no tiene paradas asignadas.',
 
     // --- day card: city assignment ---------------------------------------
     'dayCard.assignCityAria': 'Asignar una ciudad a este día',
