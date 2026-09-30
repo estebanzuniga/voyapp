@@ -11,14 +11,16 @@ import {
 } from '../graphql/mutations'
 import { TRIP_QUERY } from '../graphql/queries'
 import { useTranslation } from '../hooks/useTranslation'
-import { formatDate } from '../lib/dates'
+import { formatFullDate } from '../lib/dates'
 import { AddStopModal } from './AddStopModal'
 import { CityMapModal } from './CityMapModal'
 import { ConfirmDialog } from './ConfirmDialog'
 import { EditStopModal } from './EditStopModal'
+import { Modal } from './Modal'
 import { StopName } from './DayCard'
 import {
   BuildingIcon,
+  CalendarIcon,
   CopyIcon,
   GripVerticalIcon,
   MapPinIcon,
@@ -26,7 +28,43 @@ import {
   PencilIcon,
   PlusIcon,
   TrashIcon,
+  XIcon,
 } from './Icons'
+
+function ScheduleStopDialog({ days, locale, onSchedule, onCancel, loading, error }) {
+  const { t } = useTranslation()
+
+  return (
+    <Modal onClose={onCancel} className="max-w-xs">
+      <button
+        type="button"
+        onClick={onCancel}
+        aria-label={t('common.close')}
+        className="absolute right-2 top-2 cursor-pointer rounded-full p-2 text-muted hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+      >
+        <XIcon size={18} />
+      </button>
+
+      <h2 className="font-display mb-4 pr-6 text-lg text-ink">{t('cityStops.scheduleDialogTitle')}</h2>
+
+      <div className="flex max-h-64 flex-col gap-2 overflow-y-auto">
+        {days.map((day) => (
+          <button
+            key={day.id}
+            type="button"
+            disabled={loading}
+            onClick={() => onSchedule(day.id)}
+            className="cursor-pointer rounded-lg border border-border px-3 py-2 text-left text-ink hover:border-accent disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            {formatFullDate(day.date, locale)}
+          </button>
+        ))}
+      </div>
+
+      {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
+    </Modal>
+  )
+}
 
 // Any target index at or beyond the destination list's length just gets
 // clamped there by moveStop - so "append to the end" doesn't need the
@@ -47,6 +85,7 @@ function CityRecommendationRow({ stop, tripId, days, stopCategories, canEdit }) 
   const [duplicateError, setDuplicateError] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
   const [areNotesExpanded, setAreNotesExpanded] = useState(false)
+  const [isSchedulingOpen, setIsSchedulingOpen] = useState(false)
   const [scheduleError, setScheduleError] = useState(null)
   const [runDeleteStop, { loading }] = useMutation(DELETE_STOP_MUTATION, {
     refetchQueries: [{ query: TRIP_QUERY, variables: { id: tripId } }],
@@ -81,15 +120,13 @@ function CityRecommendationRow({ stop, tripId, days, stopCategories, canEdit }) 
     }
   }
 
-  async function handleScheduleForDay(event) {
-    const dayId = event.target.value
-    event.target.value = ''
-    if (!dayId) return
+  async function handleScheduleForDay(dayId) {
     setScheduleError(null)
     try {
       await runScheduleForDay({
         variables: { stopId: stop.id, toDayId: dayId, toIndex: APPEND_TO_END_INDEX },
       })
+      setIsSchedulingOpen(false)
     } catch (err) {
       setScheduleError(err.message)
     }
@@ -123,20 +160,19 @@ function CityRecommendationRow({ stop, tripId, days, stopCategories, canEdit }) 
         <div className="flex flex-col gap-1">
           <StopName stop={stop} t={t} />
           {canEdit && days.length > 0 ? (
-            <select
-              defaultValue=""
+            <button
+              type="button"
               disabled={scheduling}
-              onChange={handleScheduleForDay}
+              onClick={() => {
+                setScheduleError(null)
+                setIsSchedulingOpen(true)
+              }}
               aria-label={t('cityStops.scheduleAria', { name: stop.name })}
-              className="w-36 rounded-lg border border-border bg-surface px-2 py-1 text-ink focus:outline-2 focus:outline-accent"
+              className="flex w-fit cursor-pointer items-center gap-1.5 text-sm font-semibold text-accent hover:underline disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
             >
-              <option value="">{t('cityStops.scheduleForDay')}</option>
-              {days.map((day) => (
-                <option key={day.id} value={day.id}>
-                  {formatDate(day.date, locale)}
-                </option>
-              ))}
-            </select>
+              <CalendarIcon size={14} />
+              {t('cityStops.scheduleForDay')}
+            </button>
           ) : null}
           {stop.notes ? (
             <>
@@ -193,7 +229,16 @@ function CityRecommendationRow({ stop, tripId, days, stopCategories, canEdit }) 
         ) : null}
       </div>
 
-      {scheduleError ? <p className="text-sm text-red-600">{scheduleError}</p> : null}
+      {isSchedulingOpen ? (
+        <ScheduleStopDialog
+          days={days}
+          locale={locale}
+          onSchedule={handleScheduleForDay}
+          onCancel={() => setIsSchedulingOpen(false)}
+          loading={scheduling}
+          error={scheduleError}
+        />
+      ) : null}
 
       {isConfirmingDuplicate ? (
         <ConfirmDialog
