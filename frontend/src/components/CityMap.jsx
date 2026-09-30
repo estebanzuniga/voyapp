@@ -1,0 +1,77 @@
+import { useEffect, useMemo } from 'react'
+import { MapContainer, Marker, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+
+const SINGLE_STOP_ZOOM = 14
+
+function createNumberedIcon(number) {
+  return L.divIcon({
+    className: '',
+    html: `<div class="flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-accent text-xs font-bold text-accent-ink shadow-md">${number}</div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  })
+}
+
+function FitToStops({ positions }) {
+  const map = useMap()
+  useEffect(() => {
+    if (positions.length === 1) {
+      map.setView(positions[0], SINGLE_STOP_ZOOM)
+    } else if (positions.length > 1) {
+      map.fitBounds(L.latLngBounds(positions), { padding: [32, 32] })
+    }
+  }, [positions, map])
+  return null
+}
+
+function InvalidateSizeOnResize() {
+  const map = useMap()
+  useEffect(() => {
+    const container = map.getContainer()
+    const observer = new ResizeObserver(() => map.invalidateSize())
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [map])
+  return null
+}
+
+export function CityMap({ stops }) {
+  const positions = useMemo(() => stops.map((stop) => [stop.location.lat, stop.location.lng]), [stops])
+
+  if (positions.length === 0) return null
+
+  return (
+    <MapContainer
+      center={positions[0]}
+      zoom={SINGLE_STOP_ZOOM}
+      className="h-full w-full"
+      zoomControl={false}
+      scrollWheelZoom
+    >
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      <FitToStops positions={positions} />
+      <InvalidateSizeOnResize />
+
+      {stops.map((stop, index) => (
+        <Marker key={stop.id} position={[stop.location.lat, stop.location.lng]} icon={createNumberedIcon(index + 1)}>
+          <Tooltip direction="top" offset={[0, -16]} permanent>
+            {stop.name}
+          </Tooltip>
+          <Popup>
+            <div className="flex flex-col gap-1">
+              <p className="font-semibold text-ink">
+                {index + 1}. {stop.name}
+              </p>
+              {stop.notes ? <p className="text-sm text-muted">{stop.notes}</p> : null}
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+    </MapContainer>
+  )
+}

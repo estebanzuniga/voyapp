@@ -41,7 +41,16 @@ function FlyToPosition({ position }) {
   return null
 }
 
-export function MapPicker({ lat, lng, onSelect }) {
+function ApplyInitialCenter({ initialCenter, initialZoom, hasSelection }) {
+  const map = useMap()
+  useEffect(() => {
+    if (hasSelection || !initialCenter) return
+    map.setView(initialCenter, initialZoom ?? SELECTED_ZOOM)
+  }, [initialCenter, initialZoom, hasSelection, map])
+  return null
+}
+
+export function MapPicker({ lat, lng, onSelect, initialCenter = null, initialZoom = null }) {
   const { t } = useTranslation()
   const position = lat != null && lng != null ? [lat, lng] : null
   const [query, setQuery] = useState('')
@@ -113,8 +122,8 @@ export function MapPicker({ lat, lng, onSelect }) {
 
       <div className="h-50 w-full overflow-hidden rounded-lg border border-border">
         <MapContainer
-          center={position ?? DEFAULT_CENTER}
-          zoom={position ? SELECTED_ZOOM : DEFAULT_ZOOM}
+          center={position ?? initialCenter ?? DEFAULT_CENTER}
+          zoom={position ? SELECTED_ZOOM : initialCenter ? (initialZoom ?? SELECTED_ZOOM) : DEFAULT_ZOOM}
           className="h-full w-full"
           zoomControl={false}
         >
@@ -124,6 +133,7 @@ export function MapPicker({ lat, lng, onSelect }) {
           />
           <ClickToPlaceMarker onSelect={onSelect} />
           <FlyToPosition position={position} />
+          <ApplyInitialCenter initialCenter={initialCenter} initialZoom={initialZoom} hasSelection={Boolean(position)} />
           {position ? <Marker position={position} icon={markerPinIcon} /> : null}
         </MapContainer>
       </div>

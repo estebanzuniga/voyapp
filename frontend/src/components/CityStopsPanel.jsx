@@ -13,6 +13,7 @@ import { TRIP_QUERY } from '../graphql/queries'
 import { useTranslation } from '../hooks/useTranslation'
 import { formatDate } from '../lib/dates'
 import { AddStopModal } from './AddStopModal'
+import { CityMapModal } from './CityMapModal'
 import { ConfirmDialog } from './ConfirmDialog'
 import { EditStopModal } from './EditStopModal'
 import { StopName } from './DayCard'
@@ -20,6 +21,7 @@ import {
   BuildingIcon,
   CopyIcon,
   GripVerticalIcon,
+  MapPinIcon,
   NotesIcon,
   PencilIcon,
   PlusIcon,
@@ -229,6 +231,7 @@ function CityRecommendationRow({ stop, tripId, days, canEdit }) {
 function CityStopsCard({ city, days, tripId, canEdit }) {
   const { t } = useTranslation()
   const [isAddingStop, setIsAddingStop] = useState(false)
+  const [isMapOpen, setIsMapOpen] = useState(false)
   const [orderedStops, setOrderedStops] = useState(city.stops)
   const [dragError, setDragError] = useState(null)
   // A recommendation only makes sense to schedule onto a day already
@@ -272,10 +275,26 @@ function CityStopsCard({ city, days, tripId, canEdit }) {
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-5 shadow-sm">
-      <h3 className="font-display flex items-center gap-1.5 text-lg text-ink">
-        <BuildingIcon size={18} className="text-accent" />
-        {city.name}
-      </h3>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="font-display flex items-center gap-1.5 text-lg text-ink">
+          <BuildingIcon size={18} className="text-accent" />
+          {city.name}
+        </h3>
+        {orderedStops.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => setIsMapOpen(true)}
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg text-sm font-semibold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            <MapPinIcon size={16} />
+            {t('cityStops.viewCityMap')}
+          </button>
+        ) : null}
+      </div>
+
+      {isMapOpen ? (
+        <CityMapModal cityName={city.name} stops={orderedStops} onClose={() => setIsMapOpen(false)} />
+      ) : null}
 
       {dragError ? <p className="text-sm text-red-600">{dragError}</p> : null}
 
@@ -313,7 +332,13 @@ function CityStopsCard({ city, days, tripId, canEdit }) {
       ) : null}
 
       {isAddingStop ? (
-        <AddStopModal cityId={city.id} tripId={tripId} onClose={() => setIsAddingStop(false)} />
+        <AddStopModal
+          cityId={city.id}
+          cityName={city.name}
+          cityStops={orderedStops}
+          tripId={tripId}
+          onClose={() => setIsAddingStop(false)}
+        />
       ) : null}
     </div>
   )

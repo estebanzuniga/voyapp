@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { useMutation } from '@apollo/client/react'
 import { ADD_STOP_MUTATION } from '../graphql/mutations'
 import { TRIP_QUERY } from '../graphql/queries'
@@ -7,7 +7,16 @@ import { PlusIcon, XIcon } from './Icons'
 
 const MapPicker = lazy(() => import('./MapPicker').then((module) => ({ default: module.MapPicker })))
 
-export function AddStopForm({ dayId = null, cityId = null, tripId, onDone }) {
+const CITY_STOPS_CENTER_ZOOM = 13
+const CITY_GEOCODE_CENTER_ZOOM = 12
+
+function averageLocation(stops) {
+  const lat = stops.reduce((sum, stop) => sum + stop.location.lat, 0) / stops.length
+  const lng = stops.reduce((sum, stop) => sum + stop.location.lng, 0) / stops.length
+  return [lat, lng]
+}
+
+export function AddStopForm({ dayId = null, cityId = null, cityName = null, cityStops = [], tripId, onDone }) {
   const { t } = useTranslation()
   const isCityStop = cityId != null
   const [name, setName] = useState('')
@@ -17,10 +26,39 @@ export function AddStopForm({ dayId = null, cityId = null, tripId, onDone }) {
   const [startTime, setStartTime] = useState('')
   const [isImportant, setIsImportant] = useState(false)
   const [isOptional, setIsOptional] = useState(false)
+  const [initialCenter, setInitialCenter] = useState(null)
+  const [initialZoom, setInitialZoom] = useState(null)
   const [runAddStop, { loading, error }] = useMutation(ADD_STOP_MUTATION, {
     refetchQueries: [{ query: TRIP_QUERY, variables: { id: tripId } }],
     awaitRefetchQueries: true,
   })
+
+  useEffect(() => {
+    if (!isCityStop) return
+
+    if (cityStops.length > 0) {
+      setInitialCenter(averageLocation(cityStops))
+      setInitialZoom(CITY_STOPS_CENTER_ZOOM)
+      return
+    }
+
+    if (!cityName) return
+    let cancelled = false
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(cityName)}`)
+      .then((response) => response.json())
+      .then((results) => {
+        if (cancelled || results.length === 0) return
+        setInitialCenter([Number(results[0].lat), Number(results[0].lon)])
+        setInitialZoom(CITY_GEOCODE_CENTER_ZOOM)
+      })
+      .catch(() => {
+        // No geocoding result - MapPicker just falls back to its own
+        // whole-world default, same as before this feature existed.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [isCityStop])
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -56,7 +94,13 @@ export function AddStopForm({ dayId = null, cityId = null, tripId, onDone }) {
       <div className="flex flex-col gap-1">
         <label className="text-xs font-semibold text-ink">{t('stopForm.location.label')}</label>
         <Suspense fallback={<div className="flex h-40 items-center justify-center text-sm text-muted">{t('common.loadingMap')}</div>}>
-          <MapPicker lat={lat} lng={lng} onSelect={(newLat, newLng) => { setLat(newLat); setLng(newLng) }} />
+          <MapPicker
+            lat={lat}
+            lng={lng}
+            onSelect={(newLat, newLng) => { setLat(newLat); setLng(newLng) }}
+            initialCenter={initialCenter}
+            initialZoom={initialZoom}
+          />
         </Suspense>
       </div>
 

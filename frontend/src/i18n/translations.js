@@ -167,6 +167,7 @@ export const translations = {
     'cityStops.noCitiesYet': 'No cities yet — add one from "Manage cities" to start a recommendations list.',
     'cityStops.noRecommendationsYet': 'No recommendations yet.',
     'cityStops.addRecommendation': 'Add recommendation',
+    'cityStops.viewCityMap': 'View city map',
     'cityStops.scheduleForDay': 'Schedule for a day…',
     'cityStops.scheduleAria': 'Schedule {name} for a day',
 
@@ -421,6 +422,7 @@ export const translations = {
     'cityStops.noCitiesYet': 'Aún no hay ciudades — agrega una desde "Administrar ciudades" para empezar una lista de recomendaciones.',
     'cityStops.noRecommendationsYet': 'Aún no hay recomendaciones.',
     'cityStops.addRecommendation': 'Agregar recomendación',
+    'cityStops.viewCityMap': 'Ver mapa de la ciudad',
     'cityStops.scheduleForDay': 'Agendar para un día…',
     'cityStops.scheduleAria': 'Agendar {name} para un día',
 
