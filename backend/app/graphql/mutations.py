@@ -16,12 +16,14 @@ from app.graphql.types.day import Day
 from app.graphql.types.permission import PermissionLevel
 from app.graphql.types.share import Collaborator, ShareLink
 from app.graphql.types.stop import LocationInput, Stop
+from app.graphql.types.stop_category import StopCategory
 from app.graphql.types.trip import Trip
 from app.graphql.types.user import User
 from app.models.city import City as CityModel
 from app.models.day import Day as DayModel
 from app.models.password_reset_token import PasswordResetToken as PasswordResetTokenModel
 from app.models.stop import Stop as StopModel
+from app.models.stop_category import StopCategory as StopCategoryModel
 from app.models.trip import Trip as TripModel
 from app.models.trip_collaborator import MAX_COLLABORATORS_PER_TRIP
 from app.models.trip_collaborator import TripCollaborator as TripCollaboratorModel
@@ -76,6 +78,19 @@ async def _stop_parent_trip_id(session, stop: StopModel) -> int:
             raise Exception("Stop not found")
         return city.trip_id
     raise Exception("Stop not found")
+
+
+async def _resolve_stop_category(session, category_id: int | None, trip_id: int) -> int | None:
+    """Validate an optional category_id for add/update_stop - unlike
+    day_id/city_id, category_id has no "exactly one" rule of its own, it
+    just has to belong to the same trip as the stop's day/city parent (same
+    cross-trip check as set_day_city's city_id)."""
+    if category_id is None:
+        return None
+    category = await session.get(StopCategoryModel, category_id)
+    if category is None or category.trip_id != trip_id:
+        raise Exception("Category not found")
+    return category.id
 
 
 def _stop_parent_filter(day_id: int | None, city_id: int | None):
@@ -255,6 +270,9 @@ class Mutation:
         await session.execute(delete(StopModel).where(StopModel.city_id.in_(city_ids)))
         await session.execute(delete(DayModel).where(DayModel.trip_id == trip.id))
         await session.execute(delete(CityModel).where(CityModel.trip_id == trip.id))
+        # Every stop that could have referenced a category is already gone
+        # (both deletes above), so this is safe regardless of order.
+        await session.execute(delete(StopCategoryModel).where(StopCategoryModel.trip_id == trip.id))
         await session.execute(delete(TripShareLinkModel).where(TripShareLinkModel.trip_id == trip.id))
         await session.execute(delete(TripCollaboratorModel).where(TripCollaboratorModel.trip_id == trip.id))
         await session.delete(trip)
@@ -415,6 +433,89 @@ class Mutation:
         await session.commit()
         return Day.from_model(day)
 
+    # --- Stop categories -------------------------------------------------
+    # A trip-scoped, user-defined tag for classifying stops (see
+    # models/stop_category.py) - completely independent of whether a stop
+    # is parented to a Day or a City (`Stop.category_id` is just an extra
+    # nullable tag, unrelated to that "exactly one parent" rule).
+
+    @strawberry.mutation
+    async def create_stop_category(
+        self, info: strawberry.Info, trip_id: strawberry.ID, name: str, emoji: str
+    ) -> StopCategory:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        name = name.strip()
+        if not name:
+            raise Exception("Category name is required")
+        emoji = emoji.strip()
+        if not emoji:
+            raise Exception("Category emoji is required")
+
+        session = info.context.session
+        trip = await require_trip_access(session, int(trip_id), user, editor=True)
+
+        category = StopCategoryModel(trip_id=trip.id, name=name, emoji=emoji)
+        session.add(category)
+        await session.commit()
+        return StopCategory.from_model(category)
+
+    @strawberry.mutation
+    async def update_stop_category(
+        self, info: strawberry.Info, id: strawberry.ID, name: str, emoji: str
+    ) -> StopCategory:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        name = name.strip()
+        if not name:
+            raise Exception("Category name is required")
+        emoji = emoji.strip()
+        if not emoji:
+            raise Exception("Category emoji is required")
+
+        session = info.context.session
+        category = await session.get(StopCategoryModel, int(id))
+        if category is None:
+            raise Exception("Category not found")
+
+        await require_trip_access(
+            session, category.trip_id, user, editor=True, not_found_message="Category not found"
+        )
+
+        category.name = name
+        category.emoji = emoji
+        await session.commit()
+        return StopCategory.from_model(category)
+
+    @strawberry.mutation
+    async def delete_stop_category(self, info: strawberry.Info, id: strawberry.ID) -> bool:
+        user = info.context.current_user
+        if user is None:
+            raise Exception("Not authenticated")
+
+        session = info.context.session
+        category = await session.get(StopCategoryModel, int(id))
+        if category is None:
+            return False
+
+        await require_trip_access(
+            session, category.trip_id, user, editor=True, not_found_message="Category not found"
+        )
+
+        stop_count = await session.scalar(
+            select(func.count()).select_from(StopModel).where(StopModel.category_id == category.id)
+        )
+        if stop_count > 0:
+            raise Exception("This category is still assigned to stops - remove it from them first")
+
+        await session.delete(category)
+        await session.commit()
+        return True
+
     @strawberry.mutation
     async def add_stop(
         self,
@@ -423,6 +524,7 @@ class Mutation:
         location: LocationInput,
         day_id: strawberry.ID | None = None,
         city_id: strawberry.ID | None = None,
+        category_id: strawberry.ID | None = None,
         notes: str | None = None,
         start_time: time | None = None,
         is_important: bool = False,
@@ -449,6 +551,9 @@ class Mutation:
             editor=True,
             not_found_message="Day not found" if day is not None else "City not found",
         )
+        resolved_category_id = await _resolve_stop_category(
+            session, int(category_id) if category_id is not None else None, trip_id
+        )
 
         parent_filter = _stop_parent_filter(
             day.id if day is not None else None, city.id if city is not None else None
@@ -459,6 +564,7 @@ class Mutation:
         stop = StopModel(
             day_id=day.id if day is not None else None,
             city_id=city.id if city is not None else None,
+            category_id=resolved_category_id,
             name=name,
             lat=location.lat,
             lng=location.lng,
@@ -601,6 +707,7 @@ class Mutation:
         id: strawberry.ID,
         name: str,
         location: LocationInput,
+        category_id: strawberry.ID | None = None,
         notes: str | None = None,
         start_time: time | None = None,
         is_important: bool = False,
@@ -623,6 +730,10 @@ class Mutation:
         if stop.city_id is not None and start_time is not None:
             raise Exception("A city recommendation can't have a start time")
 
+        resolved_category_id = await _resolve_stop_category(
+            session, int(category_id) if category_id is not None else None, trip_id
+        )
+
         stop.name = name
         stop.lat = location.lat
         stop.lng = location.lng
@@ -630,6 +741,7 @@ class Mutation:
         # patch - the edit form always sends its current field values
         # (including `None`/`False` for a field the user cleared), so
         # there's no "unset" case to distinguish from "leave unchanged" here.
+        stop.category_id = resolved_category_id
         stop.notes = notes
         stop.start_time = start_time
         stop.is_important = is_important
@@ -667,6 +779,7 @@ class Mutation:
         duplicate = StopModel(
             day_id=stop.day_id,
             city_id=stop.city_id,
+            category_id=stop.category_id,
             name=stop.name,
             lat=stop.lat,
             lng=stop.lng,

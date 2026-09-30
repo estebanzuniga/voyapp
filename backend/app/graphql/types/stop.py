@@ -27,6 +27,7 @@ class Stop:
     order_index: int
     is_important: bool
     is_optional: bool
+    category_id: strawberry.ID | None
 
     @classmethod
     def from_model(cls, stop: StopModel) -> "Stop":
@@ -39,4 +40,5 @@ class Stop:
             order_index=stop.order_index,
             is_important=stop.is_important,
             is_optional=stop.is_optional,
+            category_id=strawberry.ID(str(stop.category_id)) if stop.category_id is not None else None,
         )

@@ -7,9 +7,11 @@ from app.graphql.types.city import City
 from app.graphql.types.day import Day
 from app.graphql.types.permission import PermissionLevel
 from app.graphql.types.share import Collaborator, ShareLink
+from app.graphql.types.stop_category import StopCategory
 from app.models.city import City as CityModel
 from app.models.day import Day as DayModel
 from app.models.enums import Permission
+from app.models.stop_category import StopCategory as StopCategoryModel
 from app.models.trip import Trip as TripModel
 from app.models.trip_collaborator import TripCollaborator as TripCollaboratorModel
 from app.models.trip_share_link import TripShareLink as TripShareLinkModel
@@ -54,6 +56,16 @@ class Trip:
             select(CityModel).where(CityModel.trip_id == int(self.id)).order_by(CityModel.id)
         )
         return [City.from_model(city) for city in result.scalars().all()]
+
+    @strawberry.field
+    async def stop_categories(self, info: strawberry.Info) -> list[StopCategory]:
+        session = info.context.session
+        result = await session.execute(
+            select(StopCategoryModel)
+            .where(StopCategoryModel.trip_id == int(self.id))
+            .order_by(StopCategoryModel.id)
+        )
+        return [StopCategory.from_model(category) for category in result.scalars().all()]
 
     @strawberry.field
     def is_owner(self, info: strawberry.Info) -> bool:

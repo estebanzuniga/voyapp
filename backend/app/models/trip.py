@@ -9,6 +9,7 @@ from app.database import Base
 if TYPE_CHECKING:
     from app.models.city import City
     from app.models.day import Day
+    from app.models.stop_category import StopCategory
     from app.models.trip_collaborator import TripCollaborator
     from app.models.trip_share_link import TripShareLink
     from app.models.user import User
@@ -30,3 +31,6 @@ class Trip(Base):
     share_links: Mapped[list["TripShareLink"]] = relationship(back_populates="trip")
     collaborators: Mapped[list["TripCollaborator"]] = relationship(back_populates="trip")
     cities: Mapped[list["City"]] = relationship(back_populates="trip", order_by="City.id")
+    stop_categories: Mapped[list["StopCategory"]] = relationship(
+        back_populates="trip", order_by="StopCategory.id"
+    )

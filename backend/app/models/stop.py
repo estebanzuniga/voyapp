@@ -9,6 +9,7 @@ from app.database import Base
 if TYPE_CHECKING:
     from app.models.day import Day
     from app.models.city import City
+    from app.models.stop_category import StopCategory
 
 
 class Stop(Base):
@@ -22,6 +23,7 @@ class Stop(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     day_id: Mapped[int | None] = mapped_column(ForeignKey("days.id"), default=None)
     city_id: Mapped[int | None] = mapped_column(ForeignKey("cities.id"), default=None)
+    category_id: Mapped[int | None] = mapped_column(ForeignKey("stop_categories.id"), default=None)
     name: Mapped[str]
     lat: Mapped[float]
     lng: Mapped[float]
@@ -33,3 +35,4 @@ class Stop(Base):
 
     day: Mapped["Day | None"] = relationship(back_populates="stops")
     city: Mapped["City | None"] = relationship(back_populates="stops")
+    category: Mapped["StopCategory | None"] = relationship(back_populates="stops")
