@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { MapContainer, Marker, Polyline, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { useLocateMe } from '../hooks/useLocateMe'
 import { useTranslation } from '../hooks/useTranslation'
 import { formatTime } from '../lib/dates'
 import { GOOGLE_MAPS_DIRECTIONS_URL, haversineDistanceMeters } from '../lib/geo'
@@ -9,7 +10,6 @@ import { ClockIcon, LocateIcon, NavigationIcon } from './Icons'
 
 const SINGLE_STOP_ZOOM = 14
 const ROUTE_COLOR = '#e0602f'
-const LOCATE_COLOR = '#2563eb'
 
 function createNumberedIcon(number) {
   return L.divIcon({
@@ -53,10 +53,7 @@ function LocateControl({ stops }) {
   const map = useMap()
   const { t } = useTranslation()
   const containerRef = useRef(null)
-  const positionLayerRef = useRef(null)
-  const [locating, setLocating] = useState(false)
-  const [position, setPosition] = useState(null)
-  const [error, setError] = useState(null) // 'denied' | 'unavailable'
+  const { position, locating, error, handleLocate } = useLocateMe(map, t('dayMap.myLocation'))
 
   // These buttons sit directly inside the Leaflet container, so without this
   // a tap/scroll on them would also pan or zoom the map underneath.
@@ -65,54 +62,6 @@ function LocateControl({ stops }) {
     L.DomEvent.disableClickPropagation(containerRef.current)
     L.DomEvent.disableScrollPropagation(containerRef.current)
   }, [])
-
-  useEffect(() => {
-    function handleFound(event) {
-      setLocating(false)
-      setError(null)
-      setPosition({ lat: event.latlng.lat, lng: event.latlng.lng, accuracy: event.accuracy })
-    }
-    function handleError(event) {
-      setLocating(false)
-      // Leaflet forwards the browser's GeolocationPositionError.code as-is:
-      // 1 = PERMISSION_DENIED, 2 = POSITION_UNAVAILABLE, 3 = TIMEOUT - the
-      // latter two both read as a generic "couldn't get your location".
-      setError(event.code === 1 ? 'denied' : 'unavailable')
-    }
-    map.on('locationfound', handleFound)
-    map.on('locationerror', handleError)
-    return () => {
-      map.off('locationfound', handleFound)
-      map.off('locationerror', handleError)
-    }
-  }, [map])
-
-  // Renders the blue dot + accuracy circle as a plain Leaflet layer (not
-  // JSX) since it needs to be added/replaced imperatively alongside
-  // map.locate()'s own events, same reasoning as createNumberedIcon below.
-  useEffect(() => {
-    if (!position) return
-    if (positionLayerRef.current) map.removeLayer(positionLayerRef.current)
-    const layer = L.layerGroup([
-      L.circle([position.lat, position.lng], {
-        radius: position.accuracy,
-        color: LOCATE_COLOR,
-        weight: 1,
-        fillColor: LOCATE_COLOR,
-        fillOpacity: 0.1,
-      }),
-      L.circleMarker([position.lat, position.lng], {
-        radius: 7,
-        color: '#fff',
-        weight: 2,
-        fillColor: LOCATE_COLOR,
-        fillOpacity: 1,
-      }).bindTooltip(t('dayMap.myLocation')),
-    ])
-    layer.addTo(map)
-    positionLayerRef.current = layer
-    return () => map.removeLayer(layer)
-  }, [position, map, t])
 
   // No visited-tracking yet (that's a separate, not-yet-built phase), so
   // "next stop" is approximated as the nearest stop to the live position -
@@ -126,14 +75,6 @@ function LocateControl({ stops }) {
       return distance < closestDistance ? stop : closest
     })
   }, [position, stops])
-
-  function handleLocate() {
-    setLocating(true)
-    setError(null)
-    // Permission is only ever requested here, lazily, on this explicit tap -
-    // never proactively when the map opens.
-    map.locate({ setView: true, enableHighAccuracy: true, watch: false })
-  }
 
   return (
     <div ref={containerRef} className="absolute right-2 top-2 z-1000 flex flex-col items-end gap-2">

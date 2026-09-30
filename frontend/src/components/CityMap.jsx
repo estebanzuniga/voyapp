@@ -1,7 +1,10 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { useLocateMe } from '../hooks/useLocateMe'
+import { useTranslation } from '../hooks/useTranslation'
+import { LocateIcon } from './Icons'
 
 const SINGLE_STOP_ZOOM = 14
 
@@ -37,6 +40,38 @@ function InvalidateSizeOnResize() {
   return null
 }
 
+function LocateControl() {
+  const map = useMap()
+  const { t } = useTranslation()
+  const containerRef = useRef(null)
+  const { locating, error, handleLocate } = useLocateMe(map, t('dayMap.myLocation'))
+
+  useEffect(() => {
+    if (!containerRef.current) return
+    L.DomEvent.disableClickPropagation(containerRef.current)
+    L.DomEvent.disableScrollPropagation(containerRef.current)
+  }, [])
+
+  return (
+    <div ref={containerRef} className="absolute right-2 top-2 z-1000 flex flex-col items-end gap-2">
+      <button
+        type="button"
+        onClick={handleLocate}
+        disabled={locating}
+        aria-label={t('dayMap.locateMeAria')}
+        className="cursor-pointer rounded-full border border-border bg-surface p-2 text-ink shadow-md hover:bg-surface-2 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-accent"
+      >
+        <LocateIcon size={18} />
+      </button>
+      {error ? (
+        <p className="max-w-40 rounded-lg border border-border bg-surface px-2 py-1 text-right text-xs text-muted shadow-md">
+          {t(`dayMap.locateError.${error}`)}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
 export function CityMap({ stops }) {
   const positions = useMemo(() => stops.map((stop) => [stop.location.lat, stop.location.lng]), [stops])
 
@@ -56,6 +91,7 @@ export function CityMap({ stops }) {
       />
       <FitToStops positions={positions} />
       <InvalidateSizeOnResize />
+      <LocateControl />
 
       {stops.map((stop) => (
         <Marker key={stop.id} position={[stop.location.lat, stop.location.lng]} icon={createDotIcon()}>
