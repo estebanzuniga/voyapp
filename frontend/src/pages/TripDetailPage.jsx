@@ -14,6 +14,7 @@ import { TRIP_QUERY } from '../graphql/queries'
 import { ADD_DAY_MUTATION, MOVE_STOP_MUTATION, REORDER_STOPS_MUTATION } from '../graphql/mutations'
 import { useTranslation } from '../hooks/useTranslation'
 import { formatDate, formatDateRange, enumerateDates, isToday } from '../lib/dates'
+import { CityStopsPanel } from '../components/CityStopsPanel'
 import { DayCard, StopDragPreview } from '../components/DayCard'
 import { ManageCitiesModal } from '../components/ManageCitiesModal'
 import { Skeleton } from '../components/Skeleton'
@@ -194,6 +195,7 @@ export function TripDetailPage() {
   const [dragError, setDragError] = useState(null)
   const [activeStop, setActiveStop] = useState(null)
   const [isManagingCities, setIsManagingCities] = useState(false)
+  const [activeTab, setActiveTab] = useState('itinerary')
   const [collapsedGroupIds, setCollapsedGroupIds] = useState(() => loadCollapsedGroupIds(id))
   // Set at drag start, read (and cleared) at drag end - not state, since
   // updating them shouldn't itself trigger a re-render.
@@ -504,12 +506,37 @@ export function TripDetailPage() {
               />
             ) : null}
 
+            <div className="flex w-fit gap-1 rounded-lg border border-border bg-surface-2 p-1">
+              {[
+                { id: 'itinerary', label: t('tripDetail.tabItinerary') },
+                { id: 'cityStops', label: t('tripDetail.tabCityStops') },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  aria-pressed={activeTab === tab.id}
+                  className={`cursor-pointer rounded-lg px-3 py-1.5 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                    activeTab === tab.id ? 'bg-surface text-ink shadow-sm' : 'text-muted hover:text-ink'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {activeTab === 'cityStops' ? (
+              <CityStopsPanel trip={trip} tripId={id} canEdit={canEdit} />
+            ) : null}
+
             {dragError ? <p className="text-sm text-red-600">{dragError}</p> : null}
             {addDayError ? <p className="text-sm text-red-600">{addDayError}</p> : null}
 
-            {trip.days.length === 0 ? <p className="text-muted">{t('tripDetail.noDaysYet')}</p> : null}
+            {activeTab === 'itinerary' && trip.days.length === 0 ? (
+              <p className="text-muted">{t('tripDetail.noDaysYet')}</p>
+            ) : null}
 
-            {groupedTimeline.length > 0 ? (
+            {activeTab === 'itinerary' && groupedTimeline.length > 0 ? (
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCorners}

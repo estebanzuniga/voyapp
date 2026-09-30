@@ -7,8 +7,9 @@ import { PlusIcon, XIcon } from './Icons'
 
 const MapPicker = lazy(() => import('./MapPicker').then((module) => ({ default: module.MapPicker })))
 
-export function AddStopForm({ dayId, tripId, onDone }) {
+export function AddStopForm({ dayId = null, cityId = null, tripId, onDone }) {
   const { t } = useTranslation()
+  const isCityStop = cityId != null
   const [name, setName] = useState('')
   const [lat, setLat] = useState(null)
   const [lng, setLng] = useState(null)
@@ -27,10 +28,11 @@ export function AddStopForm({ dayId, tripId, onDone }) {
     await runAddStop({
       variables: {
         dayId,
+        cityId,
         name,
         location: { lat, lng },
         notes: notes.trim() || null,
-        startTime: startTime || null,
+        startTime: isCityStop ? null : startTime || null,
         isImportant,
         isOptional,
       },
@@ -58,15 +60,17 @@ export function AddStopForm({ dayId, tripId, onDone }) {
         </Suspense>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-semibold text-ink">{t('stopForm.startTime.label')}</label>
-        <input
-          type="time"
-          value={startTime}
-          onChange={(event) => setStartTime(event.target.value)}
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-ink focus:outline-2 focus:outline-accent"
-        />
-      </div>
+      {!isCityStop ? (
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-ink">{t('stopForm.startTime.label')}</label>
+          <input
+            type="time"
+            value={startTime}
+            onChange={(event) => setStartTime(event.target.value)}
+            className="rounded-lg border border-border bg-surface px-3 py-2 text-ink focus:outline-2 focus:outline-accent"
+          />
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-1">
         <label className="text-xs font-semibold text-ink">{t('stopForm.notes.label')}</label>

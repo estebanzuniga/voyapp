@@ -7,7 +7,7 @@ import { CheckIcon, XIcon } from './Icons'
 
 const MapPicker = lazy(() => import('./MapPicker').then((module) => ({ default: module.MapPicker })))
 
-export function EditStopForm({ stop, tripId, onDone, onCancel }) {
+export function EditStopForm({ stop, tripId, isCityStop = false, onDone, onCancel }) {
   const { t } = useTranslation()
   const [name, setName] = useState(stop.name)
   const [lat, setLat] = useState(stop.location.lat)
@@ -33,7 +33,7 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
         name,
         location: { lat, lng },
         notes: notes.trim() || null,
-        startTime: startTime || null,
+        startTime: isCityStop ? null : startTime || null,
         isImportant,
         isOptional,
       },
@@ -61,15 +61,17 @@ export function EditStopForm({ stop, tripId, onDone, onCancel }) {
         </Suspense>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-semibold text-ink">{t('stopForm.startTime.label')}</label>
-        <input
-          type="time"
-          value={startTime}
-          onChange={(event) => setStartTime(event.target.value)}
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-ink focus:outline-2 focus:outline-accent"
-        />
-      </div>
+      {!isCityStop ? (
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-ink">{t('stopForm.startTime.label')}</label>
+          <input
+            type="time"
+            value={startTime}
+            onChange={(event) => setStartTime(event.target.value)}
+            className="rounded-lg border border-border bg-surface px-3 py-2 text-ink focus:outline-2 focus:outline-accent"
+          />
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-1">
         <label className="text-xs font-semibold text-ink">{t('stopForm.notes.label')}</label>

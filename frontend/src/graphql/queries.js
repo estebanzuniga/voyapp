@@ -51,6 +51,19 @@ export const TRIP_QUERY = gql`
       cities {
         id
         name
+        stops {
+          id
+          name
+          notes
+          startTime
+          orderIndex
+          isImportant
+          isOptional
+          location {
+            lat
+            lng
+          }
+        }
       }
       days {
         id

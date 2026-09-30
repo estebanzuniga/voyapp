@@ -145,6 +145,8 @@ export const translations = {
     'tripDetail.jumpToToday': 'Jump to today',
     'tripDetail.manageCities': 'Manage cities',
     'tripDetail.cityGroupLabel': '{city} · {range}',
+    'tripDetail.tabItinerary': 'Itinerary',
+    'tripDetail.tabCityStops': 'Stops per city',
 
     // --- cities modal ---------------------------------------------------
     'citiesModal.title': 'Cities',
@@ -161,6 +163,12 @@ export const translations = {
     // --- day card: city assignment ---------------------------------------
     'dayCard.assignCityAria': 'Assign a city to this day',
     'dayCard.noCity': 'No city',
+    // --- stops per city tab -----------------------------------------------
+    'cityStops.noCitiesYet': 'No cities yet — add one from "Manage cities" to start a recommendations list.',
+    'cityStops.noRecommendationsYet': 'No recommendations yet.',
+    'cityStops.addRecommendation': 'Add recommendation',
+    'cityStops.scheduleForDay': 'Schedule for a day…',
+    'cityStops.scheduleAria': 'Schedule {name} for a day',
 
     // --- edit trip ------------------------------------------------------
     'editTrip.title': 'Edit trip',
@@ -391,6 +399,8 @@ export const translations = {
     'tripDetail.jumpToToday': 'Ir a hoy',
     'tripDetail.manageCities': 'Administrar ciudades',
     'tripDetail.cityGroupLabel': '{city} · {range}',
+    'tripDetail.tabItinerary': 'Itinerario',
+    'tripDetail.tabCityStops': 'Paradas por ciudad',
 
     // --- cities modal ---------------------------------------------------
     'citiesModal.title': 'Ciudades',
@@ -407,6 +417,12 @@ export const translations = {
     // --- day card: city assignment ---------------------------------------
     'dayCard.assignCityAria': 'Asignar una ciudad a este día',
     'dayCard.noCity': 'Sin ciudad',
+    // --- stops per city tab -----------------------------------------------
+    'cityStops.noCitiesYet': 'Aún no hay ciudades — agrega una desde "Administrar ciudades" para empezar una lista de recomendaciones.',
+    'cityStops.noRecommendationsYet': 'Aún no hay recomendaciones.',
+    'cityStops.addRecommendation': 'Agregar recomendación',
+    'cityStops.scheduleForDay': 'Agendar para un día…',
+    'cityStops.scheduleAria': 'Agendar {name} para un día',
 
     // --- edit trip ------------------------------------------------------
     'editTrip.title': 'Editar viaje',

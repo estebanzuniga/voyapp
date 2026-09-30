@@ -3,7 +3,7 @@ import { AddStopForm } from './AddStopForm'
 import { Modal } from './Modal'
 import { XIcon } from './Icons'
 
-export function AddStopModal({ dayId, tripId, onClose }) {
+export function AddStopModal({ dayId = null, cityId = null, tripId, onClose }) {
   const { t } = useTranslation()
 
   return (
@@ -19,7 +19,7 @@ export function AddStopModal({ dayId, tripId, onClose }) {
 
       <h2 className="font-display mb-4 pr-6 text-lg text-ink">{t('stopForm.addStop')}</h2>
 
-      <AddStopForm dayId={dayId} tripId={tripId} onDone={onClose} />
+      <AddStopForm dayId={dayId} cityId={cityId} tripId={tripId} onDone={onClose} />
     </Modal>
   )
 }

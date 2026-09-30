@@ -166,7 +166,8 @@ export const SET_DAY_CITY_MUTATION = gql`
 
 export const ADD_STOP_MUTATION = gql`
   mutation AddStop(
-    $dayId: ID!
+    $dayId: ID
+    $cityId: ID
     $name: String!
     $location: LocationInput!
     $notes: String
@@ -176,6 +177,7 @@ export const ADD_STOP_MUTATION = gql`
   ) {
     addStop(
       dayId: $dayId
+      cityId: $cityId
       name: $name
       location: $location
       notes: $notes
@@ -236,16 +238,16 @@ export const DELETE_STOP_MUTATION = gql`
 `
 
 export const REORDER_STOPS_MUTATION = gql`
-  mutation ReorderStops($dayId: ID!, $stopIds: [ID!]!) {
-    reorderStops(dayId: $dayId, stopIds: $stopIds) {
+  mutation ReorderStops($dayId: ID, $cityId: ID, $stopIds: [ID!]!) {
+    reorderStops(dayId: $dayId, cityId: $cityId, stopIds: $stopIds) {
       id
     }
   }
 `
 
 export const MOVE_STOP_MUTATION = gql`
-  mutation MoveStop($stopId: ID!, $toDayId: ID!, $toIndex: Int!) {
-    moveStop(stopId: $stopId, toDayId: $toDayId, toIndex: $toIndex) {
+  mutation MoveStop($stopId: ID!, $toIndex: Int!, $toDayId: ID, $toCityId: ID) {
+    moveStop(stopId: $stopId, toIndex: $toIndex, toDayId: $toDayId, toCityId: $toCityId) {
       id
     }
   }

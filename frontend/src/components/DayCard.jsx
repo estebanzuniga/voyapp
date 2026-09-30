@@ -32,7 +32,7 @@ import {
   TrashIcon,
 } from './Icons'
 
-function StopName({ stop, t }) {
+export function StopName({ stop, t }) {
   return (
     <span className="inline-flex items-center gap-1 font-semibold text-ink">
       {stop.isImportant ? <StarIcon size={14} className="shrink-0 text-accent" /> : null}
