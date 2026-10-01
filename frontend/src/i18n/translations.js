@@ -224,6 +224,9 @@ export const translations = {
     'dayCard.dragHere': 'Drag a stop here',
     'dayCard.noStopsYet': 'No stops yet',
     'dayCard.todayBadge': 'Today',
+    'dayCard.collapseAria': 'Collapse day',
+    'dayCard.expandAria': 'Expand day',
+    'dayCard.stopsCount': '{count} stops',
 
     // --- stop forms (add/edit) -----------------------------------------
     'stopForm.name.label': 'Stop name',
@@ -498,6 +501,9 @@ export const translations = {
     'dayCard.dragHere': 'Arrastra una parada aquí',
     'dayCard.noStopsYet': 'Aún no hay paradas',
     'dayCard.todayBadge': 'Hoy',
+    'dayCard.collapseAria': 'Colapsar día',
+    'dayCard.expandAria': 'Expandir día',
+    'dayCard.stopsCount': '{count} paradas',
 
     // --- stop forms (add/edit) -----------------------------------------
     'stopForm.name.label': 'Nombre de la parada',

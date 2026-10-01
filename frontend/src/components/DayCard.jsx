@@ -20,6 +20,7 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { DayMapModal } from './DayMapModal'
 import { EditStopModal } from './EditStopModal'
 import {
+  ChevronDownIcon,
   ClockIcon,
   CopyIcon,
   GripVerticalIcon,
@@ -247,7 +248,17 @@ export function StopDragPreview({ stop }) {
   )
 }
 
-export function DayCard({ day, stops, tripId, cities, stopCategories, canEdit, isToday }) {
+export function DayCard({
+  day,
+  stops,
+  tripId,
+  cities,
+  stopCategories,
+  canEdit,
+  isToday,
+  isCollapsed,
+  onToggleCollapse,
+}) {
   const { t, locale } = useTranslation()
   const { user } = useAuth()
   const liveCurrentPosition = useCurrentLocation()
@@ -300,10 +311,27 @@ export function DayCard({ day, stops, tripId, cities, stopCategories, canEdit, i
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            aria-expanded={!isCollapsed}
+            aria-label={isCollapsed ? t('dayCard.expandAria') : t('dayCard.collapseAria')}
+            className="cursor-pointer rounded-lg p-1 text-muted hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            <ChevronDownIcon
+              size={16}
+              className={isCollapsed ? '-rotate-90 transition-transform' : 'transition-transform'}
+            />
+          </button>
           <h3 className="font-display text-lg text-ink">{formatFullDate(day.date, locale)}</h3>
           {isToday ? (
             <span className="flex w-fit items-center gap-1 rounded-full bg-accent/10 px-2.5 py-1 text-xs font-semibold text-accent">
               {t('dayCard.todayBadge')}
+            </span>
+          ) : null}
+          {isCollapsed ? (
+            <span className="flex w-fit items-center gap-1 rounded-full bg-surface-2 px-2.5 py-1 text-xs font-semibold text-muted">
+              {t('dayCard.stopsCount', { count: stops.length })}
             </span>
           ) : null}
           {canEdit && cities?.length > 0 ? (
@@ -354,8 +382,6 @@ export function DayCard({ day, stops, tripId, cities, stopCategories, canEdit, i
         </div>
       </div>
 
-      {cityUpdateError ? <p className="text-sm text-red-600">{cityUpdateError}</p> : null}
-
       {isConfirmingDeleteDay ? (
         <ConfirmDialog
           title={t('dayCard.deleteDayTitle')}
@@ -375,38 +401,44 @@ export function DayCard({ day, stops, tripId, cities, stopCategories, canEdit, i
         />
       ) : null}
 
-      <SortableContext items={stops.map((stop) => stop.id)} strategy={verticalListSortingStrategy}>
-        <ul ref={setNodeRef} className="flex min-h-14 flex-col gap-2">
-          {stops.length === 0 ? (
-            <li className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-muted">
-              {canEdit ? t('dayCard.dragHere') : t('dayCard.noStopsYet')}
-            </li>
-          ) : (
-            stops.map((stop, index) => (
-              <SortableStopRow
-                key={stop.id}
-                stop={stop}
-                prevStop={index > 0 ? stops[index - 1] : null}
-                tripId={tripId}
-                stopCategories={stopCategories}
-                canEdit={canEdit}
-                currentPosition={currentPosition}
-              />
-            ))
-          )}
-        </ul>
-      </SortableContext>
+      {isCollapsed ? null : (
+        <>
+          {cityUpdateError ? <p className="text-sm text-red-600">{cityUpdateError}</p> : null}
 
-      {canEdit ? (
-        <button
-          type="button"
-          onClick={() => setIsAddingStop(true)}
-          className="flex cursor-pointer items-center gap-1.5 self-start rounded-lg text-sm font-semibold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
-        >
-          <PlusIcon size={16} />
-          {t('stopForm.addStop')}
-        </button>
-      ) : null}
+          <SortableContext items={stops.map((stop) => stop.id)} strategy={verticalListSortingStrategy}>
+            <ul ref={setNodeRef} className="flex min-h-14 flex-col gap-2">
+              {stops.length === 0 ? (
+                <li className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-muted">
+                  {canEdit ? t('dayCard.dragHere') : t('dayCard.noStopsYet')}
+                </li>
+              ) : (
+                stops.map((stop, index) => (
+                  <SortableStopRow
+                    key={stop.id}
+                    stop={stop}
+                    prevStop={index > 0 ? stops[index - 1] : null}
+                    tripId={tripId}
+                    stopCategories={stopCategories}
+                    canEdit={canEdit}
+                    currentPosition={currentPosition}
+                  />
+                ))
+              )}
+            </ul>
+          </SortableContext>
+
+          {canEdit ? (
+            <button
+              type="button"
+              onClick={() => setIsAddingStop(true)}
+              className="flex cursor-pointer items-center gap-1.5 self-start rounded-lg text-sm font-semibold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              <PlusIcon size={16} />
+              {t('stopForm.addStop')}
+            </button>
+          ) : null}
+        </>
+      )}
 
       {isAddingStop ? (
         <AddStopModal

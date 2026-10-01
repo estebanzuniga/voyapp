@@ -125,6 +125,34 @@ function saveCollapsedGroupIds(tripId, ids) {
   }
 }
 
+// Each individual day's own collapse state, independent of (and nested
+// inside) a city group's - a day can be collapsed whether it's a standalone
+// entry in the timeline or one of several days inside an expanded city
+// group. Same per-viewer-preference storage convention as the group state
+// above, just a separate key/Set keyed by day id instead of group anchor id.
+function collapsedDaysStorageKey(tripId) {
+  return `voyapp_collapsed_days:${tripId}`
+}
+
+function loadCollapsedDayIds(tripId) {
+  try {
+    const raw = localStorage.getItem(collapsedDaysStorageKey(tripId))
+    return raw ? new Set(JSON.parse(raw)) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
+function saveCollapsedDayIds(tripId, ids) {
+  try {
+    localStorage.setItem(collapsedDaysStorageKey(tripId), JSON.stringify([...ids]))
+  } catch {
+    // Safari private mode / storage full / disabled - collapsing still
+    // works for the rest of this session via React state, it just won't
+    // be remembered next visit.
+  }
+}
+
 // A city-group's collapse state is keyed by its first day's id rather than
 // its cityId, so two separate visits to the same city later in the trip
 // (not adjacent - see the grouping pass below) collapse independently. If
@@ -141,6 +169,8 @@ function CityGroupSection({
   stopsByDay,
   isExpanded,
   onToggle,
+  collapsedDayIds,
+  onToggleDay,
   locale,
 }) {
   const { t } = useTranslation()
@@ -178,6 +208,8 @@ function CityGroupSection({
               stopCategories={stopCategories}
               canEdit={canEdit}
               isToday={isToday(day.date)}
+              isCollapsed={collapsedDayIds.has(day.id)}
+              onToggleCollapse={() => onToggleDay(day.id)}
             />
           ))}
         </div>
@@ -200,6 +232,7 @@ export function TripDetailPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('itinerary')
   const [collapsedGroupIds, setCollapsedGroupIds] = useState(() => loadCollapsedGroupIds(id))
+  const [collapsedDayIds, setCollapsedDayIds] = useState(() => loadCollapsedDayIds(id))
   // Set at drag start, read (and cleared) at drag end - not state, since
   // updating them shouldn't itself trigger a re-render.
   const dragOriginDayIdRef = useRef(null)
@@ -225,13 +258,27 @@ export function TripDetailPage() {
     })
   }
 
+  function toggleDay(dayId) {
+    setCollapsedDayIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(dayId)) next.delete(dayId)
+      else next.add(dayId)
+      saveCollapsedDayIds(id, next)
+      return next
+    })
+  }
+
   function handleJumpToToday() {
     if (!todayDay) return
 
     const anchorId = findGroupAnchorId(groupedTimeline, todayDay.id)
-    if (anchorId && collapsedGroupIds.has(anchorId)) {
+    const needsGroupExpand = Boolean(anchorId) && collapsedGroupIds.has(anchorId)
+    const needsDayExpand = collapsedDayIds.has(todayDay.id)
+
+    if (needsGroupExpand || needsDayExpand) {
       pendingScrollDayIdRef.current = todayDay.id
-      toggleGroup(anchorId)
+      if (needsGroupExpand) toggleGroup(anchorId)
+      if (needsDayExpand) toggleDay(todayDay.id)
       return
     }
 
@@ -242,11 +289,11 @@ export function TripDetailPage() {
     if (!pendingScrollDayIdRef.current) return
     const dayId = pendingScrollDayIdRef.current
     pendingScrollDayIdRef.current = null
-    // One frame so the newly-expanded group's DayCard has actually painted.
+    // One frame so the newly-expanded group/day's DayCard has actually painted.
     requestAnimationFrame(() => {
       document.getElementById(`day-${dayId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     })
-  }, [collapsedGroupIds])
+  }, [collapsedGroupIds, collapsedDayIds])
 
   useEffect(() => {
     if (trip) {
@@ -561,6 +608,8 @@ export function TripDetailPage() {
                           stopCategories={trip.stopCategories}
                           canEdit={canEdit}
                           isToday={isToday(item.day.date)}
+                          isCollapsed={collapsedDayIds.has(item.day.id)}
+                          onToggleCollapse={() => toggleDay(item.day.id)}
                         />
                       )
                     }
@@ -582,6 +631,8 @@ export function TripDetailPage() {
                           locale={locale}
                           isExpanded={!collapsedGroupIds.has(anchorId)}
                           onToggle={() => toggleGroup(anchorId)}
+                          collapsedDayIds={collapsedDayIds}
+                          onToggleDay={toggleDay}
                         />
                       )
                     }
