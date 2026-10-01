@@ -23,6 +23,7 @@ import { StopName } from './DayCard'
 import {
   BuildingIcon,
   CalendarIcon,
+  ChevronDownIcon,
   CopyIcon,
   GripVerticalIcon,
   MapPinIcon,
@@ -32,6 +33,32 @@ import {
   TrashIcon,
   XIcon,
 } from './Icons'
+
+function collapsedCityStorageKey(tripId, cityId) {
+  return `voyapp_collapsed_city_stops:${tripId}:${cityId}`
+}
+
+function loadIsCityCollapsed(tripId, cityId) {
+  try {
+    return localStorage.getItem(collapsedCityStorageKey(tripId, cityId)) === 'true'
+  } catch {
+    return false
+  }
+}
+
+function saveIsCityCollapsed(tripId, cityId, isCollapsed) {
+  try {
+    if (isCollapsed) {
+      localStorage.setItem(collapsedCityStorageKey(tripId, cityId), 'true')
+    } else {
+      localStorage.removeItem(collapsedCityStorageKey(tripId, cityId))
+    }
+  } catch {
+    // Safari private mode / storage full / disabled - collapsing still
+    // works for the rest of this session via React state, it just won't
+    // be remembered next visit.
+  }
+}
 
 function categoryFilterStorageKey(tripId, cityId) {
   return `voyapp_city_stop_filter:${tripId}:${cityId}`
@@ -316,6 +343,7 @@ function CityStopsCard({ city, days, stopCategories, tripId, canEdit }) {
   const [selectedCategoryKey, setSelectedCategoryKey] = useState(() =>
     loadSelectedCategoryKey(tripId, city.id),
   )
+  const [isCollapsed, setIsCollapsed] = useState(() => loadIsCityCollapsed(tripId, city.id))
   // A recommendation only makes sense to schedule onto a day already
   // grouped under this same city - scheduling it onto some other city's day
   // would silently detach it from the place it's actually a recommendation for.
@@ -340,6 +368,14 @@ function CityStopsCard({ city, days, stopCategories, tripId, canEdit }) {
   function handleSelectCategory(key) {
     setSelectedCategoryKey(key)
     saveSelectedCategoryKey(tripId, city.id, key)
+  }
+
+  function toggleCollapsed() {
+    setIsCollapsed((prev) => {
+      const next = !prev
+      saveIsCityCollapsed(tripId, city.id, next)
+      return next
+    })
   }
 
   async function handleDragEnd(event) {
@@ -372,10 +408,29 @@ function CityStopsCard({ city, days, stopCategories, tripId, canEdit }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-display flex items-center gap-1.5 text-lg text-ink">
-          <BuildingIcon size={18} className="text-accent" />
-          {city.name}
-        </h3>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            aria-expanded={!isCollapsed}
+            aria-label={isCollapsed ? t('cityStops.expandAria') : t('cityStops.collapseAria')}
+            className="cursor-pointer rounded-lg p-1 text-muted hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            <ChevronDownIcon
+              size={16}
+              className={isCollapsed ? '-rotate-90 transition-transform' : 'transition-transform'}
+            />
+          </button>
+          <h3 className="font-display flex items-center gap-1.5 text-lg text-ink">
+            <BuildingIcon size={18} className="text-accent" />
+            {city.name}
+          </h3>
+          {isCollapsed ? (
+            <span className="flex w-fit items-center gap-1 rounded-full bg-surface-2 px-2.5 py-1 text-xs font-semibold text-muted">
+              {t('cityStops.stopsCount', { count: orderedStops.length })}
+            </span>
+          ) : null}
+        </div>
         {orderedStops.length > 0 ? (
           <button
             type="button"
@@ -399,53 +454,57 @@ function CityStopsCard({ city, days, stopCategories, tripId, canEdit }) {
         />
       ) : null}
 
-      {stopCategories.length > 0 ? (
-        <CategoryFilterChips
-          stopCategories={stopCategories}
-          selectedCategoryKey={selectedCategoryKey}
-          onSelect={handleSelectCategory}
-        />
-      ) : null}
+      {isCollapsed ? null : (
+        <>
+          {stopCategories.length > 0 ? (
+            <CategoryFilterChips
+              stopCategories={stopCategories}
+              selectedCategoryKey={selectedCategoryKey}
+              onSelect={handleSelectCategory}
+            />
+          ) : null}
 
-      {dragError ? <p className="text-sm text-red-600">{dragError}</p> : null}
+          {dragError ? <p className="text-sm text-red-600">{dragError}</p> : null}
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={visibleStops.map((stop) => stop.id)} strategy={verticalListSortingStrategy}>
-          <ul className="flex min-h-14 flex-col gap-2">
-            {orderedStops.length === 0 ? (
-              <li className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-muted">
-                {t('cityStops.noRecommendationsYet')}
-              </li>
-            ) : visibleStops.length === 0 ? (
-              <li className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-muted">
-                {t('cityStops.noMatchingStops')}
-              </li>
-            ) : (
-              visibleStops.map((stop) => (
-                <CityRecommendationRow
-                  key={stop.id}
-                  stop={stop}
-                  tripId={tripId}
-                  days={cityDays}
-                  stopCategories={stopCategories}
-                  canEdit={canEdit}
-                />
-              ))
-            )}
-          </ul>
-        </SortableContext>
-      </DndContext>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={visibleStops.map((stop) => stop.id)} strategy={verticalListSortingStrategy}>
+              <ul className="flex min-h-14 flex-col gap-2">
+                {orderedStops.length === 0 ? (
+                  <li className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-muted">
+                    {t('cityStops.noRecommendationsYet')}
+                  </li>
+                ) : visibleStops.length === 0 ? (
+                  <li className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-muted">
+                    {t('cityStops.noMatchingStops')}
+                  </li>
+                ) : (
+                  visibleStops.map((stop) => (
+                    <CityRecommendationRow
+                      key={stop.id}
+                      stop={stop}
+                      tripId={tripId}
+                      days={cityDays}
+                      stopCategories={stopCategories}
+                      canEdit={canEdit}
+                    />
+                  ))
+                )}
+              </ul>
+            </SortableContext>
+          </DndContext>
 
-      {canEdit ? (
-        <button
-          type="button"
-          onClick={() => setIsAddingStop(true)}
-          className="flex cursor-pointer items-center gap-1.5 self-start rounded-lg text-sm font-semibold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
-        >
-          <PlusIcon size={16} />
-          {t('cityStops.addRecommendation')}
-        </button>
-      ) : null}
+          {canEdit ? (
+            <button
+              type="button"
+              onClick={() => setIsAddingStop(true)}
+              className="flex cursor-pointer items-center gap-1.5 self-start rounded-lg text-sm font-semibold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              <PlusIcon size={16} />
+              {t('cityStops.addRecommendation')}
+            </button>
+          ) : null}
+        </>
+      )}
 
       {isAddingStop ? (
         <AddStopModal

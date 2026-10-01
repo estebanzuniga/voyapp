@@ -189,6 +189,9 @@ export const translations = {
     'cityStops.scheduleForDay': 'Schedule for a day…',
     'cityStops.scheduleAria': 'Schedule {name} for a day',
     'cityStops.scheduleDialogTitle': 'Schedule for a day',
+    'cityStops.collapseAria': 'Collapse city',
+    'cityStops.expandAria': 'Expand city',
+    'cityStops.stopsCount': '{count} stops',
 
     // --- edit trip ------------------------------------------------------
     'editTrip.title': 'Edit trip',
@@ -468,6 +471,9 @@ export const translations = {
     'cityStops.scheduleForDay': 'Agendar para un día…',
     'cityStops.scheduleAria': 'Agendar {name} para un día',
     'cityStops.scheduleDialogTitle': 'Agendar para un día',
+    'cityStops.collapseAria': 'Colapsar ciudad',
+    'cityStops.expandAria': 'Expandir ciudad',
+    'cityStops.stopsCount': '{count} paradas',
 
     // --- edit trip ------------------------------------------------------
     'editTrip.title': 'Editar viaje',
