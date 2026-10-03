@@ -150,8 +150,6 @@ export const translations = {
     'tripDetail.tabMap': 'Map',
 
     // --- trip map tab -----------------------------------------------------
-    'tripMap.previousDayAria': 'Previous day',
-    'tripMap.nextDayAria': 'Next day',
     'tripMap.stopsPlanned': '{count} stops planned',
     'tripMap.noStopsPlanned': 'No stops planned for this day yet.',
 
@@ -439,8 +437,6 @@ export const translations = {
     'tripDetail.tabMap': 'Mapa',
 
     // --- pestaña de mapa del viaje -----------------------------------------
-    'tripMap.previousDayAria': 'Día anterior',
-    'tripMap.nextDayAria': 'Día siguiente',
     'tripMap.stopsPlanned': '{count} paradas planeadas',
     'tripMap.noStopsPlanned': 'Aún no hay paradas planeadas para este día.',
 

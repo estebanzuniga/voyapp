@@ -1,9 +1,11 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '../hooks/useTranslation'
 import { enumerateDates, formatFullDate, isToday, isTripInProgress, todayIsoDate } from '../lib/dates'
-import { BuildingIcon, ChevronDownIcon, MaximizeIcon, MinimizeIcon } from './Icons'
+import { BuildingIcon, MaximizeIcon, MinimizeIcon } from './Icons'
 
 const DayMap = lazy(() => import('./DayMap').then((module) => ({ default: module.DayMap })))
+
+const MAX_DOTS = 20
 
 function DaySlide({ date, day, cityName, locale }) {
   const { t } = useTranslation()
@@ -45,32 +47,68 @@ export function TripMapView({ trip }) {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const trackRef = useRef(null)
   const hasMountedRef = useRef(false)
+  const isSyncingScrollRef = useRef(false)
+  const syncSettleTimeoutRef = useRef(null)
   const selectedIndex = Math.max(dates.indexOf(selectedDate), 0)
 
   useEffect(() => {
     const track = trackRef.current
     const slide = track?.children[selectedIndex]
     if (!slide) return
-    slide.scrollIntoView({ behavior: hasMountedRef.current ? 'smooth' : 'auto', inline: 'start', block: 'nearest' })
+    isSyncingScrollRef.current = true
+    clearTimeout(syncSettleTimeoutRef.current)
+    syncSettleTimeoutRef.current = setTimeout(() => {
+      isSyncingScrollRef.current = false
+    }, 600)
+    slide.scrollIntoView({ behavior: hasMountedRef.current ? 'smooth' : 'auto', inline: 'center', block: 'nearest' })
     hasMountedRef.current = true
   }, [selectedIndex])
 
   function handleScroll() {
+    if (isSyncingScrollRef.current) {
+      clearTimeout(syncSettleTimeoutRef.current)
+      syncSettleTimeoutRef.current = setTimeout(() => {
+        isSyncingScrollRef.current = false
+      }, 150)
+      return
+    }
+
     const track = trackRef.current
-    if (!track || track.clientWidth === 0) return
-    const index = Math.round(track.scrollLeft / track.clientWidth)
+    if (!track || dates.length === 0) return
+    const itemWidth = track.scrollWidth / dates.length
+    if (itemWidth === 0) return
+    const index = Math.round(track.scrollLeft / itemWidth)
     const clamped = Math.min(Math.max(index, 0), dates.length - 1)
     const date = dates[clamped]
     if (date && date !== selectedDate) setSelectedDate(date)
   }
 
-  function goToOffset(offset) {
-    const nextIndex = Math.min(Math.max(selectedIndex + offset, 0), dates.length - 1)
-    setSelectedDate(dates[nextIndex])
-  }
-
   const selectedDay = dayByDate.get(selectedDate) ?? null
   const stops = selectedDay?.stops ?? []
+
+  const dotIndices = useMemo(() => {
+    if (dates.length <= MAX_DOTS) return dates.map((_, index) => index)
+    const indices = []
+    for (let i = 0; i < MAX_DOTS; i += 1) {
+      indices.push(Math.round((i * (dates.length - 1)) / (MAX_DOTS - 1)))
+    }
+    return [...new Set(indices)]
+  }, [dates])
+
+  const activeDotIndex = useMemo(
+    () =>
+      dotIndices.reduce((closest, index) =>
+        Math.abs(index - selectedIndex) < Math.abs(closest - selectedIndex) ? index : closest,
+      ),
+    [dotIndices, selectedIndex],
+  )
+
+  // Swiping to a day with no stops while fullscreen (no map to show, so the
+  // toggle button itself is hidden) would otherwise leave no way back out -
+  // drop out of fullscreen automatically instead.
+  useEffect(() => {
+    if (stops.length === 0) setIsFullscreen(false)
+  }, [stops.length])
 
   return (
     <div
@@ -81,14 +119,16 @@ export function TripMapView({ trip }) {
       }
     >
       <div className="relative min-h-0 min-w-0 w-full flex-1 overflow-hidden rounded-lg border border-border">
-        <button
-          type="button"
-          onClick={() => setIsFullscreen((prev) => !prev)}
-          aria-label={isFullscreen ? t('dayMap.exitFullScreen') : t('dayMap.viewFullScreen')}
-          className="absolute right-14 top-2 z-1000 cursor-pointer rounded-full border border-border bg-surface p-2 text-ink shadow-md hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-accent"
-        >
-          {isFullscreen ? <MinimizeIcon size={18} /> : <MaximizeIcon size={18} />}
-        </button>
+        {stops.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => setIsFullscreen((prev) => !prev)}
+            aria-label={isFullscreen ? t('dayMap.exitFullScreen') : t('dayMap.viewFullScreen')}
+            className="absolute right-14 top-2 z-1000 cursor-pointer rounded-full border border-border bg-surface p-2 text-ink shadow-md hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            {isFullscreen ? <MinimizeIcon size={18} /> : <MaximizeIcon size={18} />}
+          </button>
+        ) : null}
         <Suspense
           fallback={
             <div className="flex h-full items-center justify-center text-sm text-muted">{t('common.loadingMap')}</div>
@@ -104,46 +144,44 @@ export function TripMapView({ trip }) {
         </Suspense>
       </div>
 
-      <div className="flex min-w-0 items-center gap-2">
-        <button
-          type="button"
-          onClick={() => goToOffset(-1)}
-          disabled={selectedIndex <= 0}
-          aria-label={t('tripMap.previousDayAria')}
-          className="shrink-0 cursor-pointer rounded-full border border-border bg-surface p-2 text-ink shadow-sm hover:bg-surface-2 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-accent"
-        >
-          <ChevronDownIcon size={18} className="rotate-90" />
-        </button>
+      <ul
+        ref={trackRef}
+        onScroll={handleScroll}
+        data-no-pull-refresh
+        className="flex min-w-0 snap-x snap-mandatory overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden"
+        style={{ scrollbarWidth: 'none' }}
+      >
+        {dates.map((date) => (
+          <li key={date} className="w-[85%] shrink-0 snap-center px-1 sm:w-[60%]">
+            <DaySlide
+              date={date}
+              day={dayByDate.get(date)}
+              cityName={trip.cities.find((city) => city.id === dayByDate.get(date)?.cityId)?.name ?? null}
+              locale={locale}
+            />
+          </li>
+        ))}
+      </ul>
 
-        <ul
-          ref={trackRef}
-          onScroll={handleScroll}
-          data-no-pull-refresh
-          className="flex min-w-0 flex-1 snap-x snap-mandatory overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden"
-          style={{ scrollbarWidth: 'none' }}
-        >
-          {dates.map((date) => (
-            <li key={date} className="w-full shrink-0 snap-start px-1">
-              <DaySlide
-                date={date}
-                day={dayByDate.get(date)}
-                cityName={trip.cities.find((city) => city.id === dayByDate.get(date)?.cityId)?.name ?? null}
-                locale={locale}
+      {dates.length > 1 ? (
+        <div className="flex shrink-0 flex-wrap items-center justify-center gap-1.5">
+          {dotIndices.map((index) => {
+            const isActive = index === activeDotIndex
+            return (
+              <button
+                key={index}
+                type="button"
+                onClick={() => setSelectedDate(dates[index])}
+                aria-label={formatFullDate(dates[index], locale)}
+                aria-current={isActive}
+                className={`h-2 cursor-pointer rounded-full transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                  isActive ? 'w-5 bg-accent' : 'w-2 bg-border hover:bg-muted'
+                }`}
               />
-            </li>
-          ))}
-        </ul>
-
-        <button
-          type="button"
-          onClick={() => goToOffset(1)}
-          disabled={selectedIndex >= dates.length - 1}
-          aria-label={t('tripMap.nextDayAria')}
-          className="shrink-0 cursor-pointer rounded-full border border-border bg-surface p-2 text-ink shadow-sm hover:bg-surface-2 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-accent"
-        >
-          <ChevronDownIcon size={18} className="-rotate-90" />
-        </button>
-      </div>
+            )
+          })}
+        </div>
+      ) : null}
     </div>
   )
 }
