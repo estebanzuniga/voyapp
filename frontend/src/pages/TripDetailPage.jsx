@@ -17,6 +17,7 @@ import { formatDate, formatDateRange, enumerateDates, isToday } from '../lib/dat
 import { CityStopsPanel } from '../components/CityStopsPanel'
 import { DayCard, StopDragPreview } from '../components/DayCard'
 import { Skeleton } from '../components/Skeleton'
+import { TripMapView } from '../components/TripMapView'
 import { TripSettingsModal } from '../components/TripSettingsModal'
 import {
   ArrowLeftIcon,
@@ -476,8 +477,18 @@ export function TripDetailPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-bg px-4 pb-8 pt-4 sm:px-8 sm:pt-6 lg:px-12">
-      <div className="mx-auto flex max-w-4xl flex-col gap-4">
+    <div
+      className={`bg-bg pt-4 sm:pt-6 ${
+        activeTab === 'map' && trip
+          ? 'flex h-[calc(100dvh-max(1rem,env(safe-area-inset-top))-env(safe-area-inset-bottom))] flex-col overflow-hidden px-2 pb-4'
+          : 'min-h-dvh px-4 pb-8 sm:px-8 lg:px-12'
+      }`}
+    >
+      <div
+        className={`mx-auto flex min-h-0 flex-1 flex-col gap-4 ${
+          activeTab === 'map' && trip ? 'w-full' : 'max-w-4xl'
+        }`}
+      >
         <Link
           to="/trips"
           className="flex w-fit items-center gap-1.5 rounded-lg text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
@@ -561,6 +572,7 @@ export function TripDetailPage() {
               {[
                 { id: 'itinerary', label: t('tripDetail.tabItinerary') },
                 { id: 'cityStops', label: t('tripDetail.tabCityStops') },
+                { id: 'map', label: t('tripDetail.tabMap') },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -578,6 +590,12 @@ export function TripDetailPage() {
 
             {activeTab === 'cityStops' ? (
               <CityStopsPanel trip={trip} tripId={id} canEdit={canEdit} />
+            ) : null}
+
+            {activeTab === 'map' ? (
+              <div className="flex min-h-0 flex-1 flex-col">
+                <TripMapView trip={trip} />
+              </div>
             ) : null}
 
             {dragError ? <p className="text-sm text-red-600">{dragError}</p> : null}
@@ -638,11 +656,6 @@ export function TripDetailPage() {
                     }
 
                     return canEdit ? (
-                      // Keyed by the full date range, not just the first date: when
-                      // adding a day splits this gap in two, each half needs a fresh
-                      // key (and therefore a fresh, collapsed isExpanded state) rather
-                      // than reusing the old gap's key/state for whichever half kept
-                      // the same start date.
                       <AddDayGap
                         key={`gap:${item.dates.join(',')}`}
                         dates={item.dates}

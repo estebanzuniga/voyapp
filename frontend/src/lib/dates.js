@@ -52,7 +52,7 @@ export function formatTime(isoTime) {
 // still yesterday) for them. `Day.date`/`Trip.startDate`/`endDate` have no
 // server-side timezone, so this stays consistent with how `enumerateDates`
 // already does its date math client-side.
-function todayIsoDate() {
+export function todayIsoDate() {
   const now = new Date()
   const month = String(now.getMonth() + 1).padStart(2, '0')
   const day = String(now.getDate()).padStart(2, '0')

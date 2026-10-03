@@ -147,6 +147,13 @@ export const translations = {
     'tripDetail.cityGroupLabel': '{city} · {range}',
     'tripDetail.tabItinerary': 'Itinerary',
     'tripDetail.tabCityStops': 'Stops per city',
+    'tripDetail.tabMap': 'Map',
+
+    // --- trip map tab -----------------------------------------------------
+    'tripMap.previousDayAria': 'Previous day',
+    'tripMap.nextDayAria': 'Next day',
+    'tripMap.stopsPlanned': '{count} stops planned',
+    'tripMap.noStopsPlanned': 'No stops planned for this day yet.',
 
     // --- trip settings modal ---------------------------------------------
     'settingsModal.title': 'Trip settings',
@@ -429,6 +436,13 @@ export const translations = {
     'tripDetail.cityGroupLabel': '{city} · {range}',
     'tripDetail.tabItinerary': 'Itinerario',
     'tripDetail.tabCityStops': 'Paradas por ciudad',
+    'tripDetail.tabMap': 'Mapa',
+
+    // --- pestaña de mapa del viaje -----------------------------------------
+    'tripMap.previousDayAria': 'Día anterior',
+    'tripMap.nextDayAria': 'Día siguiente',
+    'tripMap.stopsPlanned': '{count} paradas planeadas',
+    'tripMap.noStopsPlanned': 'Aún no hay paradas planeadas para este día.',
 
     // --- modal de configuración del viaje ---------------------------------
     'settingsModal.title': 'Configuración del viaje',
