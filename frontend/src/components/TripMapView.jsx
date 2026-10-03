@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '../hooks/useTranslation'
 import { enumerateDates, formatFullDate, isToday, isTripInProgress, todayIsoDate } from '../lib/dates'
-import { BuildingIcon, ChevronDownIcon } from './Icons'
+import { BuildingIcon, ChevronDownIcon, MaximizeIcon, MinimizeIcon } from './Icons'
 
 const DayMap = lazy(() => import('./DayMap').then((module) => ({ default: module.DayMap })))
 
@@ -42,6 +42,7 @@ export function TripMapView({ trip }) {
   const [selectedDate, setSelectedDate] = useState(() =>
     isTripInProgress(trip.startDate, trip.endDate) ? todayIsoDate() : trip.startDate,
   )
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const trackRef = useRef(null)
   const hasMountedRef = useRef(false)
   const selectedIndex = Math.max(dates.indexOf(selectedDate), 0)
@@ -72,8 +73,22 @@ export function TripMapView({ trip }) {
   const stops = selectedDay?.stops ?? []
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col gap-3">
-      <div className="min-h-0 min-w-0 w-full flex-1 overflow-hidden rounded-lg border border-border">
+    <div
+      className={
+        isFullscreen
+          ? 'fixed inset-0 z-2000 flex flex-col gap-3 bg-bg p-2 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))]'
+          : 'flex h-full min-h-0 min-w-0 flex-col gap-3'
+      }
+    >
+      <div className="relative min-h-0 min-w-0 w-full flex-1 overflow-hidden rounded-lg border border-border">
+        <button
+          type="button"
+          onClick={() => setIsFullscreen((prev) => !prev)}
+          aria-label={isFullscreen ? t('dayMap.exitFullScreen') : t('dayMap.viewFullScreen')}
+          className="absolute right-14 top-2 z-1000 cursor-pointer rounded-full border border-border bg-surface p-2 text-ink shadow-md hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-accent"
+        >
+          {isFullscreen ? <MinimizeIcon size={18} /> : <MaximizeIcon size={18} />}
+        </button>
         <Suspense
           fallback={
             <div className="flex h-full items-center justify-center text-sm text-muted">{t('common.loadingMap')}</div>
