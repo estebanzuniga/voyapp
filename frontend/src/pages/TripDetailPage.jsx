@@ -478,17 +478,13 @@ export function TripDetailPage() {
 
   return (
     <div
-      className={`bg-bg pt-4 sm:pt-6 ${
+      className={`bg-bg px-4 pt-4 sm:px-8 sm:pt-6 lg:px-12 ${
         activeTab === 'map' && trip
-          ? 'flex h-[calc(100dvh-max(1rem,env(safe-area-inset-top))-env(safe-area-inset-bottom))] flex-col overflow-hidden px-2 pb-4'
-          : 'min-h-dvh px-4 pb-8 sm:px-8 lg:px-12'
+          ? 'flex h-[calc(100dvh-max(1rem,env(safe-area-inset-top))-env(safe-area-inset-bottom))] flex-col overflow-hidden pb-4'
+          : 'min-h-dvh pb-8'
       }`}
     >
-      <div
-        className={`mx-auto flex min-h-0 flex-1 flex-col gap-4 ${
-          activeTab === 'map' && trip ? 'w-full' : 'max-w-4xl'
-        }`}
-      >
+      <div className="mx-auto flex h-full w-full min-h-0 min-w-0 max-w-4xl flex-1 flex-col gap-4">
         <Link
           to="/trips"
           className="flex w-fit items-center gap-1.5 rounded-lg text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
@@ -593,7 +589,7 @@ export function TripDetailPage() {
             ) : null}
 
             {activeTab === 'map' ? (
-              <div className="flex min-h-0 flex-1 flex-col">
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                 <TripMapView trip={trip} />
               </div>
             ) : null}

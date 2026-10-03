@@ -72,8 +72,8 @@ export function TripMapView({ trip }) {
   const stops = selectedDay?.stops ?? []
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3">
-      <div className="min-h-0 w-full flex-1 overflow-hidden rounded-lg border border-border">
+    <div className="flex h-full min-h-0 min-w-0 flex-col gap-3">
+      <div className="min-h-0 min-w-0 w-full flex-1 overflow-hidden rounded-lg border border-border">
         <Suspense
           fallback={
             <div className="flex h-full items-center justify-center text-sm text-muted">{t('common.loadingMap')}</div>
@@ -89,7 +89,7 @@ export function TripMapView({ trip }) {
         </Suspense>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center gap-2">
         <button
           type="button"
           onClick={() => goToOffset(-1)}
@@ -104,7 +104,7 @@ export function TripMapView({ trip }) {
           ref={trackRef}
           onScroll={handleScroll}
           data-no-pull-refresh
-          className="flex flex-1 snap-x snap-mandatory overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden"
+          className="flex min-w-0 flex-1 snap-x snap-mandatory overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden"
           style={{ scrollbarWidth: 'none' }}
         >
           {dates.map((date) => (
