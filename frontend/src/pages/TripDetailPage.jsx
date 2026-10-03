@@ -13,7 +13,7 @@ import { arrayMove } from '@dnd-kit/sortable'
 import { TRIP_QUERY } from '../graphql/queries'
 import { ADD_DAY_MUTATION, MOVE_STOP_MUTATION, REORDER_STOPS_MUTATION } from '../graphql/mutations'
 import { useTranslation } from '../hooks/useTranslation'
-import { formatDate, formatDateRange, enumerateDates, isToday } from '../lib/dates'
+import { formatDate, formatDateRange, enumerateDates, isToday, isTripInProgress } from '../lib/dates'
 import { CityStopsPanel } from '../components/CityStopsPanel'
 import { DayCard, StopDragPreview } from '../components/DayCard'
 import { Skeleton } from '../components/Skeleton'
@@ -243,6 +243,11 @@ export function TripDetailPage() {
   // actually render (its DayCard doesn't exist in the DOM until then), so
   // this flags "scroll once the pending re-render lands" instead.
   const pendingScrollDayIdRef = useRef(null)
+  // Guards the "default to the Map tab for an in-progress trip" effect below
+  // so it only ever fires once, the first time trip data arrives - without
+  // it, every refetch (e.g. after a mutation) would re-run and yank the
+  // viewer back to the Map tab even after they'd manually switched away.
+  const hasAppliedDefaultTabRef = useRef(false)
 
   const canEdit = trip?.myPermission === 'EDITOR'
   // Only set when today's date actually has a day in this trip's itinerary -
@@ -299,6 +304,14 @@ export function TripDetailPage() {
   useEffect(() => {
     if (trip) {
       setStopsByDay(Object.fromEntries(trip.days.map((day) => [day.id, day.stops])))
+    }
+  }, [trip])
+
+  useEffect(() => {
+    if (hasAppliedDefaultTabRef.current || !trip) return
+    hasAppliedDefaultTabRef.current = true
+    if (isTripInProgress(trip.startDate, trip.endDate)) {
+      setActiveTab('map')
     }
   }, [trip])
 
@@ -567,8 +580,8 @@ export function TripDetailPage() {
             <div className="flex w-fit gap-1 rounded-lg border border-border bg-surface-2 p-1">
               {[
                 { id: 'itinerary', label: t('tripDetail.tabItinerary') },
-                { id: 'cityStops', label: t('tripDetail.tabCityStops') },
                 { id: 'map', label: t('tripDetail.tabMap') },
+                { id: 'cityStops', label: t('tripDetail.tabCityStops') },
               ].map((tab) => (
                 <button
                   key={tab.id}
