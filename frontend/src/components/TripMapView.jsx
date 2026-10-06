@@ -148,7 +148,7 @@ export function TripMapView({ trip }) {
         ref={trackRef}
         onScroll={handleScroll}
         data-no-pull-refresh
-        className="flex min-w-0 snap-x snap-mandatory overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden"
+        className="flex min-w-0 snap-x snap-mandatory overflow-x-auto [&::-webkit-scrollbar]:hidden"
         style={{ scrollbarWidth: 'none' }}
       >
         {dates.map((date) => (
